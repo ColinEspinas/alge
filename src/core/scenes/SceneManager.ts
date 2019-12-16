@@ -18,11 +18,11 @@ export default class SceneManager {
 		return SceneManager.instance;
 	}
 	
-	get GetScenes() {
+	get GetScenes() : Scene[] {
 		return this.scenes;
 	}
 
-	public AddScene(scene : Scene, index ?: number) {
+	public AddScene(scene : Scene, index ?: number) : void {
 		if (index && index >= 0) {
 			this.scenes.splice(index, 0, scene);
 		}
@@ -31,19 +31,17 @@ export default class SceneManager {
 		}
 	}
 
-	public RemoveScene(index : number) {
+	public RemoveScene(index : number) : void {
 		this.scenes.splice(index, 1);
 	}
 
-	public Load(index : number, draw : Two) {
+	public Load(index : number, draw : Two) : void {
 		this.loadedScene = this.scenes[index];
 		this.scenes[index].Load(draw);
 	}
 
-	public UpdateScenes() {
-		for (var i = 0, len = this.scenes.length; i < len; i++) {
-			this.scenes[i].Render();
-		}
+	public RenderLoadedScene() : void {
+		this.loadedScene.Render();
 	}
 
 }

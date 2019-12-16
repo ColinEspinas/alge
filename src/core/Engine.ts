@@ -7,18 +7,20 @@ type Options  = {
 	width ?: number;
 	height ?: number;
 	fullscreen ?: boolean;
+	container ?: string;
 }
 
 export default class engine {
 
 	private width : number;
 	private height : number;
+	private fullscreen : boolean;
+
+	private container : string;
 
 	private lastCall : number;
 	private deltaTime : number;
 	private fps : number;
-
-	private fullscreen : boolean;
 
 	public draw : Two;
 
@@ -31,6 +33,7 @@ export default class engine {
 			width : 1280,
 			height : 720,
 			fullscreen : false,
+			container : "body",
 		}, options);
 
 		this.sceneManager = SceneManager.Instance();
@@ -41,10 +44,11 @@ export default class engine {
 		this.width = options.width;
 		this.height = options.height;
 		this.fullscreen = options.fullscreen;
+		this.container = options.container;
 
 		if (options.scenes.length <= 0) {
 			let scene = new Scene();
-			this.sceneManager.AddScene(scene, 0);
+			this.sceneManager.AddScene(scene);
 		}
 	}
 
@@ -54,9 +58,9 @@ export default class engine {
 			height: this.height,
 			fullscreen: this.fullscreen,
 			autostart: false,
-		}).appendTo(document.body);
+		}).appendTo(document.querySelector(this.container));
 
-		console.log("Engine is running");
+		console.log("Engine is running in ", document.querySelector(this.container));
 
 		this.sceneManager.Load(0, this.draw);
 
@@ -65,12 +69,14 @@ export default class engine {
 	}
 
 	public Update() : void {
-		this.sceneManager.UpdateScenes();
+		this.sceneManager.RenderLoadedScene();
 		this.draw.update();
 
 		this.deltaTime = (performance.now() - this.lastCall)/1000;
 		this.lastCall = performance.now();
 		this.fps = 1/this.deltaTime;
+
+		// console.log(this.fps);	
 
 		requestAnimationFrame(this.Update.bind(this));
 	}

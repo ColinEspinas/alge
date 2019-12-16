@@ -7,26 +7,24 @@ export default class Scene {
 	private id : number;
 	entities : Entity[];
 	draw : Two;
+	rect : any;
 
 	constructor() {
 		this.id = shortid.generate();
 		console.log(this.id);
 	}
 
-	get GetId() {
+	get GetId() : number {
 		return this.id;
 	}
 
-	Load(draw : Two) {
+	Load(draw : Two) : void {
 		this.draw = draw;
-		var rect = this.draw.makeRectangle(213, 100, 100, 100);
-		rect.fill = '#FF0000';
-		this.draw.bind('update', function() {
-			rect.rotation += 0.05;
-		});
+		this.rect = this.draw.makeRectangle(213, 100, 100, 100);
+		this.rect.fill = '#FF0000';
 	}
 
 	Render() : void {
-
+		this.rect.rotation += 0.05;
 	}
 }
