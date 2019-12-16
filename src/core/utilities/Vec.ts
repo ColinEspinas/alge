@@ -11,18 +11,18 @@ export default class Vec {
 			this.z = z;
 	}
 
-	static FromArray = function(a) {
+	public static FromArray = function(a : number[]) : Vec {
 		return new Vec(a[0], a[1], a[2]);
 	}
 
-	Equals(v, tolerance) {
+	public Equals(v : Vec, tolerance : number) : boolean {
 		if (tolerance == undefined) {
 		  tolerance = 0.0000001;
 		}
 		return (Math.abs(v.x - this.x) <= tolerance) && (Math.abs(v.y - this.y) <= tolerance) && (Math.abs(v.z - this.z) <= tolerance);
 	};
 
-	Add(v : Vec) {
+	public Add(v : Vec) : Vec {
 		this.x += v.x;
 		this.y += v.y;
 		if (this.z) {
@@ -31,7 +31,7 @@ export default class Vec {
 		return this;
 	};
 
-	Sub(v : Vec) {
+	public Sub(v : Vec) : Vec  {
 		this.x -= v.x;
 		this.y -= v.y;
 		if (this.z) {
@@ -40,7 +40,7 @@ export default class Vec {
 		return this;
 	};
 
-	Scale(f : number) {
+	public Scale(f : number) : Vec  {
 		this.x *= f;
 		this.y *= f;
 		if (this.z) {
@@ -49,7 +49,7 @@ export default class Vec {
 		return this;
 	};
 
-	Distance(v : Vec) {
+	public Distance(v : Vec) {
 		var dx = v.x - this.x;
 		var dy = v.y - this.y;
 		var dz = v.z - this.z;
@@ -59,7 +59,7 @@ export default class Vec {
 		return Math.sqrt(dx * dx + dy * dy);
 	};
 
-	SquareDistance(v : Vec) {
+	public SquareDistance(v : Vec) {
 		var dx = v.x - this.x;
 		var dy = v.y - this.y;
 		var dz = v.z - this.z;
@@ -69,7 +69,7 @@ export default class Vec {
 		return dx * dx + dy * dy;
 	};
 
-	SimpleDistance(v : Vec) {
+	public SimpleDistance(v : Vec) {
 		var dx = Math.abs(v.x - this.x);
 		var dy = Math.abs(v.y - this.y);
 		var dz = Math.abs(v.z - this.z);
@@ -79,14 +79,14 @@ export default class Vec {
 		return Math.min(dx, dy);
 	};
 
-	Dot(b) {
+	public Dot(v : Vec) : number {
 		if (this.z) {
-			return this.x * b.x + this.y * b.y + this.z * b.z;
+			return this.x * v.x + this.y * v.y + this.z * v.z;
 		}
-		return this.x * b.x + this.y * b.y;
+		return this.x * v.x + this.y * v.y;
 	};
 
-	Cross(v) {
+	public Cross(v : Vec) : Vec {
 		var x = this.x;
 		var y = this.y;
 		var z = this.z;
@@ -98,4 +98,47 @@ export default class Vec {
 		this.z = x * vy - y * vx;
 		return this;
 	};
+
+	public Length() : number {
+		if (this.z) {
+			return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+		}
+		return Math.sqrt(this.x * this.x + this.y * this.y);
+	};
+
+	public Normalize() : Vec {
+		var len = this.Length();
+		if (len > 0) {
+			this.Scale(1 / len);
+		}
+		return this;
+	};
+
+	public Limit(s : number) : Vec {
+		var len = this.Length();
+		if (len > s && len > 0) {
+			this.Scale(s / len);
+		}
+		return this;
+	};
+
+	public Lerp(v : Vec, t : number) : Vec {
+		this.x = this.x + (v.x - this.x) * t;
+		this.y = this.y + (v.y - this.y) * t;
+		this.z = this.z + (v.z - this.z) * t;
+		return this;
+	}
+
+	public ToString() : string {
+		return "{" + Math.floor(this.x*1000)/1000 + ", " + Math.floor(this.y*1000)/1000 + ", " + Math.floor(this.z*1000)/1000 + "}";
+	};
+
+	public static Zero() : Vec { return new Vec(0, 0, 0); }
+	public static One() : Vec { return new Vec(1, 1, 1); }
+	public static Up() : Vec { return new Vec(0, -1, 0); }
+	public static Down() : Vec { return new Vec(0, 1, 0); }
+	public static Left() : Vec { return new Vec(-1, 0, 0); }
+	public static Right() : Vec { return new Vec(1, 0, 0); }
+	public static Front() : Vec { return new Vec(0, 0, 1); }
+	public static Back() : Vec { return new Vec(0, 0, -1); }
 }

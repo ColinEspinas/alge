@@ -1,10 +1,7 @@
 import Engine from './core/Engine';
 import Vec from './core/utilities/Vec';
 
-const engine = new Engine({
-	width: 400,
-	height: 200,
-});
+const engine = new Engine({fullscreen: true});
 
 engine.Run();
 

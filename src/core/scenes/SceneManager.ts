@@ -35,9 +35,9 @@ export default class SceneManager {
 		this.scenes.splice(index, 1);
 	}
 
-	public Load(index : number, draw : Two) : void {
+	public Load(index : number) : void {
 		this.loadedScene = this.scenes[index];
-		this.scenes[index].Load(draw);
+		this.scenes[index].Load();
 	}
 
 	public RenderLoadedScene() : void {
