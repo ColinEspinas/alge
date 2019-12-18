@@ -23,27 +23,23 @@ export default class Entity {
 	}
 
 	Init() {
-		this.texture = new Two.Texture('https://s.ftcdn.net/v2013/pics/all/curated/RKyaEDwp8J7JKeZWQPuOVWvkUjGQfpCx_cover_580.jpg?r=1a0fc22192d0c808b8bb2b9bcfbf4a45b1793687', function() {
-		});
-		this.transform.position.y = 500;
-		this.transform.position.x = 500;
+		for (var i = 0, len = this.components.length; i < len; i++) {
+			this.components[i].Init();
+		}
 	}
 
 	Update() {
-		var draw = DrawManager.GetDriver();
-		this.shape = draw.makeCircle(this.transform.position.x, this.transform.position.y, 100);
-		this.shape.fill = this.texture;
-		this.shape.scale = new Two.Vector(this.transform.scale.x, this.transform.scale.y);
-		this.shape.translation = new Two.Vector(this.transform.position.x, this.transform.position.y);
-		this.shape.rotation = this.transform.rotation;
+		for (var i = 0, len = this.components.length; i < len; i++) {
+			this.components[i].Update();
+		}
 	}
 
-	AddComponent<ComponentType extends Component>(c : new () => ComponentType) : Component {
-		this.components.push(new c());
+	AddComponent<ComponentType extends Component>(c : new (...args : any[]) => ComponentType, ...args : any[]) : Component {
+		this.components.push(new c(this, args));
 		return this.components[this.components.length - 1];
 	}
 
-	GetComponent<ComponentType extends Component>(c : new () => ComponentType) : Component {
+	GetComponent<ComponentType extends Component>(c : ComponentType) : Component {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			if (typeof this.components[i] === typeof c) {
 				return this.components[i];
@@ -51,7 +47,7 @@ export default class Entity {
 		}
 	}
 
-	GetComponents<ComponentType extends Component>(c : new () => ComponentType) : Component[] {
+	GetComponents<ComponentType extends Component>(c : ComponentType) : Component[] {
 		let components : Component[] = [];
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			if (typeof this.components[i] === typeof c) {
@@ -61,7 +57,7 @@ export default class Entity {
 		return components;
 	}
 
-	RemoveComponent<ComponentType extends Component>(c : new () => ComponentType) : void {
+	RemoveComponent<ComponentType extends Component>(c : ComponentType) : void {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			if (typeof this.components[i] === typeof c) {
 				this.components.splice(i, 1);

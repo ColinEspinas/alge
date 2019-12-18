@@ -72,7 +72,7 @@ export default class engine {
 
 	public Update() : void {
 		Time.Update();
-		DrawManager.GetDriver().clear();
+		// DrawManager.GetDriver().clear();
 		this.sceneManager.RenderLoadedScene();
 		DrawManager.GetDriver().update();
 

@@ -2,13 +2,11 @@ import Entity from "../entities/Entity";
 
 export default abstract class Component {
 
-	public parent : Entity;
+	protected parent : Entity;
 
-	constructor(parent : Entity) {
+	public constructor(parent : Entity) {
 		this.parent = parent;
 	}
-
-	protected abstract Init();
-	protected abstract Update();
-	
+	public abstract Init();
+	public abstract Update();
 }
