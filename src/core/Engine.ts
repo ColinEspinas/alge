@@ -3,6 +3,7 @@ import Two from 'two.js';
 import SceneManager from './scenes/SceneManager';
 import DrawManager from './draw/DrawManager';
 import Time from './Time';
+import InputManager from './inputs/InputManager';
 
 type Options  = {
 	scenes ?: Scene[];
@@ -22,6 +23,7 @@ export default class engine {
 
 	public sceneManager : SceneManager;
 	public drawManager : DrawManager;
+	public inputManager : InputManager;
 
 	constructor(options : Partial<Options> = {}) {
 
@@ -35,6 +37,7 @@ export default class engine {
 
 		this.sceneManager = SceneManager.Instance();
 		this.drawManager = DrawManager.Instance();
+		this.inputManager = InputManager.Instance();
 
 		for (var i = 0, len = options.scenes.length; i < len; i++) {
 			this.sceneManager.AddScene(options.scenes[i]);
@@ -58,9 +61,11 @@ export default class engine {
 				height: this.height,
 				fullscreen: this.fullscreen,
 				autostart: false,
-				// type: Two.Types.webgl,
+				type: Two.Types.webgl,
 			}).appendTo(document.querySelector(this.container))
 		);
+
+		this.inputManager.Init(this.container);
 
 		console.log("Engine is running in ", document.querySelector(this.container));
 

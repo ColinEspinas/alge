@@ -25,6 +25,10 @@ export default class Scene {
 		}
 	}
 
+	Unload() : void {
+		this.entities = [];
+	}
+
 	Render() : void {
 		for (var i = 0, len = this.entities.length; i < len; i++) {
 			this.entities[i].Update();

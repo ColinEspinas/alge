@@ -36,6 +36,8 @@ export default class SceneManager {
 	}
 
 	public Load(index : number) : void {
+		if (this.loadedScene)
+			this.loadedScene.Unload();
 		this.loadedScene = this.scenes[index];
 		this.scenes[index].Load();
 	}

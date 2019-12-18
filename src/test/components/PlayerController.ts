@@ -1,26 +1,25 @@
 import Component from "../../core/components/Component";
+import InputManager, { Key } from "../../core/inputs/InputManager";
+import Time from "../../core/Time";
 
 export default class PlayerController extends Component {
 	
 	public Init() {
-		window.addEventListener("keydown", e =>{
-			if (e.key === "z") {
-				this.parent.transform.position.y -= 1;
-			}
-			if (e.key === "q") {
-				this.parent.transform.position.x -= 1;
-			}
-			if (e.key === "s") {
-				this.parent.transform.position.y += 1;
-			}
-			if (e.key === "d") {
-				this.parent.transform.position.x += 1;
-			}
-			e.preventDefault();
-		}, false);
+
 	}
 	
 	public Update() {
-		
+		if (InputManager.GetKeyDown(Key.UpArrow)) {
+			this.parent.transform.position.y -= 10 * Time.DeltaTime() * 100;
+		}
+		if (InputManager.GetKeyDown(Key.DownArrow)) {
+			this.parent.transform.position.y += 10 * Time.DeltaTime() * 100;
+		}
+		if (InputManager.GetKeyDown(Key.LeftArrow)) {
+			this.parent.transform.position.x -= 10 * Time.DeltaTime() * 100;
+		}
+		if (InputManager.GetKeyDown(Key.RightArrow)) {
+			this.parent.transform.position.x += 10 * Time.DeltaTime() * 100;
+		}
 	}
 }
