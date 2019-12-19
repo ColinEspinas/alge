@@ -16,9 +16,9 @@ export default class DrawManager {
 		return DrawManager.instance;
 	}
 
-	static SetDriver(driver : any) {
+	static SetContext(driver : any) {
 		this.driver = driver;
 	}
 
-	static GetDriver() : any { return this.driver; }
+	static GetContext() : any { return this.driver; }
 }

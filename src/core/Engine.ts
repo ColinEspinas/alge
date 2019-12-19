@@ -55,7 +55,7 @@ export default class engine {
 	}
 
 	public Run() : number {
-		DrawManager.SetDriver(
+		DrawManager.SetContext(
 			new Two({
 				width: this.width,
 				height: this.height,
@@ -77,10 +77,8 @@ export default class engine {
 
 	public Update() : void {
 		Time.Update();
-		// DrawManager.GetDriver().clear();
 		this.sceneManager.RenderLoadedScene();
-		DrawManager.GetDriver().update();
-
+		DrawManager.GetContext().update();
 		requestAnimationFrame(this.Update.bind(this));
 	}
 }
