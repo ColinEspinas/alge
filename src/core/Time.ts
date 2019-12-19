@@ -1,6 +1,6 @@
 export default class Time {
 
-	private static instance : Time;
+	private static _instance : Time;
 
 	private static lastUpdate : number;
 	private static deltaTime : number;
@@ -12,11 +12,11 @@ export default class Time {
 		Time.fps = 0;
 	}
 
-	static Instance() : Time {
-		if (!Time.instance) {
-			Time.instance = new Time();
+	static get instance() : Time {
+		if (!Time._instance) {
+			Time._instance = new Time();
 		}
-		return Time.instance;
+		return Time._instance;
 	}
 
 	static DeltaTime() : number { return this.deltaTime; }

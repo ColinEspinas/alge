@@ -3,7 +3,7 @@ import Two from 'two.js';
 
 export default class SceneManager {
 
-	private static instance : SceneManager;
+	private static _instance : SceneManager;
 	private scenes : Scene[];
 	private loadedScene : Scene;
 
@@ -11,11 +11,11 @@ export default class SceneManager {
 		this.scenes = [];
 	}
 
-	static Instance() : SceneManager {
-		if (!SceneManager.instance) {
-			SceneManager.instance = new SceneManager();
+	static get instance() : SceneManager {
+		if (!SceneManager._instance) {
+			SceneManager._instance = new SceneManager();
 		}
-		return SceneManager.instance;
+		return SceneManager._instance;
 	}
 	
 	get GetScenes() : Scene[] {

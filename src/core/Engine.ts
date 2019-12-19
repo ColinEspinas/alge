@@ -35,9 +35,9 @@ export default class engine {
 			container : "body",
 		}, options);
 
-		this.sceneManager = SceneManager.Instance();
-		this.drawManager = DrawManager.Instance();
-		this.inputManager = InputManager.Instance();
+		this.sceneManager = SceneManager.instance;
+		this.drawManager = DrawManager.instance;
+		this.inputManager = InputManager.instance;
 
 		for (var i = 0, len = options.scenes.length; i < len; i++) {
 			this.sceneManager.AddScene(options.scenes[i]);

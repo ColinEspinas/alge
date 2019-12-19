@@ -3,7 +3,7 @@ import Vec from "../utilities/Vec";
 
 export default class InputManager {
 
-	private static instance : InputManager;
+	private static _instance : InputManager;
 	private static pressed : { [key: number]: boolean; } = {};
 	private static mousePressed : { [key: number]: boolean; } = {};
 	private static mousePos : Vec = new Vec(0, 0);
@@ -12,11 +12,11 @@ export default class InputManager {
 
 	private constructor() {}
 
-	static Instance() : InputManager {
-		if (!InputManager.instance) {
-			InputManager.instance = new InputManager();
+	static get instance() : InputManager {
+		if (!InputManager._instance) {
+			InputManager._instance = new InputManager();
 		}
-		return InputManager.instance;
+		return InputManager._instance;
 	}
 	
 	public Init(container : string) : void {
@@ -59,7 +59,7 @@ export default class InputManager {
 	}
 
 	static SetCursor(type : Cursor) : void {
-		this.Instance().containerElement.style.cursor = type;
+		this.instance.containerElement.style.cursor = type;
 	}
 
 	// static GetKeyPressed() {
