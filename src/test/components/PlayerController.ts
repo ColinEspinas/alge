@@ -1,5 +1,5 @@
 import Component from "../../core/components/Component";
-import InputManager, { Key, Cursor } from "../../core/inputs/InputManager";
+import InputManager, { Key, Cursor, Mouse } from "../../core/inputs/InputManager";
 import Time from "../../core/Time";
 
 export default class PlayerController extends Component {
@@ -22,6 +22,9 @@ export default class PlayerController extends Component {
 		}
 		if (InputManager.GetKeyDown(Key.RightArrow)) {
 			this.parent.transform.position.x += 10 * Time.DeltaTime() * 100;
+		}
+		if (InputManager.GetMouseDown(Mouse.Left)) {
+			this.parent.transform.position.y -= 10 * Time.DeltaTime() * 100;
 		}
 
 		this.parent.transform.position = InputManager.GetMousePosition();

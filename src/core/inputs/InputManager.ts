@@ -5,7 +5,11 @@ export default class InputManager {
 
 	private static _instance : InputManager;
 	private static pressed : { [key: number]: boolean; } = {};
+	private static down : { [key: number]: boolean; } = {};
+	private static released : { [key: number]: boolean; } = {};
 	private static mousePressed : { [key: number]: boolean; } = {};
+	private static mouseDown : { [key: number]: boolean; } = {};
+	private static mouseReleased : { [key: number]: boolean; } = {};
 	private static mousePos : Vec = new Vec(0, 0);
 	private static mouseWheel : Vec = new Vec(0, 0, 0);
 	private containerElement : HTMLElement;
@@ -25,16 +29,30 @@ export default class InputManager {
 		this.containerElement = document.querySelector(container);
 
 		// Setup keyboard events:
-		this.containerElement.addEventListener('keydown', (e : KeyboardEvent) => { InputManager.pressed[e.keyCode] = true; });
-		this.containerElement.addEventListener('keyup', (e : KeyboardEvent) => { InputManager.pressed[e.keyCode] = false; });
+		this.containerElement.addEventListener('keydown', (e : KeyboardEvent) => {
+			InputManager.down[e.keyCode] = true;
+			if (!e.repeat) {
+				InputManager.pressed[e.keyCode] = true;
+			}
+		});
+		this.containerElement.addEventListener('keyup', (e : KeyboardEvent) => { 
+			InputManager.down[e.keyCode] = false;
+			InputManager.released[e.keyCode] = true;
+		});
 
 		// Setup mouse events:
 		this.containerElement.addEventListener('mousemove', (e : MouseEvent) => {
 			InputManager.mousePos.x = e.clientX; 
 			InputManager.mousePos.y = e.clientY;
 		});
-		this.containerElement.addEventListener('mousedown', (e : MouseEvent) => {InputManager.mousePressed[e.button] = true; });
-		this.containerElement.addEventListener('mouseup', (e : MouseEvent) => { InputManager.mousePressed[e.button] = false; });
+		this.containerElement.addEventListener('mousedown', (e : MouseEvent) => {
+			InputManager.mouseDown[e.button] = true;
+			InputManager.mousePressed[e.button] = true;
+		});
+		this.containerElement.addEventListener('mouseup', (e : MouseEvent) => { 
+			InputManager.mouseDown[e.button] = false;
+			InputManager.mouseReleased[e.button] = true;
+		});
 		this.containerElement.addEventListener('wheel', (e : WheelEvent) => {
 			InputManager.mouseWheel.x += e.deltaX;
 			InputManager.mouseWheel.y += e.deltaY;
@@ -42,8 +60,20 @@ export default class InputManager {
 		});
 	}
 
+	public Update() {
+		for (var i = 0, len = Object.keys(InputManager.pressed).length; i < len; i++) {
+			InputManager.pressed[Object.keys(InputManager.pressed)[i]] = false;
+		}
+		for (var i = 0, len = Object.keys(InputManager.released).length; i < len; i++) {
+			InputManager.released[Object.keys(InputManager.released)[i]] = false;
+		}
+		for (var i = 0, len = Object.keys(InputManager.mouseReleased).length; i < len; i++) {
+			InputManager.mouseReleased[Object.keys(InputManager.mouseReleased)[i]] = false;
+		}
+	}
+
 	static GetKeyDown(key : number) : boolean {
-		return this.pressed[key];
+		return this.down[key];
 	}
 
 	static GetMousePosition() : Vec {
@@ -51,7 +81,11 @@ export default class InputManager {
 	}
 
 	static GetMouseDown(button : number) : boolean {
-		return this.mousePressed[button];
+		return this.mouseDown[button];
+	}
+
+	static GetMouseReleased(button : number) : boolean {
+		return this.mouseReleased[button];
 	}
 
 	static GetMouseWheel() : Vec {
@@ -62,9 +96,13 @@ export default class InputManager {
 		this.instance.containerElement.style.cursor = type;
 	}
 
-	// static GetKeyPressed() {
+	static GetKeyPressed(key : number) {
+		return this.pressed[key];
+	}
 
-	// }
+	static GetKeyReleased(key : number) {
+		return this.released[key];
+	}
 }
 
 export const enum Cursor {

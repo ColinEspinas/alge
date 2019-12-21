@@ -79,6 +79,7 @@ export default class engine {
 		Time.Update();
 		this.sceneManager.RenderLoadedScene();
 		DrawManager.GetContext().update();
+		this.inputManager.Update();
 		requestAnimationFrame(this.Update.bind(this));
 	}
 }
