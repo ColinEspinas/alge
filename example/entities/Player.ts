@@ -1,7 +1,6 @@
-import Entity from "../../core/entities/Entity";
-import SpriteRenderer, { SpriteMode } from "../../core/components/SpriteRenderer";
-import Vec from "../../core/utilities/Vec";
+import { Entity, SpriteRenderer, SpriteMode, Vec} from "../../dist/alge";
 import PlayerController from "../components/PlayerController";
+import FPSCounter from "../components/FPSCounter";
 
 export default class Player extends Entity {
 	constructor() {
@@ -10,5 +9,7 @@ export default class Player extends Entity {
 		this.transform.position.Add(new Vec(200, 200));
 		this.AddComponent(SpriteRenderer, "https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg", SpriteMode.Cover);
 		this.AddComponent(PlayerController);
+		this.AddComponent(FPSCounter);
+		console.log(this.GetComponent(FPSCounter));
 	}
 }

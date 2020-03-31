@@ -1,6 +1,6 @@
-import Component from "./Component";
-import Entity from "../entities/Entity";
-import DrawManager from "../draw/DrawManager";
+import Component from "../core/Component";
+import Entity from "../core/Entity";
+import DrawManager from "../core/DrawManager";
 import Two from 'two.js';
 
 export default class SpriteRenderer extends Component {
@@ -15,6 +15,8 @@ export default class SpriteRenderer extends Component {
 
 	private stretchMode : SpriteMode;
 
+	private isFirstUpdate : Boolean = false;
+
 	constructor(parent : Entity, args : any[] = []) {
 		super(parent);
 		this.image = args[0];
@@ -23,6 +25,7 @@ export default class SpriteRenderer extends Component {
 	}
 
 	public Init() {
+		console.log(DrawManager.instance);
 		this.texture = new Two.Texture(this.image);
 		this.shape = DrawManager.GetContext().makeRectangle(
 			this.parent.transform.position.x,
@@ -35,7 +38,6 @@ export default class SpriteRenderer extends Component {
 	}
 
 	public Update() {
-
 		this.shape.width = this.parent.transform.scale.x;
 		this.shape.height = this.parent.transform.scale.y;
 
@@ -87,7 +89,7 @@ export default class SpriteRenderer extends Component {
 	}
 }
 
-export const enum SpriteMode {
+export enum SpriteMode {
 	BestFit = 0,
 	Cover = 1,
 	Stretch = 2,

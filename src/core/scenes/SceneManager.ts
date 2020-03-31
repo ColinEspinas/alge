@@ -1,5 +1,4 @@
 import Scene from "./Scene";
-import Two from 'two.js';
 
 export default class SceneManager {
 

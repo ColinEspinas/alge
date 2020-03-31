@@ -1,22 +1,22 @@
-export default class Time {
+export default class TimeManager {
 
-	private static _instance : Time;
+	private static _instance : TimeManager;
 
 	private static lastUpdate : number;
 	private static deltaTime : number;
 	private static fps : number;
 
 	private constructor() {
-		Time.lastUpdate = 0;
-		Time.deltaTime = 0;
-		Time.fps = 0;
+		TimeManager.lastUpdate = 0;
+		TimeManager.deltaTime = 0;
+		TimeManager.fps = 0;
 	}
 
-	static get instance() : Time {
-		if (!Time._instance) {
-			Time._instance = new Time();
+	static get instance() : TimeManager {
+		if (!TimeManager._instance) {
+			TimeManager._instance = new TimeManager();
 		}
-		return Time._instance;
+		return TimeManager._instance;
 	}
 
 	static DeltaTime() : number { return this.deltaTime; }

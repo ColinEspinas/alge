@@ -1,6 +1,4 @@
-import Entity from '../entities/Entity';
-import Player from '../../test/entities/Player'
-import Two from 'two.js';
+import Entity from '../Entity';
 import shortid from 'shortid';
 
 export default class Scene {
@@ -18,8 +16,6 @@ export default class Scene {
 	}
 
 	Load() : void {
-		this.entities.push(new Player());
-
 		for (var i = 0, len = this.entities.length; i < len; i++) {
 			this.entities[i].Init();
 		}

@@ -1,5 +1,4 @@
-import DrawManager from "../draw/DrawManager";
-import Vec from "../utilities/Vec";
+import Vec from "./utilities/Vec";
 
 export default class InputManager {
 
@@ -105,7 +104,7 @@ export default class InputManager {
 	}
 }
 
-export const enum Cursor {
+export enum Cursor {
 	Hidden = "none",
 	Default = "default",
 	Pointer = "pointer",
@@ -117,13 +116,13 @@ export const enum Cursor {
 	NotAllowed = "not-allowed",
 }
 
-export const enum Mouse {
+export enum Mouse {
 	Left = 0,
 	Middle = 1,
 	Right = 2,
 }
 
-export const enum Key {
+export enum Key {
 	Backspace = 8,
 	Tab = 9,
 	Enter = 13,

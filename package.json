@@ -1,17 +1,25 @@
 {
-  "name": "2dgameengine",
+  "name": "alge",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "2D Awesome Little Game Engine",
+  "source": "src/*.ts",
+  "main": "dist/alge.js",
+  "browser": "dist/alge.umd.js",
+  "module": "dist/alge.module.js",
   "scripts": {
-    "dev": "parcel src/index.html",
-    "build": "parcel build src/index.html"
+    "watch": "rollup -w -c",
+    "build": "rollup -c && tsc",
+    "example": "parcel ./example/index.html -d ./example/dist",
+    "example:build": "npm run build & npm run example"
   },
-  "author": "",
+  "author": "Colin Espinas",
   "license": "ISC",
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
-    "typescript": "^3.7.3"
+    "rollup": "^2.3.1",
+    "rollup-plugin-terser": "^5.3.0",
+    "rollup-plugin-typescript2": "^0.27.0",
+    "typescript": "^3.8.3"
   },
   "dependencies": {
     "shortid": "^2.2.15",

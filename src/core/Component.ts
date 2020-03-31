@@ -1,4 +1,4 @@
-import Entity from "../entities/Entity";
+import Entity from "./Entity";
 
 export default abstract class Component {
 

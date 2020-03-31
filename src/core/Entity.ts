@@ -1,9 +1,8 @@
-import DrawManager from '../draw/DrawManager';
+import DrawManager from './DrawManager';
 import Transform from './Transform';
-import Component from '../components/Component'
+import Component from './Component';
 import shortid from 'shortid';
 import Two from 'two.js';
-import SpriteRenderer from '../components/SpriteRenderer';
 
 export default class Entity {
 

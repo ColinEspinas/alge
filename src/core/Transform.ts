@@ -1,4 +1,4 @@
-import Vec from '../utilities/Vec'
+import Vec from './utilities/Vec'
 
 export default class Transform {
 

@@ -1,9 +1,9 @@
-import Scene from './scenes/Scene';
 import Two from 'two.js';
+import Scene from './scenes/Scene';
 import SceneManager from './scenes/SceneManager';
-import DrawManager from './draw/DrawManager';
-import Time from './Time';
-import InputManager from './inputs/InputManager';
+import DrawManager from './DrawManager';
+import TimeManager from './TimeManager';
+import InputManager from './InputManager';
 
 type Options  = {
 	scenes ?: Scene[];
@@ -76,7 +76,7 @@ export default class engine {
 	}
 
 	public Update() : void {
-		Time.Update();
+		TimeManager.Update();
 		this.sceneManager.RenderLoadedScene();
 		DrawManager.GetContext().update();
 		this.inputManager.Update();
