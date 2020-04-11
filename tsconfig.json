@@ -1,7 +1,6 @@
 {
     "compilerOptions": {
 		"target": "ES6",
-    "outDir": "trans",
     "moduleResolution": "node",
     "declaration": true,
     },
