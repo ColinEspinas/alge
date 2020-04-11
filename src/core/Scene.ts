@@ -1,6 +1,6 @@
-import Entity from '../Entity';
+import Entity from './Entity';
 import shortid from 'shortid';
-import Engine from '../Engine';
+import Engine from './Engine';
 
 export default class Scene {
 

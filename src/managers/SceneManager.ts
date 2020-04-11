@@ -1,5 +1,5 @@
 import Manager from '../core/Manager';
-import Scene from "../core/scenes/Scene";
+import Scene from "../core/Scene";
 import Engine, { Options } from '../core/Engine';
 
 export default class SceneManager extends Manager {

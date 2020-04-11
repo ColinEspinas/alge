@@ -3,31 +3,37 @@ import Engine from './core/Engine';
 import Entity from './core/Entity';
 import Transform from './core/Transform';
 import Component from './core/Component';
-import DrawManager from './managers/DrawManager';
-import InputManager, { Key, Cursor, Mouse } from './managers/InputManager';
-import TimeManager from './managers/TimeManager';
-import Vec from './core/utilities/Vec';
+import Scene from './core/Scene';
 
-import Scene from './core/scenes/Scene';
+// Base Managers:
+import DrawManager from './managers/DrawManager';
+import InputManager from './managers/InputManager';
+import TimeManager from './managers/TimeManager';
 import SceneManager from './managers/SceneManager';
 
-// Base Components :
-import SpriteRenderer, { SpriteMode } from './components/SpriteRenderer';
+// Base Components:
+import SpriteRenderer from './components/SpriteRenderer';
 
+// Utilities:
+import Vec from './core/utilities/Vec';
+import { Key, Cursor, Mouse } from './managers/InputManager';
+import { SpriteMode } from './components/SpriteRenderer';
 
 export {
-	// Core :
+	// Core:
 	Engine,
 	Entity,
 	Transform,
 	Component,
+	Scene,
+
+	// Base Managers:
 	DrawManager,
 	InputManager,
 	TimeManager,
-	Scene,
 	SceneManager,
 
-	// Base Components :
+	// Base Components:
 	SpriteRenderer,
 
 	// Utilities:
