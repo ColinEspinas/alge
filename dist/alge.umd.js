@@ -1,1 +1,782 @@
-var alge=function(e,t,s){"use strict";t=t&&Object.prototype.hasOwnProperty.call(t,"default")?t.default:t,s=s&&Object.prototype.hasOwnProperty.call(s,"default")?s.default:s;class i{constructor(){this.id=s.generate(),this.entities=[]}get GetId(){return this.id}Load(){for(var e=0,t=this.entities.length;e<t;e++)this.entities[e].Init()}Unload(){this.entities=[]}Render(){for(var e=0,t=this.entities.length;e<t;e++)this.entities[e].Update()}}class n{constructor(){this.scenes=[]}static get instance(){return n._instance||(n._instance=new n),n._instance}get GetScenes(){return this.scenes}AddScene(e,t){t&&t>=0?this.scenes.splice(t,0,e):this.scenes.push(e)}RemoveScene(e){this.scenes.splice(e,1)}Load(e){this.loadedScene&&this.loadedScene.Unload(),this.loadedScene=this.scenes[e],this.scenes[e].Load()}RenderLoadedScene(){this.loadedScene.Render()}}class a{constructor(){}static get instance(){return a._instance||(a._instance=new a),a._instance}static SetContext(e){a.driver=e}static GetContext(){return a.driver}}class r{constructor(){r.lastUpdate=0,r.deltaTime=0,r.fps=0}static get instance(){return r._instance||(r._instance=new r),r._instance}static DeltaTime(){return this.deltaTime}static LastUpdate(){return this.lastUpdate}static Fps(){return this.fps}static Update(){this.deltaTime=(performance.now()-this.lastUpdate)/1e3,this.lastUpdate=performance.now(),this.fps=1/this.deltaTime}}class h{constructor(e,t,s){this.x=e,this.y=t,s&&(this.z=s)}Equals(e,t){return null==t&&(t=1e-7),Math.abs(e.x-this.x)<=t&&Math.abs(e.y-this.y)<=t&&Math.abs(e.z-this.z)<=t}Add(e){return this.x+=e.x,this.y+=e.y,this.z&&(this.z+=e.z),this}Sub(e){return this.x-=e.x,this.y-=e.y,this.z&&(this.z-=e.z),this}Scale(e){return this.x*=e,this.y*=e,this.z&&(this.z*=e),this}Distance(e){var t=e.x-this.x,s=e.y-this.y,i=e.z-this.z;return i?Math.sqrt(t*t+s*s+i*i):Math.sqrt(t*t+s*s)}SquareDistance(e){var t=e.x-this.x,s=e.y-this.y,i=e.z-this.z;return i?t*t+s*s+i*i:t*t+s*s}SimpleDistance(e){var t=Math.abs(e.x-this.x),s=Math.abs(e.y-this.y),i=Math.abs(e.z-this.z);return i?Math.min(t,s,i):Math.min(t,s)}Dot(e){return this.z?this.x*e.x+this.y*e.y+this.z*e.z:this.x*e.x+this.y*e.y}Cross(e){var t=this.x,s=this.y,i=this.z,n=e.x,a=e.y,r=e.z;return this.x=s*r-i*a,this.y=i*n-t*r,this.z=t*a-s*n,this}Length(){return this.z?Math.sqrt(this.x*this.x+this.y*this.y+this.z*this.z):Math.sqrt(this.x*this.x+this.y*this.y)}Normalize(){var e=this.Length();return e>0&&this.Scale(1/e),this}Limit(e){var t=this.Length();return t>e&&t>0&&this.Scale(e/t),this}Lerp(e,t){return this.x=this.x+(e.x-this.x)*t,this.y=this.y+(e.y-this.y)*t,this.z=this.z+(e.z-this.z)*t,this}ToString(){return"{"+Math.floor(1e3*this.x)/1e3+", "+Math.floor(1e3*this.y)/1e3+", "+Math.floor(1e3*this.z)/1e3+"}"}static Zero(){return new h(0,0,0)}static One(){return new h(1,1,1)}static Up(){return new h(0,-1,0)}static Down(){return new h(0,1,0)}static Left(){return new h(-1,0,0)}static Right(){return new h(1,0,0)}static Front(){return new h(0,0,1)}static Back(){return new h(0,0,-1)}}h.FromArray=function(e){return new h(e[0],e[1],e[2])};class o{constructor(){}static get instance(){return o._instance||(o._instance=new o),o._instance}Init(e){this.containerElement=document.querySelector(e),this.containerElement.addEventListener("keydown",e=>{o.down[e.keyCode]=!0,e.repeat||(o.pressed[e.keyCode]=!0)}),this.containerElement.addEventListener("keyup",e=>{o.down[e.keyCode]=!1,o.released[e.keyCode]=!0}),this.containerElement.addEventListener("mousemove",e=>{o.mousePos.x=e.clientX,o.mousePos.y=e.clientY}),this.containerElement.addEventListener("mousedown",e=>{o.mouseDown[e.button]=!0,o.mousePressed[e.button]=!0}),this.containerElement.addEventListener("mouseup",e=>{o.mouseDown[e.button]=!1,o.mouseReleased[e.button]=!0}),this.containerElement.addEventListener("wheel",e=>{o.mouseWheel.x+=e.deltaX,o.mouseWheel.y+=e.deltaY,o.mouseWheel.z+=e.deltaZ})}Update(){for(var e=0,t=Object.keys(o.pressed).length;e<t;e++)o.pressed[Object.keys(o.pressed)[e]]=!1;for(e=0,t=Object.keys(o.released).length;e<t;e++)o.released[Object.keys(o.released)[e]]=!1;for(e=0,t=Object.keys(o.mouseReleased).length;e<t;e++)o.mouseReleased[Object.keys(o.mouseReleased)[e]]=!1}static GetKeyDown(e){return this.down[e]}static GetMousePosition(){return this.mousePos}static GetMouseDown(e){return this.mouseDown[e]}static GetMouseReleased(e){return this.mouseReleased[e]}static GetMouseWheel(){return this.mouseWheel}static SetCursor(e){this.instance.containerElement.style.cursor=e}static GetKeyPressed(e){return this.pressed[e]}static GetKeyReleased(e){return this.released[e]}}var c,d,u,l;o.pressed={},o.down={},o.released={},o.mousePressed={},o.mouseDown={},o.mouseReleased={},o.mousePos=new h(0,0),o.mouseWheel=new h(0,0,0),(c=e.Cursor||(e.Cursor={})).Hidden="none",c.Default="default",c.Pointer="pointer",c.Help="help",c.Loading="wait",c.Crosshair="crosshair",c.Grab="grab",c.Grabbing="grabbing",c.NotAllowed="not-allowed",(d=e.Mouse||(e.Mouse={}))[d.Left=0]="Left",d[d.Middle=1]="Middle",d[d.Right=2]="Right",(u=e.Key||(e.Key={}))[u.Backspace=8]="Backspace",u[u.Tab=9]="Tab",u[u.Enter=13]="Enter",u[u.Shift=16]="Shift",u[u.Ctrl=17]="Ctrl",u[u.Alt=18]="Alt",u[u.PauseBreak=19]="PauseBreak",u[u.CapsLock=20]="CapsLock",u[u.Escape=27]="Escape",u[u.Space=32]="Space",u[u.PageUp=33]="PageUp",u[u.PageDown=34]="PageDown",u[u.End=35]="End",u[u.Home=36]="Home",u[u.LeftArrow=37]="LeftArrow",u[u.UpArrow=38]="UpArrow",u[u.RightArrow=39]="RightArrow",u[u.DownArrow=40]="DownArrow",u[u.Insert=45]="Insert",u[u.Delete=46]="Delete",u[u.Zero=48]="Zero",u[u.ClosedParen=48]="ClosedParen",u[u.One=49]="One",u[u.ExclamationMark=49]="ExclamationMark",u[u.Two=50]="Two",u[u.AtSign=50]="AtSign",u[u.Three=51]="Three",u[u.PoundSign=51]="PoundSign",u[u.Hash=51]="Hash",u[u.Four=52]="Four",u[u.DollarSign=52]="DollarSign",u[u.Five=53]="Five",u[u.PercentSign=53]="PercentSign",u[u.Six=54]="Six",u[u.Caret=54]="Caret",u[u.Hat=54]="Hat",u[u.Seven=55]="Seven",u[u.Ampersand=55]="Ampersand",u[u.Eight=56]="Eight",u[u.Star=56]="Star",u[u.Asterik=56]="Asterik",u[u.Nine=57]="Nine",u[u.OpenParen=57]="OpenParen",u[u.A=65]="A",u[u.B=66]="B",u[u.C=67]="C",u[u.D=68]="D",u[u.E=69]="E",u[u.F=70]="F",u[u.G=71]="G",u[u.H=72]="H",u[u.I=73]="I",u[u.J=74]="J",u[u.K=75]="K",u[u.L=76]="L",u[u.M=77]="M",u[u.N=78]="N",u[u.O=79]="O",u[u.P=80]="P",u[u.Q=81]="Q",u[u.R=82]="R",u[u.S=83]="S",u[u.T=84]="T",u[u.U=85]="U",u[u.V=86]="V",u[u.W=87]="W",u[u.X=88]="X",u[u.Y=89]="Y",u[u.Z=90]="Z",u[u.LeftWindowKey=91]="LeftWindowKey",u[u.RightWindowKey=92]="RightWindowKey",u[u.SelectKey=93]="SelectKey",u[u.Numpad0=96]="Numpad0",u[u.Numpad1=97]="Numpad1",u[u.Numpad2=98]="Numpad2",u[u.Numpad3=99]="Numpad3",u[u.Numpad4=100]="Numpad4",u[u.Numpad5=101]="Numpad5",u[u.Numpad6=102]="Numpad6",u[u.Numpad7=103]="Numpad7",u[u.Numpad8=104]="Numpad8",u[u.Numpad9=105]="Numpad9",u[u.Multiply=106]="Multiply",u[u.Add=107]="Add",u[u.Subtract=109]="Subtract",u[u.DecimalPoint=110]="DecimalPoint",u[u.Divide=111]="Divide",u[u.F1=112]="F1",u[u.F2=113]="F2",u[u.F3=114]="F3",u[u.F4=115]="F4",u[u.F5=116]="F5",u[u.F6=117]="F6",u[u.F7=118]="F7",u[u.F8=119]="F8",u[u.F9=120]="F9",u[u.F10=121]="F10",u[u.F11=122]="F11",u[u.F12=123]="F12",u[u.NumLock=144]="NumLock",u[u.ScrollLock=145]="ScrollLock",u[u.SemiColon=186]="SemiColon",u[u.Equals=187]="Equals",u[u.Comma=188]="Comma",u[u.Dash=189]="Dash",u[u.Period=190]="Period",u[u.UnderScore=189]="UnderScore",u[u.PlusSign=187]="PlusSign",u[u.ForwardSlash=191]="ForwardSlash",u[u.Tilde=192]="Tilde",u[u.GraveAccent=192]="GraveAccent",u[u.OpenBracket=219]="OpenBracket",u[u.ClosedBracket=221]="ClosedBracket",u[u.Quote=222]="Quote";class p{constructor(){this.position=new h(0,0,0),this.rotation=0,this.scale=new h(1,1)}}class m{constructor(e){this.parent=e}get name(){return this._name}}return(l=e.SpriteMode||(e.SpriteMode={}))[l.BestFit=0]="BestFit",l[l.Cover=1]="Cover",l[l.Stretch=2]="Stretch",l[l.Unscaled=3]="Unscaled",e.Component=m,e.DrawManager=a,e.Engine=class{constructor(e={}){e=Object.assign({scenes:[],width:1280,height:720,fullscreen:!1,container:"body"},e),this.sceneManager=n.instance,this.drawManager=a.instance,this.inputManager=o.instance;for(var t=0,s=e.scenes.length;t<s;t++)this.sceneManager.AddScene(e.scenes[t]);if(this.width=e.width,this.height=e.height,this.fullscreen=e.fullscreen,this.container=e.container,e.scenes.length<=0){let e=new i;this.sceneManager.AddScene(e)}}Run(){return a.SetContext(new t({width:this.width,height:this.height,fullscreen:this.fullscreen,autostart:!1,type:t.Types.webgl}).appendTo(document.querySelector(this.container))),this.inputManager.Init(this.container),console.log("Engine is running in ",document.querySelector(this.container)),this.sceneManager.Load(0),requestAnimationFrame(this.Update.bind(this)),0}Update(){r.Update(),this.sceneManager.RenderLoadedScene(),a.GetContext().update(),this.inputManager.Update(),requestAnimationFrame(this.Update.bind(this))}},e.Entity=class{constructor(){this.id=s.generate(),this.transform=new p,this.components=[]}get GetId(){return this.id}Init(){for(var e=0,t=this.components.length;e<t;e++)this.components[e].Init()}Update(){for(var e=0,t=this.components.length;e<t;e++)this.components[e].Update()}AddComponent(e,...t){return this.components.push(new e(this,t)),this.components[this.components.length-1]}GetComponent(e){for(var t=0,s=this.components.length;t<s;t++)if(this.components[t].name===new e(this).name)return this.components[t]}GetComponents(e){let t=[];for(var s=0,i=this.components.length;s<i;s++)this.components[s].name===new e(this).name&&t.push(this.components[s]);return t}RemoveComponent(e){for(var t=0,s=this.components.length;t<s;t++)this.components[t].name===new e(this).name&&this.components.splice(t,1)}},e.InputManager=o,e.Scene=i,e.SceneManager=n,e.SpriteRenderer=class extends m{constructor(e,t=[]){super(e),this._name="SpriteRenderer",this.isFirstUpdate=!1,this.image=t[0],this.scale=1,this.stretchMode=t[1]}Init(){console.log(a.instance),this.texture=new t.Texture(this.image),this.shape=a.GetContext().makeRectangle(this.parent.transform.position.x,this.parent.transform.position.y,this.parent.transform.scale.x,this.parent.transform.scale.y),this.shape.noStroke(),this.shape.fill=this.texture}Update(){switch(this.shape.width=this.parent.transform.scale.x,this.shape.height=this.parent.transform.scale.y,this.stretchMode){case 0:{let e=this.texture.image.naturalWidth/this.texture.image.naturalHeight;this.texture.scale=e<1?new t.Vector(this.scale*(this.shape.height/this.texture.image.naturalHeight),this.scale*(this.shape.height/this.texture.image.naturalHeight)):new t.Vector(this.scale*(this.shape.width/this.texture.image.naturalWidth),this.scale*(this.shape.width/this.texture.image.naturalWidth));break}case 1:{let e=this.texture.image.naturalWidth/this.texture.image.naturalHeight;this.texture.scale=e<1?new t.Vector(this.scale*(this.shape.width/this.texture.image.naturalWidth),this.scale*(this.shape.width/this.texture.image.naturalWidth)):new t.Vector(this.scale*(this.shape.height/this.texture.image.naturalHeight),this.scale*(this.shape.height/this.texture.image.naturalHeight));break}case 2:this.texture.scale=new t.Vector(this.scale*(this.shape.width/this.texture.image.naturalWidth),this.scale*(this.shape.height/this.texture.image.naturalHeight))}this.shape.translation.set(this.parent.transform.position.x,this.parent.transform.position.y)}},e.TimeManager=r,e.Transform=p,e.Vec=h,e}({},Two,shortid);
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('shortid'), require('two.js')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'shortid', 'two.js'], factory) :
+	(global = global || self, factory(global.alge = {}, global.shortid, global.Two));
+}(this, (function (exports, shortid, Two) { 'use strict';
+
+	shortid = shortid && Object.prototype.hasOwnProperty.call(shortid, 'default') ? shortid['default'] : shortid;
+	Two = Two && Object.prototype.hasOwnProperty.call(Two, 'default') ? Two['default'] : Two;
+
+	class Manager {
+	    constructor(engine) {
+	        this._engine = engine;
+	    }
+	    get name() { return this._name; }
+	    get engine() { return this._engine; }
+	    /**
+	     * Called at the end of the engine constructor
+	     * @param options Engine construct options
+	     */
+	    PreInit(options) { }
+	    ;
+	    /**
+	     * Called on engine run
+	     * @param args
+	     */
+	    Init(...args) { }
+	    ;
+	    /**
+	     * Called on engine update
+	     * @param args
+	     */
+	    Update(...args) { }
+	    ;
+	}
+
+	class Scene {
+	    constructor(name, engine) {
+	        this.loaded = false;
+	        this._id = shortid.generate();
+	        this._name = name;
+	        this.engine = engine;
+	        this.entities = [];
+	        this.loadedEntities = [];
+	    }
+	    get id() {
+	        return this._id;
+	    }
+	    get name() {
+	        return this._name;
+	    }
+	    Reload() {
+	        this.loadedEntities = [];
+	        this.loaded = false;
+	        this.loadedEntities = this.entities;
+	    }
+	    Load() {
+	        this.loadedEntities = [];
+	        this.loaded = false;
+	        this.loadedEntities = this.entities;
+	    }
+	    Unload() {
+	        this.loadedEntities = [];
+	        this.loaded = false;
+	        for (var i = 0, len = this.entities.length; i < len; i++) {
+	            this.entities[i].Unload();
+	        }
+	    }
+	    Update() {
+	        for (var i = 0, len = this.entities.length; i < len; i++) {
+	            if (this.loaded == false) {
+	                this.loadedEntities[i].Init();
+	            }
+	            else {
+	                this.loadedEntities[i].Update();
+	            }
+	        }
+	        this.loaded = true;
+	    }
+	    AddEntity(e, name, ...args) {
+	        if (name && name !== "") {
+	            this.entities.push(new e(this.engine, name, ...args));
+	            return this.entities[this.entities.length - 1];
+	        }
+	        else
+	            throw Error("Entity name is null or empty");
+	    }
+	    GetEntity(name) {
+	        for (var i = 0, len = this.entities.length; i < len; i++) {
+	            if (this.entities[i].name == name) {
+	                return this.entities[i];
+	            }
+	        }
+	    }
+	}
+
+	class SceneManager extends Manager {
+	    constructor(engine) {
+	        super(engine);
+	        this._name = "SceneManager";
+	        this.scenes = [];
+	    }
+	    Init() {
+	        this.LoadSceneByIndex(0);
+	    }
+	    Update() {
+	        this.loadedScene.Update();
+	    }
+	    CreateScene(name) {
+	        if (name && name !== "") {
+	            try {
+	                this.GetScene(name);
+	            }
+	            catch (_a) {
+	                let scene = new Scene(name, this.engine);
+	                this.scenes.push(scene);
+	                return scene;
+	            }
+	            throw Error("Scene with name " + name + " already exist");
+	        }
+	        else
+	            throw Error("Cannot create scene with name " + name);
+	    }
+	    GetScenes() {
+	        return this.scenes;
+	    }
+	    GetScene(name) {
+	        for (var i = 0, len = this.scenes.length; i < len; i++) {
+	            if (this.scenes[i].name === name) {
+	                return this.scenes[i];
+	            }
+	        }
+	        throw Error("Cannot get scene with name " + name);
+	    }
+	    RemoveScene(index) {
+	        this.scenes.splice(index, 1);
+	    }
+	    LoadSceneByIndex(index) {
+	        if (typeof this.scenes[index] !== "undefined") {
+	            if (this.loadedScene)
+	                this.loadedScene.Unload();
+	            this.loadedScene = this.scenes[index];
+	            this.scenes[index].Load();
+	        }
+	        else
+	            throw Error("Cannot load scene with index " + index);
+	    }
+	    LoadSceneByName(name) {
+	        try {
+	            const scene = this.GetScene(name);
+	            if (this.loadedScene)
+	                this.loadedScene.Unload();
+	            this.loadedScene = scene;
+	            scene.Load();
+	        }
+	        catch (_a) {
+	            throw Error("Cannot load scene with name " + name);
+	        }
+	    }
+	}
+
+	class DrawManager extends Manager {
+	    constructor() {
+	        super(...arguments);
+	        this._name = "DrawManager";
+	    }
+	    Init() {
+	        this.SetContext(new Two({
+	            width: this.engine.width,
+	            height: this.engine.height,
+	            fullscreen: this.engine.fullscreen,
+	            autostart: false,
+	            type: Two.Types.webgl,
+	        }).appendTo(document.querySelector(this.engine.container)));
+	    }
+	    Update() {
+	        this.driver.update();
+	    }
+	    SetContext(driver) {
+	        this.driver = driver;
+	    }
+	    GetContext() { return this.driver; }
+	}
+
+	class TimeManager extends Manager {
+	    constructor(engine) {
+	        super(engine);
+	        this._name = "TimeManager";
+	        this._lastUpdate = 0;
+	        this._deltaTime = 0;
+	        this._fps = 0;
+	    }
+	    get deltaTime() { return this._deltaTime; }
+	    get lastUpdate() { return this._lastUpdate; }
+	    get fps() { return this._fps; }
+	    Update() {
+	        this._deltaTime = (performance.now() - this._lastUpdate) / 1000;
+	        this._lastUpdate = performance.now();
+	        this._fps = 1 / this._deltaTime;
+	    }
+	}
+
+	class Vec {
+	    constructor(x, y, z) {
+	        this.x = x;
+	        this.y = y;
+	        if (z)
+	            this.z = z;
+	    }
+	    Equals(v, tolerance) {
+	        if (tolerance == undefined) {
+	            tolerance = 0.0000001;
+	        }
+	        return (Math.abs(v.x - this.x) <= tolerance) && (Math.abs(v.y - this.y) <= tolerance) && (Math.abs(v.z - this.z) <= tolerance);
+	    }
+	    ;
+	    Add(v) {
+	        this.x += v.x;
+	        this.y += v.y;
+	        if (this.z) {
+	            this.z += v.z;
+	        }
+	        return this;
+	    }
+	    ;
+	    Sub(v) {
+	        this.x -= v.x;
+	        this.y -= v.y;
+	        if (this.z) {
+	            this.z -= v.z;
+	        }
+	        return this;
+	    }
+	    ;
+	    Scale(f) {
+	        this.x *= f;
+	        this.y *= f;
+	        if (this.z) {
+	            this.z *= f;
+	        }
+	        return this;
+	    }
+	    ;
+	    Distance(v) {
+	        var dx = v.x - this.x;
+	        var dy = v.y - this.y;
+	        var dz = v.z - this.z;
+	        if (dz) {
+	            return Math.sqrt(dx * dx + dy * dy + dz * dz);
+	        }
+	        return Math.sqrt(dx * dx + dy * dy);
+	    }
+	    ;
+	    SquareDistance(v) {
+	        var dx = v.x - this.x;
+	        var dy = v.y - this.y;
+	        var dz = v.z - this.z;
+	        if (dz) {
+	            return dx * dx + dy * dy + dz * dz;
+	        }
+	        return dx * dx + dy * dy;
+	    }
+	    ;
+	    SimpleDistance(v) {
+	        var dx = Math.abs(v.x - this.x);
+	        var dy = Math.abs(v.y - this.y);
+	        var dz = Math.abs(v.z - this.z);
+	        if (dz) {
+	            return Math.min(dx, dy, dz);
+	        }
+	        return Math.min(dx, dy);
+	    }
+	    ;
+	    Dot(v) {
+	        if (this.z) {
+	            return this.x * v.x + this.y * v.y + this.z * v.z;
+	        }
+	        return this.x * v.x + this.y * v.y;
+	    }
+	    ;
+	    Cross(v) {
+	        var x = this.x;
+	        var y = this.y;
+	        var z = this.z;
+	        var vx = v.x;
+	        var vy = v.y;
+	        var vz = v.z;
+	        this.x = y * vz - z * vy;
+	        this.y = z * vx - x * vz;
+	        this.z = x * vy - y * vx;
+	        return this;
+	    }
+	    ;
+	    Length() {
+	        if (this.z) {
+	            return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+	        }
+	        return Math.sqrt(this.x * this.x + this.y * this.y);
+	    }
+	    ;
+	    Normalize() {
+	        var len = this.Length();
+	        if (len > 0) {
+	            this.Scale(1 / len);
+	        }
+	        return this;
+	    }
+	    ;
+	    Limit(s) {
+	        var len = this.Length();
+	        if (len > s && len > 0) {
+	            this.Scale(s / len);
+	        }
+	        return this;
+	    }
+	    ;
+	    Lerp(v, t) {
+	        this.x = this.x + (v.x - this.x) * t;
+	        this.y = this.y + (v.y - this.y) * t;
+	        this.z = this.z + (v.z - this.z) * t;
+	        return this;
+	    }
+	    ToString() {
+	        return "{" + Math.floor(this.x * 1000) / 1000 + ", " + Math.floor(this.y * 1000) / 1000 + ", " + Math.floor(this.z * 1000) / 1000 + "}";
+	    }
+	    ;
+	    static Zero() { return new Vec(0, 0, 0); }
+	    static One() { return new Vec(1, 1, 1); }
+	    static Up() { return new Vec(0, -1, 0); }
+	    static Down() { return new Vec(0, 1, 0); }
+	    static Left() { return new Vec(-1, 0, 0); }
+	    static Right() { return new Vec(1, 0, 0); }
+	    static Front() { return new Vec(0, 0, 1); }
+	    static Back() { return new Vec(0, 0, -1); }
+	}
+	Vec.FromArray = function (a) {
+	    return new Vec(a[0], a[1], a[2]);
+	};
+
+	class InputManager extends Manager {
+	    constructor() {
+	        super(...arguments);
+	        this._name = "InputManager";
+	        this.pressed = {};
+	        this.down = {};
+	        this.released = {};
+	        this.mousePressed = {};
+	        this.mouseDown = {};
+	        this.mouseReleased = {};
+	        this.mousePos = new Vec(0, 0);
+	        this.mouseWheel = new Vec(0, 0, 0);
+	    }
+	    Init() {
+	        // Get container to fire events from:
+	        this.containerElement = document.querySelector(this.engine.container);
+	        // Setup keyboard events:
+	        this.containerElement.addEventListener('keydown', (e) => {
+	            this.down[e.keyCode] = true;
+	            if (!e.repeat) {
+	                this.pressed[e.keyCode] = true;
+	            }
+	        });
+	        this.containerElement.addEventListener('keyup', (e) => {
+	            this.down[e.keyCode] = false;
+	            this.released[e.keyCode] = true;
+	        });
+	        // Setup mouse events:
+	        this.containerElement.addEventListener('mousemove', (e) => {
+	            this.mousePos.x = e.clientX;
+	            this.mousePos.y = e.clientY;
+	        });
+	        this.containerElement.addEventListener('mousedown', (e) => {
+	            this.mouseDown[e.button] = true;
+	            this.mousePressed[e.button] = true;
+	        });
+	        this.containerElement.addEventListener('mouseup', (e) => {
+	            this.mouseDown[e.button] = false;
+	            this.mouseReleased[e.button] = true;
+	        });
+	        this.containerElement.addEventListener('wheel', (e) => {
+	            this.mouseWheel.x += e.deltaX;
+	            this.mouseWheel.y += e.deltaY;
+	            this.mouseWheel.z += e.deltaZ;
+	        });
+	    }
+	    Update() {
+	        for (var i = 0, len = Object.keys(this.pressed).length; i < len; i++) {
+	            this.pressed[Object.keys(this.pressed)[i]] = false;
+	        }
+	        for (var i = 0, len = Object.keys(this.released).length; i < len; i++) {
+	            this.released[Object.keys(this.released)[i]] = false;
+	        }
+	        for (var i = 0, len = Object.keys(this.mouseReleased).length; i < len; i++) {
+	            this.mouseReleased[Object.keys(this.mouseReleased)[i]] = false;
+	        }
+	    }
+	    GetKeyDown(key) {
+	        return this.down[key];
+	    }
+	    GetMousePosition() {
+	        return this.mousePos;
+	    }
+	    GetMouseDown(button) {
+	        return this.mouseDown[button];
+	    }
+	    GetMouseReleased(button) {
+	        return this.mouseReleased[button];
+	    }
+	    GetMouseWheel() {
+	        return this.mouseWheel;
+	    }
+	    SetCursor(type) {
+	        this.containerElement.style.cursor = type;
+	    }
+	    GetKeyPressed(key) {
+	        return this.pressed[key];
+	    }
+	    GetKeyReleased(key) {
+	        return this.released[key];
+	    }
+	}
+	(function (Cursor) {
+	    Cursor["Hidden"] = "none";
+	    Cursor["Default"] = "default";
+	    Cursor["Pointer"] = "pointer";
+	    Cursor["Help"] = "help";
+	    Cursor["Loading"] = "wait";
+	    Cursor["Crosshair"] = "crosshair";
+	    Cursor["Grab"] = "grab";
+	    Cursor["Grabbing"] = "grabbing";
+	    Cursor["NotAllowed"] = "not-allowed";
+	})(exports.Cursor || (exports.Cursor = {}));
+	(function (Mouse) {
+	    Mouse[Mouse["Left"] = 0] = "Left";
+	    Mouse[Mouse["Middle"] = 1] = "Middle";
+	    Mouse[Mouse["Right"] = 2] = "Right";
+	})(exports.Mouse || (exports.Mouse = {}));
+	(function (Key) {
+	    Key[Key["Backspace"] = 8] = "Backspace";
+	    Key[Key["Tab"] = 9] = "Tab";
+	    Key[Key["Enter"] = 13] = "Enter";
+	    Key[Key["Shift"] = 16] = "Shift";
+	    Key[Key["Ctrl"] = 17] = "Ctrl";
+	    Key[Key["Alt"] = 18] = "Alt";
+	    Key[Key["PauseBreak"] = 19] = "PauseBreak";
+	    Key[Key["CapsLock"] = 20] = "CapsLock";
+	    Key[Key["Escape"] = 27] = "Escape";
+	    Key[Key["Space"] = 32] = "Space";
+	    Key[Key["PageUp"] = 33] = "PageUp";
+	    Key[Key["PageDown"] = 34] = "PageDown";
+	    Key[Key["End"] = 35] = "End";
+	    Key[Key["Home"] = 36] = "Home";
+	    Key[Key["LeftArrow"] = 37] = "LeftArrow";
+	    Key[Key["UpArrow"] = 38] = "UpArrow";
+	    Key[Key["RightArrow"] = 39] = "RightArrow";
+	    Key[Key["DownArrow"] = 40] = "DownArrow";
+	    Key[Key["Insert"] = 45] = "Insert";
+	    Key[Key["Delete"] = 46] = "Delete";
+	    Key[Key["Zero"] = 48] = "Zero";
+	    Key[Key["ClosedParen"] = 48] = "ClosedParen";
+	    Key[Key["One"] = 49] = "One";
+	    Key[Key["ExclamationMark"] = 49] = "ExclamationMark";
+	    Key[Key["Two"] = 50] = "Two";
+	    Key[Key["AtSign"] = 50] = "AtSign";
+	    Key[Key["Three"] = 51] = "Three";
+	    Key[Key["PoundSign"] = 51] = "PoundSign";
+	    Key[Key["Hash"] = 51] = "Hash";
+	    Key[Key["Four"] = 52] = "Four";
+	    Key[Key["DollarSign"] = 52] = "DollarSign";
+	    Key[Key["Five"] = 53] = "Five";
+	    Key[Key["PercentSign"] = 53] = "PercentSign";
+	    Key[Key["Six"] = 54] = "Six";
+	    Key[Key["Caret"] = 54] = "Caret";
+	    Key[Key["Hat"] = 54] = "Hat";
+	    Key[Key["Seven"] = 55] = "Seven";
+	    Key[Key["Ampersand"] = 55] = "Ampersand";
+	    Key[Key["Eight"] = 56] = "Eight";
+	    Key[Key["Star"] = 56] = "Star";
+	    Key[Key["Asterik"] = 56] = "Asterik";
+	    Key[Key["Nine"] = 57] = "Nine";
+	    Key[Key["OpenParen"] = 57] = "OpenParen";
+	    Key[Key["A"] = 65] = "A";
+	    Key[Key["B"] = 66] = "B";
+	    Key[Key["C"] = 67] = "C";
+	    Key[Key["D"] = 68] = "D";
+	    Key[Key["E"] = 69] = "E";
+	    Key[Key["F"] = 70] = "F";
+	    Key[Key["G"] = 71] = "G";
+	    Key[Key["H"] = 72] = "H";
+	    Key[Key["I"] = 73] = "I";
+	    Key[Key["J"] = 74] = "J";
+	    Key[Key["K"] = 75] = "K";
+	    Key[Key["L"] = 76] = "L";
+	    Key[Key["M"] = 77] = "M";
+	    Key[Key["N"] = 78] = "N";
+	    Key[Key["O"] = 79] = "O";
+	    Key[Key["P"] = 80] = "P";
+	    Key[Key["Q"] = 81] = "Q";
+	    Key[Key["R"] = 82] = "R";
+	    Key[Key["S"] = 83] = "S";
+	    Key[Key["T"] = 84] = "T";
+	    Key[Key["U"] = 85] = "U";
+	    Key[Key["V"] = 86] = "V";
+	    Key[Key["W"] = 87] = "W";
+	    Key[Key["X"] = 88] = "X";
+	    Key[Key["Y"] = 89] = "Y";
+	    Key[Key["Z"] = 90] = "Z";
+	    Key[Key["LeftWindowKey"] = 91] = "LeftWindowKey";
+	    Key[Key["RightWindowKey"] = 92] = "RightWindowKey";
+	    Key[Key["SelectKey"] = 93] = "SelectKey";
+	    Key[Key["Numpad0"] = 96] = "Numpad0";
+	    Key[Key["Numpad1"] = 97] = "Numpad1";
+	    Key[Key["Numpad2"] = 98] = "Numpad2";
+	    Key[Key["Numpad3"] = 99] = "Numpad3";
+	    Key[Key["Numpad4"] = 100] = "Numpad4";
+	    Key[Key["Numpad5"] = 101] = "Numpad5";
+	    Key[Key["Numpad6"] = 102] = "Numpad6";
+	    Key[Key["Numpad7"] = 103] = "Numpad7";
+	    Key[Key["Numpad8"] = 104] = "Numpad8";
+	    Key[Key["Numpad9"] = 105] = "Numpad9";
+	    Key[Key["Multiply"] = 106] = "Multiply";
+	    Key[Key["Add"] = 107] = "Add";
+	    Key[Key["Subtract"] = 109] = "Subtract";
+	    Key[Key["DecimalPoint"] = 110] = "DecimalPoint";
+	    Key[Key["Divide"] = 111] = "Divide";
+	    Key[Key["F1"] = 112] = "F1";
+	    Key[Key["F2"] = 113] = "F2";
+	    Key[Key["F3"] = 114] = "F3";
+	    Key[Key["F4"] = 115] = "F4";
+	    Key[Key["F5"] = 116] = "F5";
+	    Key[Key["F6"] = 117] = "F6";
+	    Key[Key["F7"] = 118] = "F7";
+	    Key[Key["F8"] = 119] = "F8";
+	    Key[Key["F9"] = 120] = "F9";
+	    Key[Key["F10"] = 121] = "F10";
+	    Key[Key["F11"] = 122] = "F11";
+	    Key[Key["F12"] = 123] = "F12";
+	    Key[Key["NumLock"] = 144] = "NumLock";
+	    Key[Key["ScrollLock"] = 145] = "ScrollLock";
+	    Key[Key["SemiColon"] = 186] = "SemiColon";
+	    Key[Key["Equals"] = 187] = "Equals";
+	    Key[Key["Comma"] = 188] = "Comma";
+	    Key[Key["Dash"] = 189] = "Dash";
+	    Key[Key["Period"] = 190] = "Period";
+	    Key[Key["UnderScore"] = 189] = "UnderScore";
+	    Key[Key["PlusSign"] = 187] = "PlusSign";
+	    Key[Key["ForwardSlash"] = 191] = "ForwardSlash";
+	    Key[Key["Tilde"] = 192] = "Tilde";
+	    Key[Key["GraveAccent"] = 192] = "GraveAccent";
+	    Key[Key["OpenBracket"] = 219] = "OpenBracket";
+	    Key[Key["ClosedBracket"] = 221] = "ClosedBracket";
+	    Key[Key["Quote"] = 222] = "Quote";
+	})(exports.Key || (exports.Key = {}));
+
+	class engine {
+	    constructor(options = {}) {
+	        options = Object.assign({
+	            width: 1280,
+	            height: 720,
+	            fullscreen: false,
+	            container: "body",
+	            managers: [],
+	        }, options);
+	        this.managers = [];
+	        this.managers.push(new TimeManager(this));
+	        this.managers.push(new SceneManager(this));
+	        this.managers.push(new DrawManager(this));
+	        this.managers.push(new InputManager(this));
+	        for (var i = 0, len = options.managers.length; i < len; i++) {
+	            this.AddManager(options.managers[i]);
+	        }
+	        this._width = options.width;
+	        this._height = options.height;
+	        this._fullscreen = options.fullscreen;
+	        this._container = options.container;
+	        for (var i = 0, len = this.managers.length; i < len; i++) {
+	            this.managers[i].PreInit(options);
+	        }
+	    }
+	    get width() { return this._width; }
+	    get height() { return this._height; }
+	    get fullscreen() { return this._fullscreen; }
+	    get container() { return this._container; }
+	    Run() {
+	        for (var i = 0, len = this.managers.length; i < len; i++) {
+	            this.managers[i].Init();
+	        }
+	        console.log("Engine is running in ", document.querySelector(this._container));
+	        requestAnimationFrame(this.Update.bind(this));
+	        return 0;
+	    }
+	    Update() {
+	        for (var i = 0, len = this.managers.length; i < len; i++) {
+	            this.managers[i].Update();
+	        }
+	        requestAnimationFrame(this.Update.bind(this));
+	    }
+	    AddManager(c, ...args) {
+	        if (name && name !== "") {
+	            this.managers.push(new c(this, ...args));
+	            return this.managers[this.managers.length - 1];
+	        }
+	        else
+	            throw Error("Manager name is null or empty");
+	    }
+	    GetManager(m) {
+	        for (var i = 0, len = this.managers.length; i < len; i++) {
+	            if (this.managers[i].name === m.name) {
+	                return this.managers[i];
+	            }
+	        }
+	    }
+	    GetManagers(m) {
+	        let managers = [];
+	        for (var i = 0, len = this.managers.length; i < len; i++) {
+	            if (this.managers[i].name === m.name) {
+	                managers.push(this.managers[i]);
+	            }
+	        }
+	        return managers;
+	    }
+	}
+
+	class Transform {
+	    constructor() {
+	        this.Reset();
+	    }
+	    Reset() {
+	        this.position = new Vec(0, 0, 0);
+	        this.rotation = 0;
+	        this.scale = new Vec(1, 1);
+	    }
+	}
+
+	class Entity {
+	    constructor(engine, name) {
+	        this._id = shortid.generate();
+	        this._name = name;
+	        this._engine = engine;
+	        this.transform = new Transform();
+	        this.components = [];
+	    }
+	    get id() {
+	        return this._id;
+	    }
+	    set name(name) {
+	        this.name = name;
+	    }
+	    get name() {
+	        return this._name;
+	    }
+	    get engine() {
+	        return this._engine;
+	    }
+	    Init() {
+	        for (var i = 0, len = this.components.length; i < len; i++) {
+	            this.components[i].Init();
+	        }
+	    }
+	    Update() {
+	        for (var i = 0, len = this.components.length; i < len; i++) {
+	            this.components[i].Update();
+	        }
+	    }
+	    Unload() {
+	        for (var i = 0, len = this.components.length; i < len; i++) {
+	            this.components[i].Unload();
+	        }
+	    }
+	    AddComponent(c, name, ...args) {
+	        if (name && name !== "") {
+	            this.components.push(new c(this, name, ...args));
+	            return this.components[this.components.length - 1];
+	        }
+	        else
+	            throw Error("Component name is null or empty");
+	    }
+	    GetComponent(name) {
+	        for (var i = 0, len = this.components.length; i < len; i++) {
+	            if (this.components[i].name == name) {
+	                return this.components[i];
+	            }
+	        }
+	    }
+	    GetComponents(c) {
+	        let components = [];
+	        for (var i = 0, len = this.components.length; i < len; i++) {
+	            if (this.components[i].name === c.name) {
+	                components.push(this.components[i]);
+	            }
+	        }
+	        return components;
+	    }
+	    RemoveComponent(name) {
+	        for (var i = 0, len = this.components.length; i < len; i++) {
+	            if (this.components[i].name === name) {
+	                this.components.splice(i, 1);
+	            }
+	        }
+	    }
+	}
+
+	class Component {
+	    constructor(parent, name) {
+	        this.parent = parent;
+	        this._name = name;
+	    }
+	    get name() { return this._name; }
+	    Unload() { }
+	    ;
+	}
+
+	class SpriteRenderer extends Component {
+	    constructor(parent, name, image, stretchMode) {
+	        super(parent, name);
+	        this._name = "SpriteRenderer";
+	        this.image = image;
+	        this.scale = 1;
+	        this.stretchMode = stretchMode;
+	    }
+	    Init() {
+	        this.texture = new Two.Texture(this.image);
+	        this.shape = this.parent.engine.GetManager(DrawManager).GetContext().makeRectangle(this.parent.transform.position.x, this.parent.transform.position.y, this.parent.transform.scale.x, this.parent.transform.scale.y);
+	        this.shape.noStroke();
+	        this.shape.fill = this.texture;
+	    }
+	    Update() {
+	        this.shape.width = this.parent.transform.scale.x;
+	        this.shape.height = this.parent.transform.scale.y;
+	        switch (this.stretchMode) {
+	            case 0: {
+	                let imgRatio = this.texture.image.naturalWidth / this.texture.image.naturalHeight;
+	                if (imgRatio < 1) {
+	                    this.texture.scale = new Two.Vector(this.scale * (this.shape.height / this.texture.image.naturalHeight), this.scale * (this.shape.height / this.texture.image.naturalHeight));
+	                }
+	                else {
+	                    this.texture.scale = new Two.Vector(this.scale * (this.shape.width / this.texture.image.naturalWidth), this.scale * (this.shape.width / this.texture.image.naturalWidth));
+	                }
+	                break;
+	            }
+	            case 1: {
+	                let imgRatio = this.texture.image.naturalWidth / this.texture.image.naturalHeight;
+	                if (imgRatio < 1) {
+	                    this.texture.scale = new Two.Vector(this.scale * (this.shape.width / this.texture.image.naturalWidth), this.scale * (this.shape.width / this.texture.image.naturalWidth));
+	                }
+	                else {
+	                    this.texture.scale = new Two.Vector(this.scale * (this.shape.height / this.texture.image.naturalHeight), this.scale * (this.shape.height / this.texture.image.naturalHeight));
+	                }
+	                break;
+	            }
+	            case 2: {
+	                this.texture.scale = new Two.Vector(this.scale * (this.shape.width / this.texture.image.naturalWidth), this.scale * (this.shape.height / this.texture.image.naturalHeight));
+	                break;
+	            }
+	        }
+	        this.shape.translation.set(this.parent.transform.position.x, this.parent.transform.position.y);
+	    }
+	    Unload() {
+	        this.shape.remove();
+	    }
+	}
+	(function (SpriteMode) {
+	    SpriteMode[SpriteMode["BestFit"] = 0] = "BestFit";
+	    SpriteMode[SpriteMode["Cover"] = 1] = "Cover";
+	    SpriteMode[SpriteMode["Stretch"] = 2] = "Stretch";
+	    SpriteMode[SpriteMode["Unscaled"] = 3] = "Unscaled";
+	})(exports.SpriteMode || (exports.SpriteMode = {}));
+
+	exports.Component = Component;
+	exports.DrawManager = DrawManager;
+	exports.Engine = engine;
+	exports.Entity = Entity;
+	exports.InputManager = InputManager;
+	exports.Scene = Scene;
+	exports.SceneManager = SceneManager;
+	exports.SpriteRenderer = SpriteRenderer;
+	exports.TimeManager = TimeManager;
+	exports.Transform = Transform;
+	exports.Vec = Vec;
+
+	Object.defineProperty(exports, '__esModule', { value: true });
+
+})));

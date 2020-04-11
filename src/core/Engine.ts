@@ -1,85 +1,106 @@
 import Two from 'two.js';
-import Scene from './scenes/Scene';
-import SceneManager from './scenes/SceneManager';
-import DrawManager from './DrawManager';
-import TimeManager from './TimeManager';
-import InputManager from './InputManager';
+import SceneManager from '../managers/SceneManager';
+import DrawManager from '../managers/DrawManager';
+import TimeManager from '../managers/TimeManager';
+import InputManager from '../managers/InputManager';
+import Manager from './Manager';
 
-type Options  = {
-	scenes ?: Scene[];
+export type Options  = {
 	width ?: number;
 	height ?: number;
 	fullscreen ?: boolean;
 	container ?: string;
+	managers ?: any[];
 }
 
 export default class engine {
 
-	private width : number;
-	private height : number;
-	private fullscreen : boolean;
+	private _width : number;
+	private _height : number;
+	private _fullscreen : boolean;
 
-	private container : string;
+	private _container : string;
 
-	public sceneManager : SceneManager;
-	public drawManager : DrawManager;
-	public inputManager : InputManager;
+	private managers : Manager[];
 
 	constructor(options : Partial<Options> = {}) {
 
 		options = Object.assign({
-			scenes : [],
 			width : 1280,
 			height : 720,
 			fullscreen : false,
 			container : "body",
+			managers: [],
 		}, options);
 
-		this.sceneManager = SceneManager.instance;
-		this.drawManager = DrawManager.instance;
-		this.inputManager = InputManager.instance;
+		this.managers = [];
 
-		for (var i = 0, len = options.scenes.length; i < len; i++) {
-			this.sceneManager.AddScene(options.scenes[i]);
+		this.managers.push(new TimeManager(this));
+		this.managers.push(new SceneManager(this));
+		this.managers.push(new DrawManager(this));
+		this.managers.push(new InputManager(this));
+
+		for (var i = 0, len = options.managers.length; i < len; i++) {
+			this.AddManager(options.managers[i]);
 		}
 
-		this.width = options.width;
-		this.height = options.height;
-		this.fullscreen = options.fullscreen;
-		this.container = options.container;
+		this._width = options.width;
+		this._height = options.height;
+		this._fullscreen = options.fullscreen;
+		this._container = options.container;
 
-		if (options.scenes.length <= 0) {
-			let scene = new Scene();
-			this.sceneManager.AddScene(scene);
+		for (var i = 0, len = this.managers.length; i < len; i++) {
+			this.managers[i].PreInit(options);
 		}
 	}
 
+	public get width() { return this._width; }
+	public get height() { return this._height;  }
+	public get fullscreen() { return this._fullscreen; }
+	public get container() { return this._container; }
+
 	public Run() : number {
-		DrawManager.SetContext(
-			new Two({
-				width: this.width,
-				height: this.height,
-				fullscreen: this.fullscreen,
-				autostart: false,
-				type: Two.Types.webgl,
-			}).appendTo(document.querySelector(this.container))
-		);
 
-		this.inputManager.Init(this.container);
+		for (var i = 0, len = this.managers.length; i < len; i++) {
+			this.managers[i].Init();
+		}
 
-		console.log("Engine is running in ", document.querySelector(this.container));
-
-		this.sceneManager.Load(0);
+		console.log("Engine is running in ", document.querySelector(this._container));
 
 		requestAnimationFrame(this.Update.bind(this));
 		return 0;
 	}
 
 	public Update() : void {
-		TimeManager.Update();
-		this.sceneManager.RenderLoadedScene();
-		DrawManager.GetContext().update();
-		this.inputManager.Update();
+		for (var i = 0, len = this.managers.length; i < len; i++) {
+			this.managers[i].Update();
+		}
 		requestAnimationFrame(this.Update.bind(this));
+	}
+
+	protected AddManager<ManagerType extends Manager>(c : new (...args : any[]) => ManagerType, ...args : any[]) : Manager {
+		if (name && name !== "") {
+			this.managers.push(new c(this, ...args));
+			return this.managers[this.managers.length - 1];
+		}
+		else throw Error("Manager name is null or empty");
+	}
+
+	public GetManager<ManagerType extends Manager>(m : new (...args : any[]) => ManagerType) : ManagerType {
+		for (var i = 0, len = this.managers.length; i < len; i++) {
+			if (this.managers[i].name === m.name) {
+				return this.managers[i] as ManagerType;
+			}
+		}
+	}
+
+	public GetManagers<ManagerType extends Manager>(m : new (...args : any[]) => ManagerType) : ManagerType[] {
+		let managers : Manager[] = [];
+		for (var i = 0, len = this.managers.length; i < len; i++) {
+			if (this.managers[i].name === m.name) {
+				managers.push(this.managers[i]);
+			}
+		}
+		return managers as ManagerType[];
 	}
 }

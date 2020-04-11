@@ -7,6 +7,10 @@ export default class Transform {
 	public scale : Vec;
 
 	constructor() {
+		this.Reset();
+	}
+
+	public Reset() {
 		this.position = new Vec(0, 0, 0);
 		this.rotation = 0;
 		this.scale = new Vec(1, 1);

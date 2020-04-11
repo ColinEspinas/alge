@@ -117,7 +117,365 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"../node_modules/two.js/build/two.module.js":[function(require,module,exports) {
+})({"../node_modules/shortid/lib/random/random-from-seed.js":[function(require,module,exports) {
+'use strict';
+
+// Found this seed-based random generator somewhere
+// Based on The Central Randomizer 1.3 (C) 1997 by Paul Houle (houle@msc.cornell.edu)
+
+var seed = 1;
+
+/**
+ * return a random number based on a seed
+ * @param seed
+ * @returns {number}
+ */
+function getNextValue() {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed/(233280.0);
+}
+
+function setSeed(_seed_) {
+    seed = _seed_;
+}
+
+module.exports = {
+    nextValue: getNextValue,
+    seed: setSeed
+};
+
+},{}],"../node_modules/shortid/lib/alphabet.js":[function(require,module,exports) {
+'use strict';
+
+var randomFromSeed = require('./random/random-from-seed');
+
+var ORIGINAL = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
+var alphabet;
+var previousSeed;
+
+var shuffled;
+
+function reset() {
+    shuffled = false;
+}
+
+function setCharacters(_alphabet_) {
+    if (!_alphabet_) {
+        if (alphabet !== ORIGINAL) {
+            alphabet = ORIGINAL;
+            reset();
+        }
+        return;
+    }
+
+    if (_alphabet_ === alphabet) {
+        return;
+    }
+
+    if (_alphabet_.length !== ORIGINAL.length) {
+        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. You submitted ' + _alphabet_.length + ' characters: ' + _alphabet_);
+    }
+
+    var unique = _alphabet_.split('').filter(function(item, ind, arr){
+       return ind !== arr.lastIndexOf(item);
+    });
+
+    if (unique.length) {
+        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. These characters were not unique: ' + unique.join(', '));
+    }
+
+    alphabet = _alphabet_;
+    reset();
+}
+
+function characters(_alphabet_) {
+    setCharacters(_alphabet_);
+    return alphabet;
+}
+
+function setSeed(seed) {
+    randomFromSeed.seed(seed);
+    if (previousSeed !== seed) {
+        reset();
+        previousSeed = seed;
+    }
+}
+
+function shuffle() {
+    if (!alphabet) {
+        setCharacters(ORIGINAL);
+    }
+
+    var sourceArray = alphabet.split('');
+    var targetArray = [];
+    var r = randomFromSeed.nextValue();
+    var characterIndex;
+
+    while (sourceArray.length > 0) {
+        r = randomFromSeed.nextValue();
+        characterIndex = Math.floor(r * sourceArray.length);
+        targetArray.push(sourceArray.splice(characterIndex, 1)[0]);
+    }
+    return targetArray.join('');
+}
+
+function getShuffled() {
+    if (shuffled) {
+        return shuffled;
+    }
+    shuffled = shuffle();
+    return shuffled;
+}
+
+/**
+ * lookup shuffled letter
+ * @param index
+ * @returns {string}
+ */
+function lookup(index) {
+    var alphabetShuffled = getShuffled();
+    return alphabetShuffled[index];
+}
+
+function get () {
+  return alphabet || ORIGINAL;
+}
+
+module.exports = {
+    get: get,
+    characters: characters,
+    seed: setSeed,
+    lookup: lookup,
+    shuffled: getShuffled
+};
+
+},{"./random/random-from-seed":"../node_modules/shortid/lib/random/random-from-seed.js"}],"../node_modules/shortid/lib/random/random-byte-browser.js":[function(require,module,exports) {
+'use strict';
+
+var crypto = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
+
+var randomByte;
+
+if (!crypto || !crypto.getRandomValues) {
+    randomByte = function(size) {
+        var bytes = [];
+        for (var i = 0; i < size; i++) {
+            bytes.push(Math.floor(Math.random() * 256));
+        }
+        return bytes;
+    };
+} else {
+    randomByte = function(size) {
+        return crypto.getRandomValues(new Uint8Array(size));
+    };
+}
+
+module.exports = randomByte;
+
+},{}],"../node_modules/nanoid/format.browser.js":[function(require,module,exports) {
+// This file replaces `format.js` in bundlers like webpack or Rollup,
+// according to `browser` config in `package.json`.
+
+module.exports = function (random, alphabet, size) {
+  // We can’t use bytes bigger than the alphabet. To make bytes values closer
+  // to the alphabet, we apply bitmask on them. We look for the closest
+  // `2 ** x - 1` number, which will be bigger than alphabet size. If we have
+  // 30 symbols in the alphabet, we will take 31 (00011111).
+  // We do not use faster Math.clz32, because it is not available in browsers.
+  var mask = (2 << Math.log(alphabet.length - 1) / Math.LN2) - 1
+  // Bitmask is not a perfect solution (in our example it will pass 31 bytes,
+  // which is bigger than the alphabet). As a result, we will need more bytes,
+  // than ID size, because we will refuse bytes bigger than the alphabet.
+
+  // Every hardware random generator call is costly,
+  // because we need to wait for entropy collection. This is why often it will
+  // be faster to ask for few extra bytes in advance, to avoid additional calls.
+
+  // Here we calculate how many random bytes should we call in advance.
+  // It depends on ID length, mask / alphabet size and magic number 1.6
+  // (which was selected according benchmarks).
+
+  // -~f => Math.ceil(f) if n is float number
+  // -~i => i + 1 if n is integer number
+  var step = -~(1.6 * mask * size / alphabet.length)
+  var id = ''
+
+  while (true) {
+    var bytes = random(step)
+    // Compact alternative for `for (var i = 0; i < step; i++)`
+    var i = step
+    while (i--) {
+      // If random byte is bigger than alphabet even after bitmask,
+      // we refuse it by `|| ''`.
+      id += alphabet[bytes[i] & mask] || ''
+      // More compact than `id.length + 1 === size`
+      if (id.length === +size) return id
+    }
+  }
+}
+
+},{}],"../node_modules/shortid/lib/generate.js":[function(require,module,exports) {
+'use strict';
+
+var alphabet = require('./alphabet');
+var random = require('./random/random-byte');
+var format = require('nanoid/format');
+
+function generate(number) {
+    var loopCounter = 0;
+    var done;
+
+    var str = '';
+
+    while (!done) {
+        str = str + format(random, alphabet.get(), 1);
+        done = number < (Math.pow(16, loopCounter + 1 ) );
+        loopCounter++;
+    }
+    return str;
+}
+
+module.exports = generate;
+
+},{"./alphabet":"../node_modules/shortid/lib/alphabet.js","./random/random-byte":"../node_modules/shortid/lib/random/random-byte-browser.js","nanoid/format":"../node_modules/nanoid/format.browser.js"}],"../node_modules/shortid/lib/build.js":[function(require,module,exports) {
+'use strict';
+
+var generate = require('./generate');
+var alphabet = require('./alphabet');
+
+// Ignore all milliseconds before a certain time to reduce the size of the date entropy without sacrificing uniqueness.
+// This number should be updated every year or so to keep the generated id short.
+// To regenerate `new Date() - 0` and bump the version. Always bump the version!
+var REDUCE_TIME = 1567752802062;
+
+// don't change unless we change the algos or REDUCE_TIME
+// must be an integer and less than 16
+var version = 7;
+
+// Counter is used when shortid is called multiple times in one second.
+var counter;
+
+// Remember the last time shortid was called in case counter is needed.
+var previousSeconds;
+
+/**
+ * Generate unique id
+ * Returns string id
+ */
+function build(clusterWorkerId) {
+    var str = '';
+
+    var seconds = Math.floor((Date.now() - REDUCE_TIME) * 0.001);
+
+    if (seconds === previousSeconds) {
+        counter++;
+    } else {
+        counter = 0;
+        previousSeconds = seconds;
+    }
+
+    str = str + generate(version);
+    str = str + generate(clusterWorkerId);
+    if (counter > 0) {
+        str = str + generate(counter);
+    }
+    str = str + generate(seconds);
+    return str;
+}
+
+module.exports = build;
+
+},{"./generate":"../node_modules/shortid/lib/generate.js","./alphabet":"../node_modules/shortid/lib/alphabet.js"}],"../node_modules/shortid/lib/is-valid.js":[function(require,module,exports) {
+'use strict';
+var alphabet = require('./alphabet');
+
+function isShortId(id) {
+    if (!id || typeof id !== 'string' || id.length < 6 ) {
+        return false;
+    }
+
+    var nonAlphabetic = new RegExp('[^' +
+      alphabet.get().replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&') +
+    ']');
+    return !nonAlphabetic.test(id);
+}
+
+module.exports = isShortId;
+
+},{"./alphabet":"../node_modules/shortid/lib/alphabet.js"}],"../node_modules/shortid/lib/util/cluster-worker-id-browser.js":[function(require,module,exports) {
+'use strict';
+
+module.exports = 0;
+
+},{}],"../node_modules/shortid/lib/index.js":[function(require,module,exports) {
+'use strict';
+
+var alphabet = require('./alphabet');
+var build = require('./build');
+var isValid = require('./is-valid');
+
+// if you are using cluster or multiple servers use this to make each instance
+// has a unique value for worker
+// Note: I don't know if this is automatically set when using third
+// party cluster solutions such as pm2.
+var clusterWorkerId = require('./util/cluster-worker-id') || 0;
+
+/**
+ * Set the seed.
+ * Highly recommended if you don't want people to try to figure out your id schema.
+ * exposed as shortid.seed(int)
+ * @param seed Integer value to seed the random alphabet.  ALWAYS USE THE SAME SEED or you might get overlaps.
+ */
+function seed(seedValue) {
+    alphabet.seed(seedValue);
+    return module.exports;
+}
+
+/**
+ * Set the cluster worker or machine id
+ * exposed as shortid.worker(int)
+ * @param workerId worker must be positive integer.  Number less than 16 is recommended.
+ * returns shortid module so it can be chained.
+ */
+function worker(workerId) {
+    clusterWorkerId = workerId;
+    return module.exports;
+}
+
+/**
+ *
+ * sets new characters to use in the alphabet
+ * returns the shuffled alphabet
+ */
+function characters(newCharacters) {
+    if (newCharacters !== undefined) {
+        alphabet.characters(newCharacters);
+    }
+
+    return alphabet.shuffled();
+}
+
+/**
+ * Generate unique id
+ * Returns string id
+ */
+function generate() {
+  return build(clusterWorkerId);
+}
+
+// Export all other functions as properties of the generate function
+module.exports = generate;
+module.exports.generate = generate;
+module.exports.seed = seed;
+module.exports.worker = worker;
+module.exports.characters = characters;
+module.exports.isValid = isValid;
+
+},{"./alphabet":"../node_modules/shortid/lib/alphabet.js","./build":"../node_modules/shortid/lib/build.js","./is-valid":"../node_modules/shortid/lib/is-valid.js","./util/cluster-worker-id":"../node_modules/shortid/lib/util/cluster-worker-id-browser.js"}],"../node_modules/shortid/index.js":[function(require,module,exports) {
+'use strict';
+module.exports = require('./lib/index');
+
+},{"./lib/index":"../node_modules/shortid/lib/index.js"}],"../node_modules/two.js/build/two.module.js":[function(require,module,exports) {
 var global = arguments[3];
 var define;
 "use strict";
@@ -14277,365 +14635,7 @@ SOFTWARE.
 
 var _default = (void 0 || window).Two;
 exports.default = _default;
-},{}],"../node_modules/shortid/lib/random/random-from-seed.js":[function(require,module,exports) {
-'use strict';
-
-// Found this seed-based random generator somewhere
-// Based on The Central Randomizer 1.3 (C) 1997 by Paul Houle (houle@msc.cornell.edu)
-
-var seed = 1;
-
-/**
- * return a random number based on a seed
- * @param seed
- * @returns {number}
- */
-function getNextValue() {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed/(233280.0);
-}
-
-function setSeed(_seed_) {
-    seed = _seed_;
-}
-
-module.exports = {
-    nextValue: getNextValue,
-    seed: setSeed
-};
-
-},{}],"../node_modules/shortid/lib/alphabet.js":[function(require,module,exports) {
-'use strict';
-
-var randomFromSeed = require('./random/random-from-seed');
-
-var ORIGINAL = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-';
-var alphabet;
-var previousSeed;
-
-var shuffled;
-
-function reset() {
-    shuffled = false;
-}
-
-function setCharacters(_alphabet_) {
-    if (!_alphabet_) {
-        if (alphabet !== ORIGINAL) {
-            alphabet = ORIGINAL;
-            reset();
-        }
-        return;
-    }
-
-    if (_alphabet_ === alphabet) {
-        return;
-    }
-
-    if (_alphabet_.length !== ORIGINAL.length) {
-        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. You submitted ' + _alphabet_.length + ' characters: ' + _alphabet_);
-    }
-
-    var unique = _alphabet_.split('').filter(function(item, ind, arr){
-       return ind !== arr.lastIndexOf(item);
-    });
-
-    if (unique.length) {
-        throw new Error('Custom alphabet for shortid must be ' + ORIGINAL.length + ' unique characters. These characters were not unique: ' + unique.join(', '));
-    }
-
-    alphabet = _alphabet_;
-    reset();
-}
-
-function characters(_alphabet_) {
-    setCharacters(_alphabet_);
-    return alphabet;
-}
-
-function setSeed(seed) {
-    randomFromSeed.seed(seed);
-    if (previousSeed !== seed) {
-        reset();
-        previousSeed = seed;
-    }
-}
-
-function shuffle() {
-    if (!alphabet) {
-        setCharacters(ORIGINAL);
-    }
-
-    var sourceArray = alphabet.split('');
-    var targetArray = [];
-    var r = randomFromSeed.nextValue();
-    var characterIndex;
-
-    while (sourceArray.length > 0) {
-        r = randomFromSeed.nextValue();
-        characterIndex = Math.floor(r * sourceArray.length);
-        targetArray.push(sourceArray.splice(characterIndex, 1)[0]);
-    }
-    return targetArray.join('');
-}
-
-function getShuffled() {
-    if (shuffled) {
-        return shuffled;
-    }
-    shuffled = shuffle();
-    return shuffled;
-}
-
-/**
- * lookup shuffled letter
- * @param index
- * @returns {string}
- */
-function lookup(index) {
-    var alphabetShuffled = getShuffled();
-    return alphabetShuffled[index];
-}
-
-function get () {
-  return alphabet || ORIGINAL;
-}
-
-module.exports = {
-    get: get,
-    characters: characters,
-    seed: setSeed,
-    lookup: lookup,
-    shuffled: getShuffled
-};
-
-},{"./random/random-from-seed":"../node_modules/shortid/lib/random/random-from-seed.js"}],"../node_modules/shortid/lib/random/random-byte-browser.js":[function(require,module,exports) {
-'use strict';
-
-var crypto = typeof window === 'object' && (window.crypto || window.msCrypto); // IE 11 uses window.msCrypto
-
-var randomByte;
-
-if (!crypto || !crypto.getRandomValues) {
-    randomByte = function(size) {
-        var bytes = [];
-        for (var i = 0; i < size; i++) {
-            bytes.push(Math.floor(Math.random() * 256));
-        }
-        return bytes;
-    };
-} else {
-    randomByte = function(size) {
-        return crypto.getRandomValues(new Uint8Array(size));
-    };
-}
-
-module.exports = randomByte;
-
-},{}],"../node_modules/nanoid/format.browser.js":[function(require,module,exports) {
-// This file replaces `format.js` in bundlers like webpack or Rollup,
-// according to `browser` config in `package.json`.
-
-module.exports = function (random, alphabet, size) {
-  // We can’t use bytes bigger than the alphabet. To make bytes values closer
-  // to the alphabet, we apply bitmask on them. We look for the closest
-  // `2 ** x - 1` number, which will be bigger than alphabet size. If we have
-  // 30 symbols in the alphabet, we will take 31 (00011111).
-  // We do not use faster Math.clz32, because it is not available in browsers.
-  var mask = (2 << Math.log(alphabet.length - 1) / Math.LN2) - 1
-  // Bitmask is not a perfect solution (in our example it will pass 31 bytes,
-  // which is bigger than the alphabet). As a result, we will need more bytes,
-  // than ID size, because we will refuse bytes bigger than the alphabet.
-
-  // Every hardware random generator call is costly,
-  // because we need to wait for entropy collection. This is why often it will
-  // be faster to ask for few extra bytes in advance, to avoid additional calls.
-
-  // Here we calculate how many random bytes should we call in advance.
-  // It depends on ID length, mask / alphabet size and magic number 1.6
-  // (which was selected according benchmarks).
-
-  // -~f => Math.ceil(f) if n is float number
-  // -~i => i + 1 if n is integer number
-  var step = -~(1.6 * mask * size / alphabet.length)
-  var id = ''
-
-  while (true) {
-    var bytes = random(step)
-    // Compact alternative for `for (var i = 0; i < step; i++)`
-    var i = step
-    while (i--) {
-      // If random byte is bigger than alphabet even after bitmask,
-      // we refuse it by `|| ''`.
-      id += alphabet[bytes[i] & mask] || ''
-      // More compact than `id.length + 1 === size`
-      if (id.length === +size) return id
-    }
-  }
-}
-
-},{}],"../node_modules/shortid/lib/generate.js":[function(require,module,exports) {
-'use strict';
-
-var alphabet = require('./alphabet');
-var random = require('./random/random-byte');
-var format = require('nanoid/format');
-
-function generate(number) {
-    var loopCounter = 0;
-    var done;
-
-    var str = '';
-
-    while (!done) {
-        str = str + format(random, alphabet.get(), 1);
-        done = number < (Math.pow(16, loopCounter + 1 ) );
-        loopCounter++;
-    }
-    return str;
-}
-
-module.exports = generate;
-
-},{"./alphabet":"../node_modules/shortid/lib/alphabet.js","./random/random-byte":"../node_modules/shortid/lib/random/random-byte-browser.js","nanoid/format":"../node_modules/nanoid/format.browser.js"}],"../node_modules/shortid/lib/build.js":[function(require,module,exports) {
-'use strict';
-
-var generate = require('./generate');
-var alphabet = require('./alphabet');
-
-// Ignore all milliseconds before a certain time to reduce the size of the date entropy without sacrificing uniqueness.
-// This number should be updated every year or so to keep the generated id short.
-// To regenerate `new Date() - 0` and bump the version. Always bump the version!
-var REDUCE_TIME = 1567752802062;
-
-// don't change unless we change the algos or REDUCE_TIME
-// must be an integer and less than 16
-var version = 7;
-
-// Counter is used when shortid is called multiple times in one second.
-var counter;
-
-// Remember the last time shortid was called in case counter is needed.
-var previousSeconds;
-
-/**
- * Generate unique id
- * Returns string id
- */
-function build(clusterWorkerId) {
-    var str = '';
-
-    var seconds = Math.floor((Date.now() - REDUCE_TIME) * 0.001);
-
-    if (seconds === previousSeconds) {
-        counter++;
-    } else {
-        counter = 0;
-        previousSeconds = seconds;
-    }
-
-    str = str + generate(version);
-    str = str + generate(clusterWorkerId);
-    if (counter > 0) {
-        str = str + generate(counter);
-    }
-    str = str + generate(seconds);
-    return str;
-}
-
-module.exports = build;
-
-},{"./generate":"../node_modules/shortid/lib/generate.js","./alphabet":"../node_modules/shortid/lib/alphabet.js"}],"../node_modules/shortid/lib/is-valid.js":[function(require,module,exports) {
-'use strict';
-var alphabet = require('./alphabet');
-
-function isShortId(id) {
-    if (!id || typeof id !== 'string' || id.length < 6 ) {
-        return false;
-    }
-
-    var nonAlphabetic = new RegExp('[^' +
-      alphabet.get().replace(/[|\\{}()[\]^$+*?.-]/g, '\\$&') +
-    ']');
-    return !nonAlphabetic.test(id);
-}
-
-module.exports = isShortId;
-
-},{"./alphabet":"../node_modules/shortid/lib/alphabet.js"}],"../node_modules/shortid/lib/util/cluster-worker-id-browser.js":[function(require,module,exports) {
-'use strict';
-
-module.exports = 0;
-
-},{}],"../node_modules/shortid/lib/index.js":[function(require,module,exports) {
-'use strict';
-
-var alphabet = require('./alphabet');
-var build = require('./build');
-var isValid = require('./is-valid');
-
-// if you are using cluster or multiple servers use this to make each instance
-// has a unique value for worker
-// Note: I don't know if this is automatically set when using third
-// party cluster solutions such as pm2.
-var clusterWorkerId = require('./util/cluster-worker-id') || 0;
-
-/**
- * Set the seed.
- * Highly recommended if you don't want people to try to figure out your id schema.
- * exposed as shortid.seed(int)
- * @param seed Integer value to seed the random alphabet.  ALWAYS USE THE SAME SEED or you might get overlaps.
- */
-function seed(seedValue) {
-    alphabet.seed(seedValue);
-    return module.exports;
-}
-
-/**
- * Set the cluster worker or machine id
- * exposed as shortid.worker(int)
- * @param workerId worker must be positive integer.  Number less than 16 is recommended.
- * returns shortid module so it can be chained.
- */
-function worker(workerId) {
-    clusterWorkerId = workerId;
-    return module.exports;
-}
-
-/**
- *
- * sets new characters to use in the alphabet
- * returns the shuffled alphabet
- */
-function characters(newCharacters) {
-    if (newCharacters !== undefined) {
-        alphabet.characters(newCharacters);
-    }
-
-    return alphabet.shuffled();
-}
-
-/**
- * Generate unique id
- * Returns string id
- */
-function generate() {
-  return build(clusterWorkerId);
-}
-
-// Export all other functions as properties of the generate function
-module.exports = generate;
-module.exports.generate = generate;
-module.exports.seed = seed;
-module.exports.worker = worker;
-module.exports.characters = characters;
-module.exports.isValid = isValid;
-
-},{"./alphabet":"../node_modules/shortid/lib/alphabet.js","./build":"../node_modules/shortid/lib/build.js","./is-valid":"../node_modules/shortid/lib/is-valid.js","./util/cluster-worker-id":"../node_modules/shortid/lib/util/cluster-worker-id-browser.js"}],"../node_modules/shortid/index.js":[function(require,module,exports) {
-'use strict';
-module.exports = require('./lib/index');
-
-},{"./lib/index":"../node_modules/shortid/lib/index.js"}],"../dist/alge.js":[function(require,module,exports) {
+},{}],"../dist/alge.js":[function(require,module,exports) {
 'use strict';
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
@@ -14645,6 +14645,10 @@ function _assertThisInitialized(self) { if (self === void 0) { throw new Referen
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
@@ -14664,65 +14668,15 @@ function _interopDefault(ex) {
   return ex && _typeof(ex) === 'object' && 'default' in ex ? ex['default'] : ex;
 }
 
-var Two = _interopDefault(require('two.js'));
-
 var shortid = _interopDefault(require('shortid'));
 
-var Scene = /*#__PURE__*/function () {
-  function Scene(name, engine) {
-    _classCallCheck(this, Scene);
-
-    this._id = shortid.generate();
-    this._name = name;
-    this.engine = engine;
-    this.entities = [];
-    this.loadedEntities = [];
-  }
-
-  _createClass(Scene, [{
-    key: "Load",
-    value: function Load() {
-      this.loadedEntities = this.entities;
-
-      for (var i = 0, len = this.entities.length; i < len; i++) {
-        this.loadedEntities[i].Init();
-      }
-    }
-  }, {
-    key: "Unload",
-    value: function Unload() {
-      this.loadedEntities = [];
-    }
-  }, {
-    key: "Update",
-    value: function Update() {
-      for (var i = 0, len = this.entities.length; i < len; i++) {
-        this.loadedEntities[i].Update();
-      }
-    }
-  }, {
-    key: "AddEntity",
-    value: function AddEntity(entity) {}
-  }, {
-    key: "id",
-    get: function get() {
-      return this._id;
-    }
-  }, {
-    key: "name",
-    get: function get() {
-      return this._name;
-    }
-  }]);
-
-  return Scene;
-}();
+var Two = _interopDefault(require('two.js'));
 
 var Manager = /*#__PURE__*/function () {
   function Manager(engine) {
     _classCallCheck(this, Manager);
 
-    this.engine = engine;
+    this._engine = engine;
   }
 
   _createClass(Manager, [{
@@ -14754,9 +14708,99 @@ var Manager = /*#__PURE__*/function () {
     get: function get() {
       return this._name;
     }
+  }, {
+    key: "engine",
+    get: function get() {
+      return this._engine;
+    }
   }]);
 
   return Manager;
+}();
+
+var Scene = /*#__PURE__*/function () {
+  function Scene(name, engine) {
+    _classCallCheck(this, Scene);
+
+    this.loaded = false;
+    this._id = shortid.generate();
+    this._name = name;
+    this.engine = engine;
+    this.entities = [];
+    this.loadedEntities = [];
+  }
+
+  _createClass(Scene, [{
+    key: "Reload",
+    value: function Reload() {
+      this.loadedEntities = [];
+      this.loaded = false;
+      this.loadedEntities = this.entities;
+    }
+  }, {
+    key: "Load",
+    value: function Load() {
+      this.loadedEntities = [];
+      this.loaded = false;
+      this.loadedEntities = this.entities;
+    }
+  }, {
+    key: "Unload",
+    value: function Unload() {
+      this.loadedEntities = [];
+      this.loaded = false;
+
+      for (var i = 0, len = this.entities.length; i < len; i++) {
+        this.entities[i].Unload();
+      }
+    }
+  }, {
+    key: "Update",
+    value: function Update() {
+      for (var i = 0, len = this.entities.length; i < len; i++) {
+        if (this.loaded == false) {
+          this.loadedEntities[i].Init();
+        } else {
+          this.loadedEntities[i].Update();
+        }
+      }
+
+      this.loaded = true;
+    }
+  }, {
+    key: "AddEntity",
+    value: function AddEntity(e, name) {
+      if (name && name !== "") {
+        for (var _len = arguments.length, args = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+          args[_key - 2] = arguments[_key];
+        }
+
+        this.entities.push(_construct(e, [this.engine, name].concat(args)));
+        return this.entities[this.entities.length - 1];
+      } else throw Error("Entity name is null or empty");
+    }
+  }, {
+    key: "GetEntity",
+    value: function GetEntity(name) {
+      for (var i = 0, len = this.entities.length; i < len; i++) {
+        if (this.entities[i].name == name) {
+          return this.entities[i];
+        }
+      }
+    }
+  }, {
+    key: "id",
+    get: function get() {
+      return this._id;
+    }
+  }, {
+    key: "name",
+    get: function get() {
+      return this._name;
+    }
+  }]);
+
+  return Scene;
 }();
 
 var SceneManager = /*#__PURE__*/function (_Manager) {
@@ -14774,25 +14818,29 @@ var SceneManager = /*#__PURE__*/function (_Manager) {
   }
 
   _createClass(SceneManager, [{
-    key: "PreInit",
-    value: function PreInit(options) {}
-  }, {
     key: "Init",
     value: function Init() {
-      this.LoadScene(0);
+      this.LoadSceneByIndex(0);
     }
   }, {
     key: "Update",
     value: function Update() {
-      this.UpdateLoadedScene();
+      this.loadedScene.Update();
     }
   }, {
     key: "CreateScene",
     value: function CreateScene(name) {
       if (name && name !== "") {
-        var scene = new Scene(name, this.engine);
-        this.scenes.push(scene);
-      }
+        try {
+          this.GetScene(name);
+        } catch (_a) {
+          var scene = new Scene(name, this.engine);
+          this.scenes.push(scene);
+          return scene;
+        }
+
+        throw Error("Scene with name " + name + " already exist");
+      } else throw Error("Cannot create scene with name " + name);
     }
   }, {
     key: "GetScenes",
@@ -14807,6 +14855,8 @@ var SceneManager = /*#__PURE__*/function (_Manager) {
           return this.scenes[i];
         }
       }
+
+      throw Error("Cannot get scene with name " + name);
     }
   }, {
     key: "RemoveScene",
@@ -14814,95 +14864,117 @@ var SceneManager = /*#__PURE__*/function (_Manager) {
       this.scenes.splice(index, 1);
     }
   }, {
-    key: "LoadScene",
-    value: function LoadScene(index) {
-      if (this.loadedScene) this.loadedScene.Unload();
-      this.loadedScene = this.scenes[index];
-      this.scenes[index].Load();
+    key: "LoadSceneByIndex",
+    value: function LoadSceneByIndex(index) {
+      if (typeof this.scenes[index] !== "undefined") {
+        if (this.loadedScene) this.loadedScene.Unload();
+        this.loadedScene = this.scenes[index];
+        this.scenes[index].Load();
+      } else throw Error("Cannot load scene with index " + index);
     }
   }, {
-    key: "UpdateLoadedScene",
-    value: function UpdateLoadedScene() {
-      this.loadedScene.Update();
+    key: "LoadSceneByName",
+    value: function LoadSceneByName(name) {
+      try {
+        var scene = this.GetScene(name);
+        if (this.loadedScene) this.loadedScene.Unload();
+        this.loadedScene = scene;
+        scene.Load();
+      } catch (_a) {
+        throw Error("Cannot load scene with name " + name);
+      }
     }
   }]);
 
   return SceneManager;
 }(Manager);
 
-var DrawManager = /*#__PURE__*/function () {
+var DrawManager = /*#__PURE__*/function (_Manager2) {
+  _inherits(DrawManager, _Manager2);
+
   function DrawManager() {
+    var _this2;
+
     _classCallCheck(this, DrawManager);
+
+    _this2 = _possibleConstructorReturn(this, _getPrototypeOf(DrawManager).apply(this, arguments));
+    _this2._name = "DrawManager";
+    return _this2;
   }
 
-  _createClass(DrawManager, null, [{
-    key: "SetContext",
-    value: function SetContext(driver) {
-      DrawManager.driver = driver;
-    }
-  }, {
-    key: "GetContext",
-    value: function GetContext() {
-      return DrawManager.driver;
-    }
-  }, {
-    key: "instance",
-    get: function get() {
-      if (!DrawManager._instance) {
-        DrawManager._instance = new DrawManager();
-      }
-
-      return DrawManager._instance;
-    }
-  }]);
-
-  return DrawManager;
-}();
-
-var TimeManager = /*#__PURE__*/function () {
-  function TimeManager() {
-    _classCallCheck(this, TimeManager);
-
-    TimeManager.lastUpdate = 0;
-    TimeManager.deltaTime = 0;
-    TimeManager.fps = 0;
-  }
-
-  _createClass(TimeManager, null, [{
-    key: "DeltaTime",
-    value: function DeltaTime() {
-      return this.deltaTime;
-    }
-  }, {
-    key: "LastUpdate",
-    value: function LastUpdate() {
-      return this.lastUpdate;
-    }
-  }, {
-    key: "Fps",
-    value: function Fps() {
-      return this.fps;
+  _createClass(DrawManager, [{
+    key: "Init",
+    value: function Init() {
+      this.SetContext(new Two({
+        width: this.engine.width,
+        height: this.engine.height,
+        fullscreen: this.engine.fullscreen,
+        autostart: false,
+        type: Two.Types.webgl
+      }).appendTo(document.querySelector(this.engine.container)));
     }
   }, {
     key: "Update",
     value: function Update() {
-      this.deltaTime = (performance.now() - this.lastUpdate) / 1000;
-      this.lastUpdate = performance.now();
-      this.fps = 1 / this.deltaTime;
+      this.driver.update();
     }
   }, {
-    key: "instance",
-    get: function get() {
-      if (!TimeManager._instance) {
-        TimeManager._instance = new TimeManager();
-      }
+    key: "SetContext",
+    value: function SetContext(driver) {
+      this.driver = driver;
+    }
+  }, {
+    key: "GetContext",
+    value: function GetContext() {
+      return this.driver;
+    }
+  }]);
 
-      return TimeManager._instance;
+  return DrawManager;
+}(Manager);
+
+var TimeManager = /*#__PURE__*/function (_Manager3) {
+  _inherits(TimeManager, _Manager3);
+
+  function TimeManager(engine) {
+    var _this3;
+
+    _classCallCheck(this, TimeManager);
+
+    _this3 = _possibleConstructorReturn(this, _getPrototypeOf(TimeManager).call(this, engine));
+    _this3._name = "TimeManager";
+    _this3._lastUpdate = 0;
+    _this3._deltaTime = 0;
+    _this3._fps = 0;
+    return _this3;
+  }
+
+  _createClass(TimeManager, [{
+    key: "Update",
+    value: function Update() {
+      this._deltaTime = (performance.now() - this._lastUpdate) / 1000;
+      this._lastUpdate = performance.now();
+      this._fps = 1 / this._deltaTime;
+    }
+  }, {
+    key: "deltaTime",
+    get: function get() {
+      return this._deltaTime;
+    }
+  }, {
+    key: "lastUpdate",
+    get: function get() {
+      return this._lastUpdate;
+    }
+  }, {
+    key: "fps",
+    get: function get() {
+      return this._fps;
     }
   }]);
 
   return TimeManager;
-}();
+}(Manager);
 
 var Vec = /*#__PURE__*/function () {
   function Vec(x, y, z) {
@@ -15113,63 +15185,81 @@ Vec.FromArray = function (a) {
   return new Vec(a[0], a[1], a[2]);
 };
 
-var InputManager = /*#__PURE__*/function () {
+var InputManager = /*#__PURE__*/function (_Manager4) {
+  _inherits(InputManager, _Manager4);
+
   function InputManager() {
+    var _this4;
+
     _classCallCheck(this, InputManager);
+
+    _this4 = _possibleConstructorReturn(this, _getPrototypeOf(InputManager).apply(this, arguments));
+    _this4._name = "InputManager";
+    _this4.pressed = {};
+    _this4.down = {};
+    _this4.released = {};
+    _this4.mousePressed = {};
+    _this4.mouseDown = {};
+    _this4.mouseReleased = {};
+    _this4.mousePos = new Vec(0, 0);
+    _this4.mouseWheel = new Vec(0, 0, 0);
+    return _this4;
   }
 
   _createClass(InputManager, [{
     key: "Init",
-    value: function Init(container) {
+    value: function Init() {
+      var _this5 = this;
+
       // Get container to fire events from:
-      this.containerElement = document.querySelector(container); // Setup keyboard events:
+      this.containerElement = document.querySelector(this.engine.container); // Setup keyboard events:
 
       this.containerElement.addEventListener('keydown', function (e) {
-        InputManager.down[e.keyCode] = true;
+        _this5.down[e.keyCode] = true;
 
         if (!e.repeat) {
-          InputManager.pressed[e.keyCode] = true;
+          _this5.pressed[e.keyCode] = true;
         }
       });
       this.containerElement.addEventListener('keyup', function (e) {
-        InputManager.down[e.keyCode] = false;
-        InputManager.released[e.keyCode] = true;
+        _this5.down[e.keyCode] = false;
+        _this5.released[e.keyCode] = true;
       }); // Setup mouse events:
 
       this.containerElement.addEventListener('mousemove', function (e) {
-        InputManager.mousePos.x = e.clientX;
-        InputManager.mousePos.y = e.clientY;
+        _this5.mousePos.x = e.clientX;
+        _this5.mousePos.y = e.clientY;
       });
       this.containerElement.addEventListener('mousedown', function (e) {
-        InputManager.mouseDown[e.button] = true;
-        InputManager.mousePressed[e.button] = true;
+        _this5.mouseDown[e.button] = true;
+        _this5.mousePressed[e.button] = true;
       });
       this.containerElement.addEventListener('mouseup', function (e) {
-        InputManager.mouseDown[e.button] = false;
-        InputManager.mouseReleased[e.button] = true;
+        _this5.mouseDown[e.button] = false;
+        _this5.mouseReleased[e.button] = true;
       });
       this.containerElement.addEventListener('wheel', function (e) {
-        InputManager.mouseWheel.x += e.deltaX;
-        InputManager.mouseWheel.y += e.deltaY;
-        InputManager.mouseWheel.z += e.deltaZ;
+        _this5.mouseWheel.x += e.deltaX;
+        _this5.mouseWheel.y += e.deltaY;
+        _this5.mouseWheel.z += e.deltaZ;
       });
     }
   }, {
     key: "Update",
     value: function Update() {
-      for (var i = 0, len = Object.keys(InputManager.pressed).length; i < len; i++) {
-        InputManager.pressed[Object.keys(InputManager.pressed)[i]] = false;
+      for (var i = 0, len = Object.keys(this.pressed).length; i < len; i++) {
+        this.pressed[Object.keys(this.pressed)[i]] = false;
       }
 
-      for (var i = 0, len = Object.keys(InputManager.released).length; i < len; i++) {
-        InputManager.released[Object.keys(InputManager.released)[i]] = false;
+      for (var i = 0, len = Object.keys(this.released).length; i < len; i++) {
+        this.released[Object.keys(this.released)[i]] = false;
       }
 
-      for (var i = 0, len = Object.keys(InputManager.mouseReleased).length; i < len; i++) {
-        InputManager.mouseReleased[Object.keys(InputManager.mouseReleased)[i]] = false;
+      for (var i = 0, len = Object.keys(this.mouseReleased).length; i < len; i++) {
+        this.mouseReleased[Object.keys(this.mouseReleased)[i]] = false;
       }
     }
-  }], [{
+  }, {
     key: "GetKeyDown",
     value: function GetKeyDown(key) {
       return this.down[key];
@@ -15197,7 +15287,7 @@ var InputManager = /*#__PURE__*/function () {
   }, {
     key: "SetCursor",
     value: function SetCursor(type) {
-      this.instance.containerElement.style.cursor = type;
+      this.containerElement.style.cursor = type;
     }
   }, {
     key: "GetKeyPressed",
@@ -15209,28 +15299,10 @@ var InputManager = /*#__PURE__*/function () {
     value: function GetKeyReleased(key) {
       return this.released[key];
     }
-  }, {
-    key: "instance",
-    get: function get() {
-      if (!InputManager._instance) {
-        InputManager._instance = new InputManager();
-      }
-
-      return InputManager._instance;
-    }
   }]);
 
   return InputManager;
-}();
-
-InputManager.pressed = {};
-InputManager.down = {};
-InputManager.released = {};
-InputManager.mousePressed = {};
-InputManager.mouseDown = {};
-InputManager.mouseReleased = {};
-InputManager.mousePos = new Vec(0, 0);
-InputManager.mouseWheel = new Vec(0, 0, 0);
+}(Manager);
 
 (function (Cursor) {
   Cursor["Hidden"] = "none";
@@ -15374,25 +15446,26 @@ var engine = /*#__PURE__*/function () {
     _classCallCheck(this, engine);
 
     options = Object.assign({
-      scenes: [],
       width: 1280,
       height: 720,
       fullscreen: false,
       container: "body",
       managers: []
     }, options);
-    this.managers = options.managers;
+    this.managers = [];
+    this.managers.push(new TimeManager(this));
     this.managers.push(new SceneManager(this));
-    this.drawManager = DrawManager.instance;
-    this.inputManager = InputManager.instance;
-    this.width = options.width;
-    this.height = options.height;
-    this.fullscreen = options.fullscreen;
-    this.container = options.container;
+    this.managers.push(new DrawManager(this));
+    this.managers.push(new InputManager(this));
 
-    if (options.scenes.length <= 0) {
-      options.scenes = [new Scene("main", this)];
+    for (var i = 0, len = options.managers.length; i < len; i++) {
+      this.AddManager(options.managers[i]);
     }
+
+    this._width = options.width;
+    this._height = options.height;
+    this._fullscreen = options.fullscreen;
+    this._container = options.container;
 
     for (var i = 0, len = this.managers.length; i < len; i++) {
       this.managers[i].PreInit(options);
@@ -15402,27 +15475,34 @@ var engine = /*#__PURE__*/function () {
   _createClass(engine, [{
     key: "Run",
     value: function Run() {
-      DrawManager.SetContext(new Two({
-        width: this.width,
-        height: this.height,
-        fullscreen: this.fullscreen,
-        autostart: false,
-        type: Two.Types.webgl
-      }).appendTo(document.querySelector(this.container)));
-      this.inputManager.Init(this.container);
-      console.log("Engine is running in ", document.querySelector(this.container));
-      this.GetManager(SceneManager).LoadScene(0);
+      for (var i = 0, len = this.managers.length; i < len; i++) {
+        this.managers[i].Init();
+      }
+
+      console.log("Engine is running in ", document.querySelector(this._container));
       requestAnimationFrame(this.Update.bind(this));
       return 0;
     }
   }, {
     key: "Update",
     value: function Update() {
-      TimeManager.Update();
-      this.GetManager(SceneManager).Update();
-      DrawManager.GetContext().update();
-      this.inputManager.Update();
+      for (var i = 0, len = this.managers.length; i < len; i++) {
+        this.managers[i].Update();
+      }
+
       requestAnimationFrame(this.Update.bind(this));
+    }
+  }, {
+    key: "AddManager",
+    value: function AddManager(c) {
+      if (name && name !== "") {
+        for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+          args[_key2 - 1] = arguments[_key2];
+        }
+
+        this.managers.push(_construct(c, [this].concat(args)));
+        return this.managers[this.managers.length - 1];
+      } else throw Error("Manager name is null or empty");
     }
   }, {
     key: "GetManager",
@@ -15446,25 +15526,57 @@ var engine = /*#__PURE__*/function () {
 
       return managers;
     }
+  }, {
+    key: "width",
+    get: function get() {
+      return this._width;
+    }
+  }, {
+    key: "height",
+    get: function get() {
+      return this._height;
+    }
+  }, {
+    key: "fullscreen",
+    get: function get() {
+      return this._fullscreen;
+    }
+  }, {
+    key: "container",
+    get: function get() {
+      return this._container;
+    }
   }]);
 
   return engine;
 }();
 
-var Transform = function Transform() {
-  _classCallCheck(this, Transform);
+var Transform = /*#__PURE__*/function () {
+  function Transform() {
+    _classCallCheck(this, Transform);
 
-  this.position = new Vec(0, 0, 0);
-  this.rotation = 0;
-  this.scale = new Vec(1, 1);
-};
+    this.Reset();
+  }
+
+  _createClass(Transform, [{
+    key: "Reset",
+    value: function Reset() {
+      this.position = new Vec(0, 0, 0);
+      this.rotation = 0;
+      this.scale = new Vec(1, 1);
+    }
+  }]);
+
+  return Transform;
+}();
 
 var Entity = /*#__PURE__*/function () {
-  function Entity(engine) {
+  function Entity(engine, name) {
     _classCallCheck(this, Entity);
 
-    this.engine = engine;
     this._id = shortid.generate();
+    this._name = name;
+    this._engine = engine;
     this.transform = new Transform();
     this.components = [];
   }
@@ -15484,29 +15596,29 @@ var Entity = /*#__PURE__*/function () {
       }
     }
   }, {
-    key: "AddComponent",
-    value: function AddComponent(c) {
-      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        args[_key - 1] = arguments[_key];
+    key: "Unload",
+    value: function Unload() {
+      for (var i = 0, len = this.components.length; i < len; i++) {
+        this.components[i].Unload();
       }
+    }
+  }, {
+    key: "AddComponent",
+    value: function AddComponent(c, name) {
+      if (name && name !== "") {
+        for (var _len3 = arguments.length, args = new Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
+          args[_key3 - 2] = arguments[_key3];
+        }
 
-      this.components.push(new c(this, args));
-      return this.components[this.components.length - 1];
+        this.components.push(_construct(c, [this, name].concat(args)));
+        return this.components[this.components.length - 1];
+      } else throw Error("Component name is null or empty");
     }
   }, {
     key: "GetComponent",
-    value: function GetComponent(c) {
+    value: function GetComponent(name) {
       for (var i = 0, len = this.components.length; i < len; i++) {
-        if (this.components[i].name === c.name) {
-          return this.components[i];
-        }
-      }
-    }
-  }, {
-    key: "GetComponentByName",
-    value: function GetComponentByName(name) {
-      for (var i = 0, len = this.components.length; i < len; i++) {
-        if (this.components[i].name === name) {
+        if (this.components[i].name == name) {
           return this.components[i];
         }
       }
@@ -15526,9 +15638,9 @@ var Entity = /*#__PURE__*/function () {
     }
   }, {
     key: "RemoveComponent",
-    value: function RemoveComponent(c) {
+    value: function RemoveComponent(name) {
       for (var i = 0, len = this.components.length; i < len; i++) {
-        if (this.components[i].name === c.name) {
+        if (this.components[i].name === name) {
           this.components.splice(i, 1);
         }
       }
@@ -15546,19 +15658,28 @@ var Entity = /*#__PURE__*/function () {
     get: function get() {
       return this._name;
     }
+  }, {
+    key: "engine",
+    get: function get() {
+      return this._engine;
+    }
   }]);
 
   return Entity;
 }();
 
 var Component = /*#__PURE__*/function () {
-  function Component(parent) {
+  function Component(parent, name) {
     _classCallCheck(this, Component);
 
     this.parent = parent;
+    this._name = name;
   }
 
   _createClass(Component, [{
+    key: "Unload",
+    value: function Unload() {}
+  }, {
     key: "name",
     get: function get() {
       return this._name;
@@ -15571,27 +15692,24 @@ var Component = /*#__PURE__*/function () {
 var SpriteRenderer = /*#__PURE__*/function (_Component) {
   _inherits(SpriteRenderer, _Component);
 
-  function SpriteRenderer(parent) {
-    var _this2;
-
-    var args = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+  function SpriteRenderer(parent, name, image, stretchMode) {
+    var _this6;
 
     _classCallCheck(this, SpriteRenderer);
 
-    _this2 = _possibleConstructorReturn(this, _getPrototypeOf(SpriteRenderer).call(this, parent));
-    _this2._name = "SpriteRenderer";
-    _this2.isFirstUpdate = false;
-    _this2.image = args[0];
-    _this2.scale = 1;
-    _this2.stretchMode = args[1];
-    return _this2;
+    _this6 = _possibleConstructorReturn(this, _getPrototypeOf(SpriteRenderer).call(this, parent, name));
+    _this6._name = "SpriteRenderer";
+    _this6.image = image;
+    _this6.scale = 1;
+    _this6.stretchMode = stretchMode;
+    return _this6;
   }
 
   _createClass(SpriteRenderer, [{
     key: "Init",
     value: function Init() {
       this.texture = new Two.Texture(this.image);
-      this.shape = DrawManager.GetContext().makeRectangle(this.parent.transform.position.x, this.parent.transform.position.y, this.parent.transform.scale.x, this.parent.transform.scale.y);
+      this.shape = this.parent.engine.GetManager(DrawManager).GetContext().makeRectangle(this.parent.transform.position.x, this.parent.transform.position.y, this.parent.transform.scale.x, this.parent.transform.scale.y);
       this.shape.noStroke();
       this.shape.fill = this.texture;
     }
@@ -15637,6 +15755,11 @@ var SpriteRenderer = /*#__PURE__*/function (_Component) {
 
       this.shape.translation.set(this.parent.transform.position.x, this.parent.transform.position.y);
     }
+  }, {
+    key: "Unload",
+    value: function Unload() {
+      this.shape.remove();
+    }
   }]);
 
   return SpriteRenderer;
@@ -15660,85 +15783,7 @@ exports.SpriteRenderer = SpriteRenderer;
 exports.TimeManager = TimeManager;
 exports.Transform = Transform;
 exports.Vec = Vec;
-},{"two.js":"../node_modules/two.js/build/two.module.js","shortid":"../node_modules/shortid/index.js"}],"components/PlayerController.ts":[function(require,module,exports) {
-"use strict";
-
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
-function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
-
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
-function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var alge_1 = require("../../dist/alge");
-
-var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
-  _inherits(PlayerController, _alge_1$Component);
-
-  function PlayerController() {
-    var _this;
-
-    _classCallCheck(this, PlayerController);
-
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(PlayerController).apply(this, arguments));
-    _this._name = "PlayerController";
-    return _this;
-  }
-
-  _createClass(PlayerController, [{
-    key: "Init",
-    value: function Init() {
-      alge_1.InputManager.SetCursor(alge_1.Cursor.Hidden);
-    }
-  }, {
-    key: "Update",
-    value: function Update() {
-      if (alge_1.InputManager.GetKeyDown(alge_1.Key.UpArrow)) {
-        this.parent.transform.position.y -= 10 * alge_1.TimeManager.DeltaTime() * 100;
-      }
-
-      if (alge_1.InputManager.GetKeyDown(alge_1.Key.DownArrow)) {
-        this.parent.transform.position.y += 10 * alge_1.TimeManager.DeltaTime() * 100;
-      }
-
-      if (alge_1.InputManager.GetKeyDown(alge_1.Key.LeftArrow)) {
-        this.parent.transform.position.x -= 10 * alge_1.TimeManager.DeltaTime() * 100;
-      }
-
-      if (alge_1.InputManager.GetKeyDown(alge_1.Key.RightArrow)) {
-        this.parent.transform.position.x += 10 * alge_1.TimeManager.DeltaTime() * 100;
-      }
-
-      if (alge_1.InputManager.GetMouseDown(alge_1.Mouse.Left)) {
-        this.parent.transform.position.y -= 10 * alge_1.TimeManager.DeltaTime() * 100;
-      }
-
-      this.parent.transform.position = alge_1.InputManager.GetMousePosition();
-      this.parent.transform.scale.x = alge_1.InputManager.GetMouseWheel().y + 200;
-      this.parent.transform.scale.y = alge_1.InputManager.GetMouseWheel().y + 200;
-    }
-  }]);
-
-  return PlayerController;
-}(alge_1.Component);
-
-exports.default = PlayerController;
-},{"../../dist/alge":"../dist/alge.js"}],"components/FPSCounter.ts":[function(require,module,exports) {
+},{"shortid":"../node_modules/shortid/index.js","two.js":"../node_modules/two.js/build/two.module.js"}],"components/FPSCounter.ts":[function(require,module,exports) {
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -15769,13 +15814,9 @@ var FPSCounter = /*#__PURE__*/function (_alge_1$Component) {
   _inherits(FPSCounter, _alge_1$Component);
 
   function FPSCounter() {
-    var _this;
-
     _classCallCheck(this, FPSCounter);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(FPSCounter).apply(this, arguments));
-    _this._name = "FPSCounter";
-    return _this;
+    return _possibleConstructorReturn(this, _getPrototypeOf(FPSCounter).apply(this, arguments));
   }
 
   _createClass(FPSCounter, [{
@@ -15820,29 +15861,21 @@ Object.defineProperty(exports, "__esModule", {
 
 var alge_1 = require("../../dist/alge");
 
-var PlayerController_1 = __importDefault(require("../components/PlayerController"));
-
 var FPSCounter_1 = __importDefault(require("../components/FPSCounter"));
 
 var Player = /*#__PURE__*/function (_alge_1$Entity) {
   _inherits(Player, _alge_1$Entity);
 
-  function Player(image_src) {
+  function Player(engine, name, image_src) {
     var _this;
 
     _classCallCheck(this, Player);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(Player).call(this));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(Player).call(this, engine, name));
 
-    _this.transform.scale.Scale(100);
+    _this.AddComponent(alge_1.SpriteRenderer, "Sprite", image_src, alge_1.SpriteMode.Cover);
 
-    _this.transform.position.Add(new alge_1.Vec(200, 200));
-
-    _this.AddComponent(alge_1.SpriteRenderer, image_src, alge_1.SpriteMode.Cover);
-
-    _this.AddComponent(PlayerController_1.default);
-
-    _this.AddComponent(FPSCounter_1.default);
+    _this.AddComponent(FPSCounter_1.default, "FPSCounter");
 
     return _this;
   }
@@ -15851,7 +15884,7 @@ var Player = /*#__PURE__*/function (_alge_1$Entity) {
 }(alge_1.Entity);
 
 exports.default = Player;
-},{"../../dist/alge":"../dist/alge.js","../components/PlayerController":"components/PlayerController.ts","../components/FPSCounter":"components/FPSCounter.ts"}],"entities/SceneSwitcher.ts":[function(require,module,exports) {
+},{"../../dist/alge":"../dist/alge.js","../components/FPSCounter":"components/FPSCounter.ts"}],"components/PlayerController.ts":[function(require,module,exports) {
 "use strict";
 
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -15878,56 +15911,184 @@ Object.defineProperty(exports, "__esModule", {
 
 var alge_1 = require("../../dist/alge");
 
-var SceneSwitcher = /*#__PURE__*/function (_alge_1$Entity) {
-  _inherits(SceneSwitcher, _alge_1$Entity);
+var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
+  _inherits(PlayerController, _alge_1$Component);
 
-  function SceneSwitcher(scenes) {
+  function PlayerController() {
     var _this;
 
-    _classCallCheck(this, SceneSwitcher);
+    _classCallCheck(this, PlayerController);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(SceneSwitcher).call(this));
-    _this.scenes = scenes;
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(PlayerController).apply(this, arguments));
+    _this.inputManager = _this.parent.engine.GetManager(alge_1.InputManager);
+    _this.time = _this.parent.engine.GetManager(alge_1.TimeManager);
+    _this.sceneManager = _this.parent.engine.GetManager(alge_1.SceneManager);
     return _this;
   }
 
-  _createClass(SceneSwitcher, [{
+  _createClass(PlayerController, [{
+    key: "Init",
+    value: function Init() {
+      this.inputManager.SetCursor(alge_1.Cursor.Hidden);
+      console.log("Player1 Init");
+      console.log(this.parent.engine.GetManager(alge_1.DrawManager).GetContext().scene);
+    }
+  }, {
     key: "Update",
     value: function Update() {
-      if (alge_1.InputManager.GetKeyDown(alge_1.Key.Numpad8)) {
-        alge_1.SceneManager.instance.LoadScene(0);
+      if (this.inputManager.GetKeyDown(alge_1.Key.UpArrow)) {
+        this.parent.transform.position.y -= 10 * this.time.deltaTime * 100;
       }
 
-      if (alge_1.InputManager.GetKeyDown(alge_1.Key.Numpad2)) {
-        alge_1.SceneManager.instance.LoadScene(1);
+      if (this.inputManager.GetKeyDown(alge_1.Key.DownArrow)) {
+        this.parent.transform.position.y += 10 * this.time.deltaTime * 100;
+      }
+
+      if (this.inputManager.GetKeyDown(alge_1.Key.LeftArrow)) {
+        this.parent.transform.position.x -= 10 * this.time.deltaTime * 100;
+      }
+
+      if (this.inputManager.GetKeyDown(alge_1.Key.RightArrow)) {
+        this.parent.transform.position.x += 10 * this.time.deltaTime * 100;
+      }
+
+      if (this.inputManager.GetMouseDown(alge_1.Mouse.Left)) {
+        this.parent.transform.position.y -= 10 * this.time.deltaTime * 100;
+      }
+
+      this.parent.transform.position = this.inputManager.GetMousePosition();
+      this.parent.transform.scale.x = this.inputManager.GetMouseWheel().y + 200;
+      this.parent.transform.scale.y = this.inputManager.GetMouseWheel().y + 200;
+
+      if (this.inputManager.GetKeyPressed(alge_1.Key.L)) {
+        this.sceneManager.LoadSceneByName("test2");
       }
     }
   }]);
 
-  return SceneSwitcher;
-}(alge_1.Entity);
+  return PlayerController;
+}(alge_1.Component);
 
-exports.default = SceneSwitcher;
-},{"../../dist/alge":"../dist/alge.js"}],"index.js":[function(require,module,exports) {
+exports.default = PlayerController;
+},{"../../dist/alge":"../dist/alge.js"}],"components/PlayerController2.ts":[function(require,module,exports) {
 "use strict";
 
-var _alge = require("../dist/alge");
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var _Player = _interopRequireDefault(require("./entities/Player"));
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var _SceneSwitcher = _interopRequireDefault(require("./entities/SceneSwitcher"));
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-// scene.entities.push(new Player("https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg"));
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var alge_1 = require("../../dist/alge");
+
+var PlayerController2 = /*#__PURE__*/function (_alge_1$Component) {
+  _inherits(PlayerController2, _alge_1$Component);
+
+  function PlayerController2() {
+    var _this;
+
+    _classCallCheck(this, PlayerController2);
+
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(PlayerController2).apply(this, arguments));
+    _this.inputManager = _this.parent.engine.GetManager(alge_1.InputManager);
+    _this.time = _this.parent.engine.GetManager(alge_1.TimeManager);
+    _this.sceneManager = _this.parent.engine.GetManager(alge_1.SceneManager);
+    return _this;
+  }
+
+  _createClass(PlayerController2, [{
+    key: "Init",
+    value: function Init() {
+      this.inputManager.SetCursor(alge_1.Cursor.Crosshair);
+      console.log("Player2 Init");
+    }
+  }, {
+    key: "Update",
+    value: function Update() {
+      if (this.inputManager.GetKeyDown(alge_1.Key.UpArrow)) {
+        this.parent.transform.position.y -= 10 * this.time.deltaTime * 100;
+      }
+
+      if (this.inputManager.GetKeyDown(alge_1.Key.DownArrow)) {
+        this.parent.transform.position.y += 10 * this.time.deltaTime * 100;
+      }
+
+      if (this.inputManager.GetKeyDown(alge_1.Key.LeftArrow)) {
+        this.parent.transform.position.x -= 10 * this.time.deltaTime * 100;
+      }
+
+      if (this.inputManager.GetKeyDown(alge_1.Key.RightArrow)) {
+        this.parent.transform.position.x += 10 * this.time.deltaTime * 100;
+      }
+
+      if (this.inputManager.GetMouseDown(alge_1.Mouse.Left)) {
+        this.parent.transform.position.y -= 10 * this.time.deltaTime * 100;
+      }
+
+      this.parent.transform.position = this.inputManager.GetMousePosition();
+      this.parent.transform.scale.x = this.inputManager.GetMouseWheel().y + 200;
+      this.parent.transform.scale.y = this.inputManager.GetMouseWheel().y + 200;
+
+      if (this.inputManager.GetKeyPressed(alge_1.Key.L)) {
+        this.sceneManager.LoadSceneByName("test");
+      }
+    }
+  }]);
+
+  return PlayerController2;
+}(alge_1.Component);
+
+exports.default = PlayerController2;
+},{"../../dist/alge":"../dist/alge.js"}],"index.ts":[function(require,module,exports) {
+"use strict";
+
+var __importDefault = this && this.__importDefault || function (mod) {
+  return mod && mod.__esModule ? mod : {
+    "default": mod
+  };
+};
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var alge_1 = require("../dist/alge");
+
+var Player_1 = __importDefault(require("./entities/Player"));
+
+var PlayerController_1 = __importDefault(require("./components/PlayerController"));
+
+var PlayerController2_1 = __importDefault(require("./components/PlayerController2")); // scene.entities.push(new Player("https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg"));
 // scene2.entities.push(new Player("https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1280px-Image_created_with_a_mobile_phone.png"));
-var game = new _alge.Engine({
+
+
+var game = new alge_1.Engine({
   fullscreen: true
 });
-game.GetManager(_alge.SceneManager).CreateScene("test");
-game.GetManager(_alge.SceneManager).GetScene("test");
+var mainScene = game.GetManager(alge_1.SceneManager).CreateScene("test");
+var player1 = mainScene.AddEntity(Player_1.default, "PlayerEntity", "https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg");
+player1.AddComponent(PlayerController_1.default, "PlayerController");
+var newScene = game.GetManager(alge_1.SceneManager).CreateScene("test2");
+var player2 = newScene.AddEntity(Player_1.default, "PlayerEntity", "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1280px-Image_created_with_a_mobile_phone.png");
+player2.AddComponent(PlayerController2_1.default, "PlayerController");
 game.Run();
-},{"../dist/alge":"../dist/alge.js","./entities/Player":"entities/Player.ts","./entities/SceneSwitcher":"entities/SceneSwitcher.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"../dist/alge":"../dist/alge.js","./entities/Player":"entities/Player.ts","./components/PlayerController":"components/PlayerController.ts","./components/PlayerController2":"components/PlayerController2.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -15955,7 +16116,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49166" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58549" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -16131,5 +16292,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../node_modules/parcel-bundler/src/builtins/hmr-runtime.js","index.js"], null)
-//# sourceMappingURL=/example.e31bb0bc.js.map
+},{}]},{},["../node_modules/parcel-bundler/src/builtins/hmr-runtime.js","index.ts"], null)
+//# sourceMappingURL=/example.77de5100.js.map

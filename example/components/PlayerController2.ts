@@ -1,16 +1,15 @@
-import { Component, InputManager, Key, Cursor, Mouse , TimeManager, SceneManager, DrawManager } from "../../dist/alge";
+import { Component, InputManager, Key, Cursor, Mouse , TimeManager, SceneManager } from "../../dist/alge";
 import Player from "../entities/Player";
 
-export default class PlayerController extends Component {
+export default class PlayerController2 extends Component {
 	
 	protected inputManager : InputManager = this.parent.engine.GetManager(InputManager);
 	protected time : TimeManager = this.parent.engine.GetManager(TimeManager);
 	protected sceneManager : SceneManager = this.parent.engine.GetManager(SceneManager);
 
 	public Init() {
-		this.inputManager.SetCursor(Cursor.Hidden);
-		console.log("Player1 Init");
-		console.log(this.parent.engine.GetManager(DrawManager).GetContext().scene);
+		this.inputManager.SetCursor(Cursor.Crosshair);
+		console.log("Player2 Init");
 	}
 	
 	public Update() {
@@ -36,7 +35,7 @@ export default class PlayerController extends Component {
 		this.parent.transform.scale.y = this.inputManager.GetMouseWheel().y + 200;
 
 		if (this.inputManager.GetKeyPressed(Key.L)) {
-			this.sceneManager.LoadSceneByName("test2");
+			this.sceneManager.LoadSceneByName("test");
 		}
 	}
 }

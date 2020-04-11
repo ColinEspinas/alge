@@ -1,6 +1,6 @@
 import Component from "../core/Component";
 import Entity from "../core/Entity";
-import DrawManager from "../core/DrawManager";
+import DrawManager from "../managers/DrawManager";
 import Two from 'two.js';
 
 export default class SpriteRenderer extends Component {
@@ -15,19 +15,16 @@ export default class SpriteRenderer extends Component {
 
 	private stretchMode : SpriteMode;
 
-	private isFirstUpdate : Boolean = false;
-
-	constructor(parent : Entity, args : any[] = []) {
-		super(parent);
-		this.image = args[0];
+	constructor(parent : Entity, name : string, image : string, stretchMode : SpriteMode) {
+		super(parent, name);
+		this.image = image;
 		this.scale = 1;
-		this.stretchMode = args[1];
+		this.stretchMode = stretchMode;
 	}
 
 	public Init() {
-		console.log(DrawManager.instance);
 		this.texture = new Two.Texture(this.image);
-		this.shape = DrawManager.GetContext().makeRectangle(
+		this.shape = this.parent.engine.GetManager(DrawManager).GetContext().makeRectangle(
 			this.parent.transform.position.x,
 			this.parent.transform.position.y,
 			this.parent.transform.scale.x,
@@ -86,6 +83,10 @@ export default class SpriteRenderer extends Component {
 			this.parent.transform.position.x,
 			this.parent.transform.position.y,
 		);
+	}
+
+	public Unload() {
+		this.shape.remove();
 	}
 }
 

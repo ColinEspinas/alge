@@ -1,105 +1,99 @@
-import Vec from "./utilities/Vec";
+import Vec from "../core/utilities/Vec";
+import Manager from "../core/Manager";
 
-export default class InputManager {
+export default class InputManager extends Manager{
+	
+	protected _name: string = "InputManager";
 
-	private static _instance : InputManager;
-	private static pressed : { [key: number]: boolean; } = {};
-	private static down : { [key: number]: boolean; } = {};
-	private static released : { [key: number]: boolean; } = {};
-	private static mousePressed : { [key: number]: boolean; } = {};
-	private static mouseDown : { [key: number]: boolean; } = {};
-	private static mouseReleased : { [key: number]: boolean; } = {};
-	private static mousePos : Vec = new Vec(0, 0);
-	private static mouseWheel : Vec = new Vec(0, 0, 0);
+	private pressed : { [key: number]: boolean; } = {};
+	private down : { [key: number]: boolean; } = {};
+	private released : { [key: number]: boolean; } = {};
+	private mousePressed : { [key: number]: boolean; } = {};
+	private mouseDown : { [key: number]: boolean; } = {};
+	private mouseReleased : { [key: number]: boolean; } = {};
+	private mousePos : Vec = new Vec(0, 0);
+	private mouseWheel : Vec = new Vec(0, 0, 0);
 	private containerElement : HTMLElement;
 
-	private constructor() {}
+	public Init() : void {
 
-	static get instance() : InputManager {
-		if (!InputManager._instance) {
-			InputManager._instance = new InputManager();
-		}
-		return InputManager._instance;
-	}
-	
-	public Init(container : string) : void {
 
 		// Get container to fire events from:
-		this.containerElement = document.querySelector(container);
+		this.containerElement = document.querySelector(this.engine.container);
 
 		// Setup keyboard events:
 		this.containerElement.addEventListener('keydown', (e : KeyboardEvent) => {
-			InputManager.down[e.keyCode] = true;
+			this.down[e.keyCode] = true;
 			if (!e.repeat) {
-				InputManager.pressed[e.keyCode] = true;
+				this.pressed[e.keyCode] = true;
 			}
 		});
 		this.containerElement.addEventListener('keyup', (e : KeyboardEvent) => { 
-			InputManager.down[e.keyCode] = false;
-			InputManager.released[e.keyCode] = true;
+			this.down[e.keyCode] = false;
+			this.released[e.keyCode] = true;
 		});
 
 		// Setup mouse events:
 		this.containerElement.addEventListener('mousemove', (e : MouseEvent) => {
-			InputManager.mousePos.x = e.clientX; 
-			InputManager.mousePos.y = e.clientY;
+			this.mousePos.x = e.clientX; 
+			this.mousePos.y = e.clientY;
 		});
 		this.containerElement.addEventListener('mousedown', (e : MouseEvent) => {
-			InputManager.mouseDown[e.button] = true;
-			InputManager.mousePressed[e.button] = true;
+			this.mouseDown[e.button] = true;
+			this.mousePressed[e.button] = true;
 		});
 		this.containerElement.addEventListener('mouseup', (e : MouseEvent) => { 
-			InputManager.mouseDown[e.button] = false;
-			InputManager.mouseReleased[e.button] = true;
+			this.mouseDown[e.button] = false;
+			this.mouseReleased[e.button] = true;
 		});
 		this.containerElement.addEventListener('wheel', (e : WheelEvent) => {
-			InputManager.mouseWheel.x += e.deltaX;
-			InputManager.mouseWheel.y += e.deltaY;
-			InputManager.mouseWheel.z += e.deltaZ;
+			this.mouseWheel.x += e.deltaX;
+			this.mouseWheel.y += e.deltaY;
+			this.mouseWheel.z += e.deltaZ;
 		});
 	}
 
 	public Update() {
-		for (var i = 0, len = Object.keys(InputManager.pressed).length; i < len; i++) {
-			InputManager.pressed[Object.keys(InputManager.pressed)[i]] = false;
+		for (var i = 0, len = Object.keys(this.pressed).length; i < len; i++) {
+			this.pressed[Object.keys(this.pressed)[i]] = false;
 		}
-		for (var i = 0, len = Object.keys(InputManager.released).length; i < len; i++) {
-			InputManager.released[Object.keys(InputManager.released)[i]] = false;
+		for (var i = 0, len = Object.keys(this.released).length; i < len; i++) {
+			this.released[Object.keys(this.released)[i]] = false;
 		}
-		for (var i = 0, len = Object.keys(InputManager.mouseReleased).length; i < len; i++) {
-			InputManager.mouseReleased[Object.keys(InputManager.mouseReleased)[i]] = false;
+		for (var i = 0, len = Object.keys(this.mouseReleased).length; i < len; i++) {
+			this.mouseReleased[Object.keys(this.mouseReleased)[i]] = false;
 		}
 	}
 
-	static GetKeyDown(key : number) : boolean {
+	public GetKeyDown(key : number) : boolean {
 		return this.down[key];
 	}
 
-	static GetMousePosition() : Vec {
+	public GetMousePosition() : Vec {
 		return this.mousePos;
 	}
 
-	static GetMouseDown(button : number) : boolean {
+	public GetMouseDown(button : number) : boolean {
 		return this.mouseDown[button];
 	}
 
-	static GetMouseReleased(button : number) : boolean {
+	public GetMouseReleased(button : number) : boolean {
 		return this.mouseReleased[button];
 	}
 
-	static GetMouseWheel() : Vec {
+	public GetMouseWheel() : Vec {
 		return this.mouseWheel;
 	}
 
-	static SetCursor(type : Cursor) : void {
-		this.instance.containerElement.style.cursor = type;
+	public SetCursor(type : Cursor) : void {
+		this.containerElement.style.cursor = type;
 	}
 
-	static GetKeyPressed(key : number) {
+	public GetKeyPressed(key : number) {
 		return this.pressed[key];
 	}
 
-	static GetKeyReleased(key : number) {
+	public GetKeyReleased(key : number) {
 		return this.released[key];
 	}
 }
