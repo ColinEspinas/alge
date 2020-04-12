@@ -1,5 +1,4 @@
 import Component from "../core/Component";
-import Entity from "../core/Entity";
 export default class SpriteRenderer extends Component {
     protected _name: string;
     image: string;
@@ -7,7 +6,7 @@ export default class SpriteRenderer extends Component {
     private texture;
     private shape;
     private stretchMode;
-    constructor(parent: Entity, name: string, image: string, stretchMode: SpriteMode);
+    Create(): void;
     Init(): void;
     Update(): void;
     Unload(): void;

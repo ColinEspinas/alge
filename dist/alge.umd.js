@@ -58,27 +58,38 @@
 	        this.loaded = false;
 	        this.loadedEntities = this.entities;
 	    }
+	    UnloadEntity(entity) {
+	        entity.Unload();
+	        entity.UnloadComponents();
+	    }
 	    Unload() {
 	        this.loadedEntities = [];
 	        this.loaded = false;
 	        for (var i = 0, len = this.entities.length; i < len; i++) {
-	            this.entities[i].Unload();
+	            const entity = this.entities[i];
+	            this.UnloadEntity(entity);
+	        }
+	    }
+	    UpdateEntity(entity) {
+	        if (this.loaded == false) {
+	            entity.Init();
+	            entity.InitComponents();
+	        }
+	        else {
+	            entity.Update();
+	            entity.UpdateComponents();
 	        }
 	    }
 	    Update() {
 	        for (var i = 0, len = this.entities.length; i < len; i++) {
-	            if (this.loaded == false) {
-	                this.loadedEntities[i].Init();
-	            }
-	            else {
-	                this.loadedEntities[i].Update();
-	            }
+	            const entity = this.loadedEntities[i];
+	            this.UpdateEntity(entity);
 	        }
 	        this.loaded = true;
 	    }
-	    AddEntity(e, name, ...args) {
+	    AddEntity(e, name, properties) {
 	        if (name && name !== "") {
-	            this.entities.push(new e(this.engine, name, ...args));
+	            this.entities.push(new e(this.engine, name, properties));
 	            return this.entities[this.entities.length - 1];
 	        }
 	        else
@@ -130,6 +141,9 @@
 	            }
 	        }
 	        throw Error("Cannot get scene with name " + name);
+	    }
+	    GetLoadedScene() {
+	        return this.loadedScene;
 	    }
 	    RemoveScene(index) {
 	        this.scenes.splice(index, 1);
@@ -632,43 +646,46 @@
 	}
 
 	class Entity {
-	    constructor(engine, name) {
+	    constructor(engine, name, properties) {
 	        this._id = shortid.generate();
 	        this._name = name;
+	        this._properties = properties || {};
 	        this._engine = engine;
 	        this.transform = new Transform();
 	        this.components = [];
+	        this.Create();
 	    }
-	    get id() {
-	        return this._id;
-	    }
-	    set name(name) {
-	        this.name = name;
-	    }
-	    get name() {
-	        return this._name;
-	    }
-	    get engine() {
-	        return this._engine;
-	    }
-	    Init() {
+	    get id() { return this._id; }
+	    set name(name) { this.name = name; }
+	    get name() { return this._name; }
+	    get engine() { return this._engine; }
+	    get properties() { return this._properties; }
+	    Create() { }
+	    ;
+	    Init() { }
+	    ;
+	    Update() { }
+	    ;
+	    Unload() { }
+	    ;
+	    InitComponents() {
 	        for (var i = 0, len = this.components.length; i < len; i++) {
 	            this.components[i].Init();
 	        }
 	    }
-	    Update() {
+	    UpdateComponents() {
 	        for (var i = 0, len = this.components.length; i < len; i++) {
 	            this.components[i].Update();
 	        }
 	    }
-	    Unload() {
+	    UnloadComponents() {
 	        for (var i = 0, len = this.components.length; i < len; i++) {
 	            this.components[i].Unload();
 	        }
 	    }
-	    AddComponent(c, name, ...args) {
+	    AddComponent(c, name, properties) {
 	        if (name && name !== "") {
-	            this.components.push(new c(this, name, ...args));
+	            this.components.push(new c(this, name, properties));
 	            return this.components[this.components.length - 1];
 	        }
 	        else
@@ -700,22 +717,33 @@
 	}
 
 	class Component {
-	    constructor(parent, name) {
+	    constructor(parent, name, properties) {
 	        this.parent = parent;
 	        this._name = name;
+	        this._properties = properties || {};
+	        this.Create();
 	    }
 	    get name() { return this._name; }
+	    get properties() { return this._properties; }
+	    Create() { }
+	    ;
+	    Init() { }
+	    ;
+	    Update() { }
+	    ;
 	    Unload() { }
 	    ;
 	}
 
 	class SpriteRenderer extends Component {
-	    constructor(parent, name, image, stretchMode) {
-	        super(parent, name);
+	    constructor() {
+	        super(...arguments);
 	        this._name = "SpriteRenderer";
-	        this.image = image;
+	    }
+	    Create() {
+	        this.image = this.properties["image"];
 	        this.scale = 1;
-	        this.stretchMode = stretchMode;
+	        this.stretchMode = this.properties["stretchMode"];
 	    }
 	    Init() {
 	        this.texture = new Two.Texture(this.image);

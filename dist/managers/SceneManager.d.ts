@@ -11,6 +11,7 @@ export default class SceneManager extends Manager {
     CreateScene(name: string): Scene;
     GetScenes(): Scene[];
     GetScene(name: string): Scene;
+    GetLoadedScene(): Scene;
     RemoveScene(index: number): void;
     LoadSceneByIndex(index: number): void;
     LoadSceneByName(name: string): void;

@@ -15,11 +15,10 @@ export default class SpriteRenderer extends Component {
 
 	private stretchMode : SpriteMode;
 
-	constructor(parent : Entity, name : string, image : string, stretchMode : SpriteMode) {
-		super(parent, name);
-		this.image = image;
+	public Create() {
+		this.image = this.properties["image"];
 		this.scale = 1;
-		this.stretchMode = stretchMode;
+		this.stretchMode = this.properties["stretchMode"];
 	}
 
 	public Init() {

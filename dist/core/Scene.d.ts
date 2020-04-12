@@ -12,8 +12,10 @@ export default class Scene {
     get name(): string;
     Reload(): void;
     Load(): void;
+    private UnloadEntity;
     Unload(): void;
+    private UpdateEntity;
     Update(): void;
-    AddEntity<EntityType extends Entity>(e: new (...args: any[]) => EntityType, name: string, ...args: any[]): Entity;
+    AddEntity<EntityType extends Entity>(e: new (...args: any[]) => EntityType, name: string, properties?: Object): Entity;
     GetEntity(name: string): Entity;
 }

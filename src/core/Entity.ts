@@ -7,6 +7,7 @@ export default class Entity {
 
 	protected _id : number;
 	protected _name : string;
+	protected _properties : Object;
 
 	protected _engine : Engine;
 
@@ -15,51 +16,48 @@ export default class Entity {
 	public texture : any;
 	protected components : Component[];
 
-	constructor(engine : Engine, name : string) {
+	constructor(engine : Engine, name : string, properties ?: Object) {
 		this._id = shortid.generate();
 		this._name = name;
+		this._properties = properties || {};
 		this._engine = engine;
 		this.transform = new Transform();
 		this.components = [];
+		this.Create();
 	}
 
-	public get id() : number {
-		return this._id;
-	}
+	public get id() : number { return this._id; }
+	public set name(name : string) { this.name = name; }
+	public get name() { return this._name; }
+	public get engine() { return this._engine; }
+	public get properties() { return this._properties; }
 
-	public set name(name : string) {
-		this.name = name;
-	}
+	public Create() {};
+	public Init() {};
+	public Update() {};
+	public Unload() {};
 
-	public get name() {
-		return this._name;
-	}
-
-	public get engine() {
-		return this._engine;
-	}
-
-	public Init() {
+	public InitComponents() {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			this.components[i].Init();
 		}
 	}
 
-	public Update() {
+	public UpdateComponents() {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			this.components[i].Update();
 		}
 	}
 
-	public Unload() {
+	public UnloadComponents() {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			this.components[i].Unload();
 		}
 	}
 
-	public AddComponent<ComponentType extends Component>(c : new (...args : any[]) => ComponentType, name : string, ...args : any[]) : Component {
+	public AddComponent<ComponentType extends Component>(c : new (...args : any[]) => ComponentType, name : string, properties ?: Object) : Component {
 		if (name && name !== "") {
-			this.components.push(new c(this, name, ...args));
+			this.components.push(new c(this, name, properties));
 			return this.components[this.components.length - 1];
 		}
 		else throw Error("Component name is null or empty");

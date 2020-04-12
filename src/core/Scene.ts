@@ -42,25 +42,42 @@ export default class Scene {
 		this.loadedEntities = this.entities;
 	}
 
+	private UnloadEntity(entity : Entity) : void {
+		entity.Unload();
+		entity.UnloadComponents();
+	}
+
 	public Unload() : void {
 		this.loadedEntities = [];
 		this.loaded = false;
 		for (var i = 0, len = this.entities.length; i < len; i++) {
-			this.entities[i].Unload();
+			const entity = this.entities[i];
+			this.UnloadEntity(entity);
+		}
+	}
+
+	private UpdateEntity(entity : Entity) : void {
+		if (this.loaded == false) {
+			entity.Init();
+			entity.InitComponents();
+		}
+		else {
+			entity.Update();
+			entity.UpdateComponents();
 		}
 	}
 
 	public Update() : void {
 		for (var i = 0, len = this.entities.length; i < len; i++) {
-			if (this.loaded == false) { this.loadedEntities[i].Init(); }
-			else { this.loadedEntities[i].Update(); }
+			const entity = this.loadedEntities[i];
+			this.UpdateEntity(entity);
 		}
 		this.loaded = true;
 	}
 
-	public AddEntity<EntityType extends Entity>(e : new (...args : any[]) => EntityType, name : string, ...args : any[]) : Entity {
+	public AddEntity<EntityType extends Entity>(e : new (...args : any[]) => EntityType, name : string, properties ?: Object) : Entity {
 		if (name && name !== "") {
-			this.entities.push(new e(this.engine, name, ...args));
+			this.entities.push(new e(this.engine, name, properties));
 			return this.entities[this.entities.length - 1];
 		}
 		else throw Error("Entity name is null or empty");

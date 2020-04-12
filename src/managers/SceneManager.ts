@@ -50,6 +50,10 @@ export default class SceneManager extends Manager {
 		throw Error("Cannot get scene with name " + name);
 	}
 
+	public GetLoadedScene() : Scene {
+		return this.loadedScene;
+	}
+
 	public RemoveScene(index : number) : void {
 		this.scenes.splice(index, 1);
 	}

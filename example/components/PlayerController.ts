@@ -10,7 +10,7 @@ export default class PlayerController extends Component {
 	public Init() {
 		this.inputManager.SetCursor(Cursor.Hidden);
 		console.log("Player1 Init");
-		console.log(this.parent.engine.GetManager(DrawManager).GetContext().scene);
+		console.log(this.parent);
 	}
 	
 	public Update() {

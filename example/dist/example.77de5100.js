@@ -14638,6 +14638,10 @@ exports.default = _default;
 },{}],"../dist/alge.js":[function(require,module,exports) {
 'use strict';
 
+function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
@@ -14645,10 +14649,6 @@ function _assertThisInitialized(self) { if (self === void 0) { throw new Referen
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
@@ -14745,37 +14745,48 @@ var Scene = /*#__PURE__*/function () {
       this.loadedEntities = this.entities;
     }
   }, {
+    key: "UnloadEntity",
+    value: function UnloadEntity(entity) {
+      entity.Unload();
+      entity.UnloadComponents();
+    }
+  }, {
     key: "Unload",
     value: function Unload() {
       this.loadedEntities = [];
       this.loaded = false;
 
       for (var i = 0, len = this.entities.length; i < len; i++) {
-        this.entities[i].Unload();
+        var entity = this.entities[i];
+        this.UnloadEntity(entity);
+      }
+    }
+  }, {
+    key: "UpdateEntity",
+    value: function UpdateEntity(entity) {
+      if (this.loaded == false) {
+        entity.Init();
+        entity.InitComponents();
+      } else {
+        entity.Update();
+        entity.UpdateComponents();
       }
     }
   }, {
     key: "Update",
     value: function Update() {
       for (var i = 0, len = this.entities.length; i < len; i++) {
-        if (this.loaded == false) {
-          this.loadedEntities[i].Init();
-        } else {
-          this.loadedEntities[i].Update();
-        }
+        var entity = this.loadedEntities[i];
+        this.UpdateEntity(entity);
       }
 
       this.loaded = true;
     }
   }, {
     key: "AddEntity",
-    value: function AddEntity(e, name) {
+    value: function AddEntity(e, name, properties) {
       if (name && name !== "") {
-        for (var _len = arguments.length, args = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
-          args[_key - 2] = arguments[_key];
-        }
-
-        this.entities.push(_construct(e, [this.engine, name].concat(args)));
+        this.entities.push(new e(this.engine, name, properties));
         return this.entities[this.entities.length - 1];
       } else throw Error("Entity name is null or empty");
     }
@@ -14857,6 +14868,11 @@ var SceneManager = /*#__PURE__*/function (_Manager) {
       }
 
       throw Error("Cannot get scene with name " + name);
+    }
+  }, {
+    key: "GetLoadedScene",
+    value: function GetLoadedScene() {
+      return this.loadedScene;
     }
   }, {
     key: "RemoveScene",
@@ -15496,8 +15512,8 @@ var engine = /*#__PURE__*/function () {
     key: "AddManager",
     value: function AddManager(c) {
       if (name && name !== "") {
-        for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-          args[_key2 - 1] = arguments[_key2];
+        for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+          args[_key - 1] = arguments[_key];
         }
 
         this.managers.push(_construct(c, [this].concat(args)));
@@ -15571,46 +15587,56 @@ var Transform = /*#__PURE__*/function () {
 }();
 
 var Entity = /*#__PURE__*/function () {
-  function Entity(engine, name) {
+  function Entity(engine, name, properties) {
     _classCallCheck(this, Entity);
 
     this._id = shortid.generate();
     this._name = name;
+    this._properties = properties || {};
     this._engine = engine;
     this.transform = new Transform();
     this.components = [];
+    this.Create();
   }
 
   _createClass(Entity, [{
+    key: "Create",
+    value: function Create() {}
+  }, {
     key: "Init",
-    value: function Init() {
+    value: function Init() {}
+  }, {
+    key: "Update",
+    value: function Update() {}
+  }, {
+    key: "Unload",
+    value: function Unload() {}
+  }, {
+    key: "InitComponents",
+    value: function InitComponents() {
       for (var i = 0, len = this.components.length; i < len; i++) {
         this.components[i].Init();
       }
     }
   }, {
-    key: "Update",
-    value: function Update() {
+    key: "UpdateComponents",
+    value: function UpdateComponents() {
       for (var i = 0, len = this.components.length; i < len; i++) {
         this.components[i].Update();
       }
     }
   }, {
-    key: "Unload",
-    value: function Unload() {
+    key: "UnloadComponents",
+    value: function UnloadComponents() {
       for (var i = 0, len = this.components.length; i < len; i++) {
         this.components[i].Unload();
       }
     }
   }, {
     key: "AddComponent",
-    value: function AddComponent(c, name) {
+    value: function AddComponent(c, name, properties) {
       if (name && name !== "") {
-        for (var _len3 = arguments.length, args = new Array(_len3 > 2 ? _len3 - 2 : 0), _key3 = 2; _key3 < _len3; _key3++) {
-          args[_key3 - 2] = arguments[_key3];
-        }
-
-        this.components.push(_construct(c, [this, name].concat(args)));
+        this.components.push(new c(this, name, properties));
         return this.components[this.components.length - 1];
       } else throw Error("Component name is null or empty");
     }
@@ -15663,26 +15689,47 @@ var Entity = /*#__PURE__*/function () {
     get: function get() {
       return this._engine;
     }
+  }, {
+    key: "properties",
+    get: function get() {
+      return this._properties;
+    }
   }]);
 
   return Entity;
 }();
 
 var Component = /*#__PURE__*/function () {
-  function Component(parent, name) {
+  function Component(parent, name, properties) {
     _classCallCheck(this, Component);
 
     this.parent = parent;
     this._name = name;
+    this._properties = properties || {};
+    this.Create();
   }
 
   _createClass(Component, [{
+    key: "Create",
+    value: function Create() {}
+  }, {
+    key: "Init",
+    value: function Init() {}
+  }, {
+    key: "Update",
+    value: function Update() {}
+  }, {
     key: "Unload",
     value: function Unload() {}
   }, {
     key: "name",
     get: function get() {
       return this._name;
+    }
+  }, {
+    key: "properties",
+    get: function get() {
+      return this._properties;
     }
   }]);
 
@@ -15692,20 +15739,24 @@ var Component = /*#__PURE__*/function () {
 var SpriteRenderer = /*#__PURE__*/function (_Component) {
   _inherits(SpriteRenderer, _Component);
 
-  function SpriteRenderer(parent, name, image, stretchMode) {
+  function SpriteRenderer() {
     var _this6;
 
     _classCallCheck(this, SpriteRenderer);
 
-    _this6 = _possibleConstructorReturn(this, _getPrototypeOf(SpriteRenderer).call(this, parent, name));
+    _this6 = _possibleConstructorReturn(this, _getPrototypeOf(SpriteRenderer).apply(this, arguments));
     _this6._name = "SpriteRenderer";
-    _this6.image = image;
-    _this6.scale = 1;
-    _this6.stretchMode = stretchMode;
     return _this6;
   }
 
   _createClass(SpriteRenderer, [{
+    key: "Create",
+    value: function Create() {
+      this.image = this.properties["image"];
+      this.scale = 1;
+      this.stretchMode = this.properties["stretchMode"];
+    }
+  }, {
     key: "Init",
     value: function Init() {
       this.texture = new Two.Texture(this.image);
@@ -15839,6 +15890,10 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
@@ -15866,19 +15921,22 @@ var FPSCounter_1 = __importDefault(require("../components/FPSCounter"));
 var Player = /*#__PURE__*/function (_alge_1$Entity) {
   _inherits(Player, _alge_1$Entity);
 
-  function Player(engine, name, image_src) {
-    var _this;
-
+  function Player() {
     _classCallCheck(this, Player);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(Player).call(this, engine, name));
-
-    _this.AddComponent(alge_1.SpriteRenderer, "Sprite", image_src, alge_1.SpriteMode.Cover);
-
-    _this.AddComponent(FPSCounter_1.default, "FPSCounter");
-
-    return _this;
+    return _possibleConstructorReturn(this, _getPrototypeOf(Player).apply(this, arguments));
   }
+
+  _createClass(Player, [{
+    key: "Create",
+    value: function Create() {
+      this.AddComponent(alge_1.SpriteRenderer, "Sprite", {
+        image: this.properties["sprite"],
+        stretchMode: alge_1.SpriteMode.Cover
+      });
+      this.AddComponent(FPSCounter_1.default, "FPSCounter");
+    }
+  }]);
 
   return Player;
 }(alge_1.Entity);
@@ -15931,7 +15989,7 @@ var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
     value: function Init() {
       this.inputManager.SetCursor(alge_1.Cursor.Hidden);
       console.log("Player1 Init");
-      console.log(this.parent.engine.GetManager(alge_1.DrawManager).GetContext().scene);
+      console.log(this.parent);
     }
   }, {
     key: "Update",
@@ -16082,10 +16140,14 @@ var game = new alge_1.Engine({
   fullscreen: true
 });
 var mainScene = game.GetManager(alge_1.SceneManager).CreateScene("test");
-var player1 = mainScene.AddEntity(Player_1.default, "PlayerEntity", "https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg");
+var player1 = mainScene.AddEntity(Player_1.default, "PlayerEntity", {
+  sprite: "https://upload.wikimedia.org/wikipedia/commons/9/9a/Gull_portrait_ca_usa.jpg"
+});
 player1.AddComponent(PlayerController_1.default, "PlayerController");
 var newScene = game.GetManager(alge_1.SceneManager).CreateScene("test2");
-var player2 = newScene.AddEntity(Player_1.default, "PlayerEntity", "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1280px-Image_created_with_a_mobile_phone.png");
+var player2 = newScene.AddEntity(Player_1.default, "PlayerEntity", {
+  sprite: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1280px-Image_created_with_a_mobile_phone.png"
+});
 player2.AddComponent(PlayerController2_1.default, "PlayerController");
 game.Run();
 },{"../dist/alge":"../dist/alge.js","./entities/Player":"entities/Player.ts","./components/PlayerController":"components/PlayerController.ts","./components/PlayerController2":"components/PlayerController2.ts"}],"../node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
@@ -16116,7 +16178,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54701" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50754" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -61,9 +61,12 @@ import { Entity, SpriteRenderer, SpriteMode, Engine} from "alge";
 import PlayerController from "../components/PlayerController";
 
 export default class Player extends Entity {
-	constructor(engine : Engine, name : string, sprite : string) {
+	public Create() {
 		super(engine, name);
-		this.AddComponent(SpriteRenderer, "Sprite", sprite, SpriteMode.Cover);
+		this.AddComponent(SpriteRenderer, "Sprite", { 
+			image: this.properties["sprite"], 
+			stretchMode : SpriteMode.Cover,
+		});
 		this.AddComponent(PlayerController, "Controller");
 	}
 }
@@ -78,7 +81,7 @@ import Player from "./entities/Player";
 const game = new Engine({fullscreen: true});
 
 let mainScene : Scene = game.GetManager(SceneManager).CreateScene("test");
-mainScene.AddEntity(Player, "PlayerEntity", "path/to/sprite");
+mainScene.AddEntity(Player, "PlayerEntity", { sprite:"path/to/sprite" });
 
 game.Run();
 ```
