@@ -14638,19 +14638,21 @@ exports.default = _default;
 },{}],"../dist/alge.js":[function(require,module,exports) {
 'use strict';
 
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _construct(Parent, args, Class) { if (_isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
 
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -14817,12 +14819,14 @@ var Scene = /*#__PURE__*/function () {
 var SceneManager = /*#__PURE__*/function (_Manager) {
   _inherits(SceneManager, _Manager);
 
+  var _super = _createSuper(SceneManager);
+
   function SceneManager(engine) {
     var _this;
 
     _classCallCheck(this, SceneManager);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(SceneManager).call(this, engine));
+    _this = _super.call(this, engine);
     _this._name = "SceneManager";
     _this.scenes = [];
     return _this;
@@ -14908,12 +14912,14 @@ var SceneManager = /*#__PURE__*/function (_Manager) {
 var DrawManager = /*#__PURE__*/function (_Manager2) {
   _inherits(DrawManager, _Manager2);
 
+  var _super2 = _createSuper(DrawManager);
+
   function DrawManager() {
     var _this2;
 
     _classCallCheck(this, DrawManager);
 
-    _this2 = _possibleConstructorReturn(this, _getPrototypeOf(DrawManager).apply(this, arguments));
+    _this2 = _super2.apply(this, arguments);
     _this2._name = "DrawManager";
     return _this2;
   }
@@ -14952,12 +14958,14 @@ var DrawManager = /*#__PURE__*/function (_Manager2) {
 var TimeManager = /*#__PURE__*/function (_Manager3) {
   _inherits(TimeManager, _Manager3);
 
+  var _super3 = _createSuper(TimeManager);
+
   function TimeManager(engine) {
     var _this3;
 
     _classCallCheck(this, TimeManager);
 
-    _this3 = _possibleConstructorReturn(this, _getPrototypeOf(TimeManager).call(this, engine));
+    _this3 = _super3.call(this, engine);
     _this3._name = "TimeManager";
     _this3._lastUpdate = 0;
     _this3._deltaTime = 0;
@@ -15204,12 +15212,14 @@ Vec.FromArray = function (a) {
 var InputManager = /*#__PURE__*/function (_Manager4) {
   _inherits(InputManager, _Manager4);
 
+  var _super4 = _createSuper(InputManager);
+
   function InputManager() {
     var _this4;
 
     _classCallCheck(this, InputManager);
 
-    _this4 = _possibleConstructorReturn(this, _getPrototypeOf(InputManager).apply(this, arguments));
+    _this4 = _super4.apply(this, arguments);
     _this4._name = "InputManager";
     _this4.pressed = {};
     _this4.down = {};
@@ -15739,12 +15749,14 @@ var Component = /*#__PURE__*/function () {
 var SpriteRenderer = /*#__PURE__*/function (_Component) {
   _inherits(SpriteRenderer, _Component);
 
+  var _super5 = _createSuper(SpriteRenderer);
+
   function SpriteRenderer() {
     var _this6;
 
     _classCallCheck(this, SpriteRenderer);
 
-    _this6 = _possibleConstructorReturn(this, _getPrototypeOf(SpriteRenderer).apply(this, arguments));
+    _this6 = _super5.apply(this, arguments);
     _this6._name = "SpriteRenderer";
     return _this6;
   }
@@ -15845,15 +15857,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -15864,10 +15880,12 @@ var alge_1 = require("../../dist/alge");
 var FPSCounter = /*#__PURE__*/function (_alge_1$Component) {
   _inherits(FPSCounter, _alge_1$Component);
 
+  var _super = _createSuper(FPSCounter);
+
   function FPSCounter() {
     _classCallCheck(this, FPSCounter);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(FPSCounter).apply(this, arguments));
+    return _super.apply(this, arguments);
   }
 
   _createClass(FPSCounter, [{
@@ -15894,15 +15912,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 var __importDefault = this && this.__importDefault || function (mod) {
   return mod && mod.__esModule ? mod : {
@@ -15921,10 +15943,12 @@ var FPSCounter_1 = __importDefault(require("../components/FPSCounter"));
 var Player = /*#__PURE__*/function (_alge_1$Entity) {
   _inherits(Player, _alge_1$Entity);
 
+  var _super = _createSuper(Player);
+
   function Player() {
     _classCallCheck(this, Player);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(Player).apply(this, arguments));
+    return _super.apply(this, arguments);
   }
 
   _createClass(Player, [{
@@ -15953,15 +15977,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -15972,12 +16000,14 @@ var alge_1 = require("../../dist/alge");
 var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
   _inherits(PlayerController, _alge_1$Component);
 
+  var _super = _createSuper(PlayerController);
+
   function PlayerController() {
     var _this;
 
     _classCallCheck(this, PlayerController);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(PlayerController).apply(this, arguments));
+    _this = _super.apply(this, arguments);
     _this.inputManager = _this.parent.engine.GetManager(alge_1.InputManager);
     _this.time = _this.parent.engine.GetManager(alge_1.TimeManager);
     _this.sceneManager = _this.parent.engine.GetManager(alge_1.SceneManager);
@@ -16039,15 +16069,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -16058,12 +16092,14 @@ var alge_1 = require("../../dist/alge");
 var PlayerController2 = /*#__PURE__*/function (_alge_1$Component) {
   _inherits(PlayerController2, _alge_1$Component);
 
+  var _super = _createSuper(PlayerController2);
+
   function PlayerController2() {
     var _this;
 
     _classCallCheck(this, PlayerController2);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(PlayerController2).apply(this, arguments));
+    _this = _super.apply(this, arguments);
     _this.inputManager = _this.parent.engine.GetManager(alge_1.InputManager);
     _this.time = _this.parent.engine.GetManager(alge_1.TimeManager);
     _this.sceneManager = _this.parent.engine.GetManager(alge_1.SceneManager);
@@ -16178,7 +16214,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50754" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "38803" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

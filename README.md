@@ -62,7 +62,6 @@ import PlayerController from "../components/PlayerController";
 
 export default class Player extends Entity {
 	public Create() {
-		super(engine, name);
 		this.AddComponent(SpriteRenderer, "Sprite", { 
 			image: this.properties["sprite"], 
 			stretchMode : SpriteMode.Cover,
