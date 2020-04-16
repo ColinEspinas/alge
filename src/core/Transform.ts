@@ -1,4 +1,4 @@
-import Vec from './utilities/Vec'
+import Vec from '../utilities/Vec'
 
 export default class Transform {
 
@@ -14,5 +14,13 @@ export default class Transform {
 		this.position = new Vec(0, 0, 0);
 		this.rotation = 0;
 		this.scale = new Vec(1, 1);
+	}
+
+	public WorldToLocal(position : Vec) {
+		return position.Sub(this.position);
+	}
+
+	public LocalToWorld(position : Vec) {
+		return position.Add(this.position);
 	}
 }

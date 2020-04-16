@@ -1,18 +1,11 @@
-import Manager from '../core/Manager';
-import Scene from "../core/Scene";
-import Engine from '../core/Engine';
-export default class SceneManager extends Manager {
+import BaseSceneManager from './BaseSceneManager';
+import Scene from '../scenes/Scene';
+export default class SceneManager extends BaseSceneManager {
     protected _name: string;
-    private scenes;
-    private loadedScene;
-    constructor(engine: Engine);
-    Init(): void;
-    Update(): void;
+    protected scenes: Scene[];
+    protected loadedScene: Scene;
     CreateScene(name: string): Scene;
     GetScenes(): Scene[];
     GetScene(name: string): Scene;
     GetLoadedScene(): Scene;
-    RemoveScene(index: number): void;
-    LoadSceneByIndex(index: number): void;
-    LoadSceneByName(name: string): void;
 }

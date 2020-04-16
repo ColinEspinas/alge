@@ -7,6 +7,7 @@ export default class TimeManager extends Manager {
 
 	private _lastUpdate : number;
 	private _deltaTime : number;
+	private _lastDeltaTime : number;
 	private _fps : number;
 
 	public constructor(engine : Engine) {
@@ -17,10 +18,12 @@ export default class TimeManager extends Manager {
 	}
 
 	public get deltaTime() : number { return this._deltaTime; }
+	public get lastDeltaTime() : number { return this._lastDeltaTime; }
 	public get lastUpdate() : number { return this._lastUpdate; }
 	public get fps() : number { return this._fps; }
 
 	public Update() {
+		this._lastDeltaTime = this._deltaTime;
 		this._deltaTime = (performance.now() - this._lastUpdate)/1000;
 		this._lastUpdate = performance.now();
 		this._fps = 1/this._deltaTime;

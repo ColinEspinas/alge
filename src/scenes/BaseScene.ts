@@ -1,18 +1,18 @@
-import Entity from './Entity';
+import Entity from '../core/Entity';
 import shortid from 'shortid';
-import Engine from './Engine';
+import Engine from '../core/Engine';
 
-export default class Scene {
+export default class BaseScene {
 
-	private _id : number;
+	protected _id : number;
 	protected _name : string;
 
-	private engine : Engine;
+	protected engine : Engine;
 
-	private loaded : boolean = false;
+	protected loaded : boolean = false;
 
-	private entities : Entity[];
-	private loadedEntities: Entity[];
+	protected entities : Entity[];
+	protected loadedEntities: Entity[];
 
 	constructor(name : string, engine : Engine) {
 		this._id = shortid.generate();
@@ -31,9 +31,8 @@ export default class Scene {
 	}
 
 	public Reload() : void {
-		this.loadedEntities = [];
-		this.loaded = false;
-		this.loadedEntities = this.entities;
+		this.Unload();
+		this.Load();
 	}
 
 	public Load() : void {
@@ -42,7 +41,7 @@ export default class Scene {
 		this.loadedEntities = this.entities;
 	}
 
-	private UnloadEntity(entity : Entity) : void {
+	protected UnloadEntity(entity : Entity) : void {
 		entity.Unload();
 		entity.UnloadComponents();
 	}
@@ -56,10 +55,14 @@ export default class Scene {
 		}
 	}
 
-	private UpdateEntity(entity : Entity) : void {
+	protected InitEntity(entity : Entity) : void {
+		entity.Init();
+		entity.InitComponents();
+	}
+
+	protected UpdateEntity(entity : Entity) : void {
 		if (this.loaded == false) {
-			entity.Init();
-			entity.InitComponents();
+			this.InitEntity(entity);
 		}
 		else {
 			entity.Update();
@@ -78,6 +81,9 @@ export default class Scene {
 	public AddEntity<EntityType extends Entity>(e : new (...args : any[]) => EntityType, name : string, properties ?: Object) : Entity {
 		if (name && name !== "") {
 			this.entities.push(new e(this.engine, name, properties));
+			if (this.loaded) {
+				this.InitEntity(this.entities[this.entities.length - 1]);
+			}
 			return this.entities[this.entities.length - 1];
 		}
 		else throw Error("Entity name is null or empty");

@@ -26,4 +26,5 @@ export default class Vec {
     static Right(): Vec;
     static Front(): Vec;
     static Back(): Vec;
+    static From(v: Vec): Vec;
 }

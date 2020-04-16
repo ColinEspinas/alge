@@ -1,4 +1,4 @@
-import Vec from "../core/utilities/Vec";
+import Vec from "../utilities/Vec";
 import Manager from "../core/Manager";
 export default class InputManager extends Manager {
     protected _name: string;

@@ -141,4 +141,9 @@ export default class Vec {
 	public static Right() : Vec { return new Vec(1, 0, 0); }
 	public static Front() : Vec { return new Vec(0, 0, 1); }
 	public static Back() : Vec { return new Vec(0, 0, -1); }
+
+	public static From(v : Vec) : Vec {
+		if (v.z) return new Vec(v.x, v.y, v.z);
+		return new Vec(v.x, v.y);
+	}
 }

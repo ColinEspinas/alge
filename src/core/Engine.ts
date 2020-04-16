@@ -1,16 +1,19 @@
-import Two from 'two.js';
+import Manager from './Manager';
 import SceneManager from '../managers/SceneManager';
-import DrawManager from '../managers/DrawManager';
+import RenderManager from '../managers/RenderManager';
 import TimeManager from '../managers/TimeManager';
 import InputManager from '../managers/InputManager';
-import Manager from './Manager';
+import PhysicsManager from '../managers/PhysicsManager';
 
 export type Options  = {
 	width ?: number;
 	height ?: number;
+	resolution ?: number,
 	fullscreen ?: boolean;
 	container ?: string;
 	managers ?: any[];
+	renderer ?: string;
+	physics ?: string;
 }
 
 export default class engine {
@@ -18,6 +21,7 @@ export default class engine {
 	private _width : number;
 	private _height : number;
 	private _fullscreen : boolean;
+	private _resolution : number;
 
 	private _container : string;
 
@@ -28,16 +32,26 @@ export default class engine {
 		options = Object.assign({
 			width : 1280,
 			height : 720,
+			resolution : 1,
 			fullscreen : false,
 			container : "body",
 			managers: [],
+			renderer: 'pixi',
+			physics: 'matter',
 		}, options);
 
 		this.managers = [];
 
+		if (options.renderer == 'pixi') {
+			this.managers.push(new SceneManager(this));
+			this.managers.push(new RenderManager(this));
+		}
 		this.managers.push(new TimeManager(this));
-		this.managers.push(new SceneManager(this));
-		this.managers.push(new DrawManager(this));
+
+		if (options.physics == 'matter') {
+			this.managers.push(new PhysicsManager(this));
+		}
+
 		this.managers.push(new InputManager(this));
 
 		for (var i = 0, len = options.managers.length; i < len; i++) {
@@ -46,6 +60,7 @@ export default class engine {
 
 		this._width = options.width;
 		this._height = options.height;
+		this._resolution = options.resolution;
 		this._fullscreen = options.fullscreen;
 		this._container = options.container;
 
@@ -55,7 +70,8 @@ export default class engine {
 	}
 
 	public get width() { return this._width; }
-	public get height() { return this._height;  }
+	public get height() { return this._height; }
+	public get resolution() { return this._resolution; }
 	public get fullscreen() { return this._fullscreen; }
 	public get container() { return this._container; }
 

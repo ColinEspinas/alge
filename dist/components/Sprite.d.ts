@@ -1,15 +1,14 @@
 import Component from "../core/Component";
-export default class SpriteRenderer extends Component {
-    protected _name: string;
-    image: string;
-    scale: number;
+export default class Sprite extends Component {
+    private src;
     private texture;
-    private shape;
-    private stretchMode;
+    private sprite;
+    private position;
+    private scale;
+    private anchor;
     Create(): void;
     Init(): void;
     Update(): void;
-    Unload(): void;
 }
 export declare enum SpriteMode {
     BestFit = 0,

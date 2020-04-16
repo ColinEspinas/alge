@@ -3,21 +3,31 @@ import Engine from './core/Engine';
 import Entity from './core/Entity';
 import Transform from './core/Transform';
 import Component from './core/Component';
-import Scene from './core/Scene';
+
 
 // Base Managers:
-import DrawManager from './managers/DrawManager';
+import RenderManager from './managers/RenderManager';
 import InputManager from './managers/InputManager';
 import TimeManager from './managers/TimeManager';
+import BaseSceneManager from './managers/BaseSceneManager';
 import SceneManager from './managers/SceneManager';
+import PhysicsManager from './managers/PhysicsManager';
 
 // Base Components:
-import SpriteRenderer from './components/SpriteRenderer';
+import Sprite from './components/Sprite';
+import RigidBody from './components/RigidBody';
 
-// Utilities:
-import Vec from './core/utilities/Vec';
+// Base Scenes:
+import BaseScene from './scenes/BaseScene';
+import Scene from './scenes/Scene';
+
+// Base Utilities:
+import Vec from './utilities/Vec';
+import Angle from './utilities/Angle';
+import Tileset from './utilities/Tileset';
+
 import { Key, Cursor, Mouse } from './managers/InputManager';
-import { SpriteMode } from './components/SpriteRenderer';
+import { SpriteMode } from './components/Sprite';
 
 export {
 	// Core:
@@ -25,21 +35,29 @@ export {
 	Entity,
 	Transform,
 	Component,
-	Scene,
 
 	// Base Managers:
-	DrawManager,
+	RenderManager,
 	InputManager,
 	TimeManager,
+	BaseSceneManager,
 	SceneManager,
+	PhysicsManager,
 
 	// Base Components:
-	SpriteRenderer,
+	Sprite,
+	RigidBody,
 
-	// Utilities:
+	// Base Scenes:
+	BaseScene,
+	Scene,
+
+	// Base Utilities:
+	Vec,
+	Angle,
+	Tileset,
 	SpriteMode,
 	Key,
 	Cursor,
 	Mouse,
-	Vec,
 }

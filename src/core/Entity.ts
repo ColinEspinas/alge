@@ -14,7 +14,7 @@ export default class Entity {
 	public shape : any;
 	public transform : Transform;
 	public texture : any;
-	protected components : Component[];
+	protected components : any[];
 
 	constructor(engine : Engine, name : string, properties ?: Object) {
 		this._id = shortid.generate();
@@ -63,7 +63,12 @@ export default class Entity {
 		else throw Error("Component name is null or empty");
 	}
 
-	public GetComponent(name : string) : Component {
+	public AddSharedComponent<ComponentType extends Component>(c : ComponentType) : Component {
+		this.components.push(c);
+		return this.components[this.components.length - 1];
+	}
+
+	public GetComponent(name : string) {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			if (this.components[i].name == name) {
 				return this.components[i];

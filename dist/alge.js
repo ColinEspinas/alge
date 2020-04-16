@@ -5,7 +5,8 @@ Object.defineProperty(exports, '__esModule', { value: true });
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var shortid = _interopDefault(require('shortid'));
-var Two = _interopDefault(require('two.js'));
+var PIXI = require('pixi.js');
+var Matter = require('matter-js');
 
 class Manager {
     constructor(engine) {
@@ -33,7 +34,7 @@ class Manager {
     ;
 }
 
-class Scene {
+class BaseScene {
     constructor(name, engine) {
         this.loaded = false;
         this._id = shortid.generate();
@@ -49,9 +50,8 @@ class Scene {
         return this._name;
     }
     Reload() {
-        this.loadedEntities = [];
-        this.loaded = false;
-        this.loadedEntities = this.entities;
+        this.Unload();
+        this.Load();
     }
     Load() {
         this.loadedEntities = [];
@@ -70,10 +70,13 @@ class Scene {
             this.UnloadEntity(entity);
         }
     }
+    InitEntity(entity) {
+        entity.Init();
+        entity.InitComponents();
+    }
     UpdateEntity(entity) {
         if (this.loaded == false) {
-            entity.Init();
-            entity.InitComponents();
+            this.InitEntity(entity);
         }
         else {
             entity.Update();
@@ -90,6 +93,9 @@ class Scene {
     AddEntity(e, name, properties) {
         if (name && name !== "") {
             this.entities.push(new e(this.engine, name, properties));
+            if (this.loaded) {
+                this.InitEntity(this.entities[this.entities.length - 1]);
+            }
             return this.entities[this.entities.length - 1];
         }
         else
@@ -104,10 +110,10 @@ class Scene {
     }
 }
 
-class SceneManager extends Manager {
+class BaseSceneManager extends Manager {
     constructor(engine) {
         super(engine);
-        this._name = "SceneManager";
+        this._name = "BaseSceneManager";
         this.scenes = [];
     }
     Init() {
@@ -122,7 +128,7 @@ class SceneManager extends Manager {
                 this.GetScene(name);
             }
             catch (_a) {
-                let scene = new Scene(name, this.engine);
+                let scene = new BaseScene(name, this.engine);
                 this.scenes.push(scene);
                 return scene;
             }
@@ -166,33 +172,107 @@ class SceneManager extends Manager {
             this.loadedScene = scene;
             scene.Load();
         }
-        catch (_a) {
+        catch (error) {
+            console.error(error);
             throw Error("Cannot load scene with name " + name);
         }
     }
 }
 
-class DrawManager extends Manager {
+class Scene extends BaseScene {
     constructor() {
         super(...arguments);
-        this._name = "DrawManager";
+        this._container = new PIXI.Container();
+        this._world = Matter.World.create({});
+    }
+    get container() {
+        return this._container;
+    }
+    get world() {
+        return this._world;
+    }
+    Unload() {
+        super.Unload();
+        this._container.removeChildren();
+        Matter.World.clear(this._world, false);
+    }
+}
+
+class SceneManager extends BaseSceneManager {
+    constructor() {
+        super(...arguments);
+        this._name = "SceneManager";
+    }
+    CreateScene(name) {
+        if (name && name !== "") {
+            try {
+                this.GetScene(name);
+            }
+            catch (_a) {
+                let scene = new Scene(name, this.engine);
+                this.scenes.push(scene);
+                return scene;
+            }
+            throw Error("Scene with name " + name + " already exist");
+        }
+        else
+            throw Error("Cannot create scene with name " + name);
+    }
+    GetScenes() {
+        return this.scenes;
+    }
+    GetScene(name) {
+        for (var i = 0, len = this.scenes.length; i < len; i++) {
+            if (this.scenes[i].name === name) {
+                return this.scenes[i];
+            }
+        }
+        throw Error("Cannot get scene with name " + name);
+    }
+    GetLoadedScene() {
+        return this.loadedScene;
+    }
+}
+
+class PixiRenderManager extends Manager {
+    constructor() {
+        super(...arguments);
+        this._name = "PixiRenderManager";
+        this.sceneManager = this.engine.GetManager(SceneManager);
     }
     Init() {
-        this.SetContext(new Two({
-            width: this.engine.width,
-            height: this.engine.height,
-            fullscreen: this.engine.fullscreen,
-            autostart: false,
-            type: Two.Types.webgl,
-        }).appendTo(document.querySelector(this.engine.container)));
+        PIXI.utils.skipHello();
+        const container = document.querySelector(this.engine.container);
+        if (this.engine.fullscreen) {
+            this._renderer = new PIXI.Renderer({
+                width: container.clientWidth,
+                height: container.clientHeight,
+                resolution: this.engine.resolution,
+                transparent: true,
+            });
+            // Add listener to window resize to keep the rendered view the same size as the container.
+            window.addEventListener('resize', () => {
+                this._renderer.resize(container.clientWidth, container.clientHeight);
+            });
+        }
+        else {
+            this._renderer = new PIXI.Renderer({
+                width: this.engine.width,
+                height: this.engine.height,
+                resolution: this.engine.resolution,
+                transparent: true,
+            });
+        }
+        container.appendChild(this.renderer.view);
+        PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
     }
     Update() {
-        this.driver.update();
+        if (this.sceneManager) {
+            let stage = this.sceneManager.GetLoadedScene().container;
+            this.renderer.render(stage);
+        }
     }
-    SetContext(driver) {
-        this.driver = driver;
-    }
-    GetContext() { return this.driver; }
+    get renderer() { return this._renderer; }
 }
 
 class TimeManager extends Manager {
@@ -204,9 +284,11 @@ class TimeManager extends Manager {
         this._fps = 0;
     }
     get deltaTime() { return this._deltaTime; }
+    get lastDeltaTime() { return this._lastDeltaTime; }
     get lastUpdate() { return this._lastUpdate; }
     get fps() { return this._fps; }
     Update() {
+        this._lastDeltaTime = this._deltaTime;
         this._deltaTime = (performance.now() - this._lastUpdate) / 1000;
         this._lastUpdate = performance.now();
         this._fps = 1 / this._deltaTime;
@@ -345,6 +427,11 @@ class Vec {
     static Right() { return new Vec(1, 0, 0); }
     static Front() { return new Vec(0, 0, 1); }
     static Back() { return new Vec(0, 0, -1); }
+    static From(v) {
+        if (v.z)
+            return new Vec(v.x, v.y, v.z);
+        return new Vec(v.x, v.y);
+    }
 }
 Vec.FromArray = function (a) {
     return new Vec(a[0], a[1], a[2]);
@@ -565,25 +652,56 @@ class InputManager extends Manager {
     Key[Key["Quote"] = 222] = "Quote";
 })(exports.Key || (exports.Key = {}));
 
+class PhysicsManager extends Manager {
+    constructor(engine) {
+        super(engine);
+        this._name = "PhysicsManager";
+        this.timeManager = this.engine.GetManager(TimeManager);
+        this.sceneManager = this.engine.GetManager(SceneManager);
+        this._physicEngine = Matter.Engine.create();
+    }
+    Update() {
+        if (this.sceneManager && this.timeManager) {
+            this._physicEngine.world = this.sceneManager.GetLoadedScene().world;
+            const delta = this.timeManager.deltaTime * 1000;
+            const lastdelta = this.timeManager.lastDeltaTime * 1000;
+            Matter.Engine.update(this._physicEngine, 
+            // Not working even with the documentation pointing to that solution using default fixed instead
+            // delta, 
+            // delta / lastdelta,
+            1000 / 60);
+        }
+    }
+}
+
 class engine {
     constructor(options = {}) {
         options = Object.assign({
             width: 1280,
             height: 720,
+            resolution: 1,
             fullscreen: false,
             container: "body",
             managers: [],
+            renderer: 'pixi',
+            physics: 'matter',
         }, options);
         this.managers = [];
+        if (options.renderer == 'pixi') {
+            this.managers.push(new SceneManager(this));
+            this.managers.push(new PixiRenderManager(this));
+        }
         this.managers.push(new TimeManager(this));
-        this.managers.push(new SceneManager(this));
-        this.managers.push(new DrawManager(this));
+        if (options.physics == 'matter') {
+            this.managers.push(new PhysicsManager(this));
+        }
         this.managers.push(new InputManager(this));
         for (var i = 0, len = options.managers.length; i < len; i++) {
             this.AddManager(options.managers[i]);
         }
         this._width = options.width;
         this._height = options.height;
+        this._resolution = options.resolution;
         this._fullscreen = options.fullscreen;
         this._container = options.container;
         for (var i = 0, len = this.managers.length; i < len; i++) {
@@ -592,6 +710,7 @@ class engine {
     }
     get width() { return this._width; }
     get height() { return this._height; }
+    get resolution() { return this._resolution; }
     get fullscreen() { return this._fullscreen; }
     get container() { return this._container; }
     Run() {
@@ -643,6 +762,12 @@ class Transform {
         this.rotation = 0;
         this.scale = new Vec(1, 1);
     }
+    WorldToLocal(position) {
+        return position.Sub(this.position);
+    }
+    LocalToWorld(position) {
+        return position.Add(this.position);
+    }
 }
 
 class Entity {
@@ -691,6 +816,10 @@ class Entity {
         else
             throw Error("Component name is null or empty");
     }
+    AddSharedComponent(c) {
+        this.components.push(c);
+        return this.components[this.components.length - 1];
+    }
     GetComponent(name) {
         for (var i = 0, len = this.components.length; i < len; i++) {
             if (this.components[i].name == name) {
@@ -721,6 +850,7 @@ class Component {
         this.parent = parent;
         this._name = name;
         this._properties = properties || {};
+        this.GetManager = this.parent.engine.GetManager.bind(this.parent.engine);
         this.Create();
     }
     get name() { return this._name; }
@@ -735,55 +865,48 @@ class Component {
     ;
 }
 
-class SpriteRenderer extends Component {
-    constructor() {
-        super(...arguments);
-        this._name = "SpriteRenderer";
-    }
+class Sprite extends Component {
+    // private stretchMode : SpriteMode;
     Create() {
-        this.image = this.properties["image"];
-        this.scale = 1;
-        this.stretchMode = this.properties["stretchMode"];
+        if (typeof this.properties["src"] === 'string') {
+            this.src = this.properties["src"];
+            this.texture = PIXI.Texture.from(this.src);
+        }
+        else if (this.properties["src"] instanceof PIXI.Texture) {
+            this.texture = this.properties["src"];
+        }
+        this.position = this.properties["position"] || this.parent.transform.position;
+        this.anchor = this.properties["anchor"] || Vec.Zero();
+        this.scale = this.properties["scale"] || this.parent.transform.scale;
+        this.sprite = new PIXI.Sprite();
+        // this.stretchMode = this.properties["stretchMode"];
     }
     Init() {
-        this.texture = new Two.Texture(this.image);
-        this.shape = this.parent.engine.GetManager(DrawManager).GetContext().makeRectangle(this.parent.transform.position.x, this.parent.transform.position.y, this.parent.transform.scale.x, this.parent.transform.scale.y);
-        this.shape.noStroke();
-        this.shape.fill = this.texture;
+        this.sprite.position.x = this.position.x;
+        this.sprite.position.y = this.position.y;
+        this.sprite.width = this.scale.x;
+        this.sprite.height = this.scale.y;
+        this.sprite.angle = this.parent.transform.rotation;
+        this.sprite.anchor.x = this.anchor.x;
+        this.sprite.anchor.y = this.anchor.y;
+        this.sprite.texture = this.texture;
+        this.GetManager(SceneManager).GetLoadedScene().container.addChild(this.sprite);
     }
     Update() {
-        this.shape.width = this.parent.transform.scale.x;
-        this.shape.height = this.parent.transform.scale.y;
-        switch (this.stretchMode) {
-            case 0: {
-                let imgRatio = this.texture.image.naturalWidth / this.texture.image.naturalHeight;
-                if (imgRatio < 1) {
-                    this.texture.scale = new Two.Vector(this.scale * (this.shape.height / this.texture.image.naturalHeight), this.scale * (this.shape.height / this.texture.image.naturalHeight));
-                }
-                else {
-                    this.texture.scale = new Two.Vector(this.scale * (this.shape.width / this.texture.image.naturalWidth), this.scale * (this.shape.width / this.texture.image.naturalWidth));
-                }
-                break;
-            }
-            case 1: {
-                let imgRatio = this.texture.image.naturalWidth / this.texture.image.naturalHeight;
-                if (imgRatio < 1) {
-                    this.texture.scale = new Two.Vector(this.scale * (this.shape.width / this.texture.image.naturalWidth), this.scale * (this.shape.width / this.texture.image.naturalWidth));
-                }
-                else {
-                    this.texture.scale = new Two.Vector(this.scale * (this.shape.height / this.texture.image.naturalHeight), this.scale * (this.shape.height / this.texture.image.naturalHeight));
-                }
-                break;
-            }
-            case 2: {
-                this.texture.scale = new Two.Vector(this.scale * (this.shape.width / this.texture.image.naturalWidth), this.scale * (this.shape.height / this.texture.image.naturalHeight));
-                break;
-            }
-        }
-        this.shape.translation.set(this.parent.transform.position.x, this.parent.transform.position.y);
-    }
-    Unload() {
-        this.shape.remove();
+        // Set sprite position:
+        this.position = this.properties["position"] || this.parent.transform.position;
+        this.sprite.position.x = this.position.x;
+        this.sprite.position.y = this.position.y;
+        // Set sprite scale:
+        this.scale = this.properties["scale"] || this.parent.transform.scale;
+        this.sprite.width = this.scale.x;
+        this.sprite.height = this.scale.y;
+        // Set sprite rotation (in degrees):
+        this.sprite.angle = this.parent.transform.rotation;
+        // Set anchor point:
+        this.sprite.anchor.x = this.anchor.x;
+        this.sprite.anchor.y = this.anchor.y;
+        this.sprite.texture = this.texture;
     }
 }
 (function (SpriteMode) {
@@ -793,14 +916,98 @@ class SpriteRenderer extends Component {
     SpriteMode[SpriteMode["Unscaled"] = 3] = "Unscaled";
 })(exports.SpriteMode || (exports.SpriteMode = {}));
 
+class Vec$1 {
+    static DegToRad(degrees) {
+        return degrees * Math.PI / 180;
+    }
+    static RadToDeg(radians) {
+        return radians * 180 / Math.PI;
+    }
+}
+
+class RigidBody extends Component {
+    Create() {
+        const position = this.properties["position"] || this.parent.transform.position;
+        const scale = this.properties["scale"] || this.parent.transform.scale;
+        const isStatic = this.properties["static"];
+        const bodyOptions = this.properties["options"];
+        this._body = Matter.Bodies.rectangle(position.x, position.y, scale.x, scale.y, bodyOptions);
+    }
+    get body() { return this._body; }
+    Init() {
+        Matter.World.add(this.GetManager(SceneManager).GetLoadedScene().world, this._body);
+        this.parent.transform.position.x = this.body.position.x;
+        this.parent.transform.position.y = this.body.position.y;
+        this.parent.transform.rotation = Vec$1.RadToDeg(this.body.angle);
+    }
+    Update() {
+        this.parent.transform.position.x = this.body.position.x;
+        this.parent.transform.position.y = this.body.position.y;
+        this.parent.transform.rotation = Vec$1.RadToDeg(this.body.angle);
+    }
+    ApplyForce(position, force) {
+        Matter.Body.applyForce(this._body, Matter.Vector.create(position.x, position.y), Matter.Vector.create(force.x, force.y));
+    }
+    set velocity(velocity) {
+        Matter.Body.setVelocity(this._body, Matter.Vector.create(velocity.x, velocity.y));
+    }
+    get velocity() {
+        return new Vec(this._body.velocity.x, this._body.velocity.y);
+    }
+}
+
+class Tileset {
+    constructor(src, width, height, tileWidth, tileHeight) {
+        this.alias = {};
+        this.src = src;
+        this.size = new Vec(width, height);
+        this.tileSize = new Vec(tileWidth, tileHeight);
+        this.baseTexture = PIXI.BaseTexture.from(this.src);
+        this._tiles = [];
+        for (var y = 0, yMax = this.size.y; y < yMax; y++) {
+            for (var x = 0, xMax = this.size.x; x < xMax; x++) {
+                this._tiles.push(new PIXI.Texture(this.baseTexture, new PIXI.Rectangle(x * this.tileSize.x, y * this.tileSize.y, this.tileSize.x, this.tileSize.y)));
+            }
+        }
+    }
+    get tiles() { return this._tiles; }
+    /**
+     * Give an alias to a tile index
+     * @param index Index the alias is going to point to
+     * @param name Name of the alias
+     */
+    SetAlias(index, name) {
+        if (index >= 0 && name && name !== '')
+            this.alias[name] = index;
+    }
+    /**
+     * Get a tile from the tileset
+     * @param tile Tile index or name
+     */
+    GetTile(tile) {
+        if (typeof tile === 'number') {
+            return this.tiles[tile];
+        }
+        if (typeof tile === 'string') {
+            return this.tiles[this.alias[tile]];
+        }
+    }
+}
+
+exports.Angle = Vec$1;
+exports.BaseScene = BaseScene;
+exports.BaseSceneManager = BaseSceneManager;
 exports.Component = Component;
-exports.DrawManager = DrawManager;
 exports.Engine = engine;
 exports.Entity = Entity;
 exports.InputManager = InputManager;
+exports.PhysicsManager = PhysicsManager;
+exports.RenderManager = PixiRenderManager;
+exports.RigidBody = RigidBody;
 exports.Scene = Scene;
 exports.SceneManager = SceneManager;
-exports.SpriteRenderer = SpriteRenderer;
+exports.Sprite = Sprite;
+exports.Tileset = Tileset;
 exports.TimeManager = TimeManager;
 exports.Transform = Transform;
 exports.Vec = Vec;

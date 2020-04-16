@@ -9,7 +9,7 @@ export default class Entity {
     shape: any;
     transform: Transform;
     texture: any;
-    protected components: Component[];
+    protected components: any[];
     constructor(engine: Engine, name: string, properties?: Object);
     get id(): number;
     set name(name: string);
@@ -24,7 +24,8 @@ export default class Entity {
     UpdateComponents(): void;
     UnloadComponents(): void;
     AddComponent<ComponentType extends Component>(c: new (...args: any[]) => ComponentType, name: string, properties?: Object): Component;
-    GetComponent(name: string): Component;
+    AddSharedComponent<ComponentType extends Component>(c: ComponentType): Component;
+    GetComponent(name: string): any;
     GetComponents<ComponentType extends Component>(c: new (...args: any[]) => ComponentType): ComponentType[];
     RemoveComponent(name: string): void;
 }
