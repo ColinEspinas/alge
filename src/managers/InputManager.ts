@@ -8,11 +8,15 @@ export default class InputManager extends Manager{
 	private pressed : { [key: number]: boolean; } = {};
 	private down : { [key: number]: boolean; } = {};
 	private released : { [key: number]: boolean; } = {};
+
 	private mousePressed : { [key: number]: boolean; } = {};
+	private mouseWasPressed : { [key: number]: boolean; } = {};
 	private mouseDown : { [key: number]: boolean; } = {};
 	private mouseReleased : { [key: number]: boolean; } = {};
+
 	private mousePos : Vec = new Vec(0, 0);
 	private mouseWheel : Vec = new Vec(0, 0, 0);
+
 	private containerElement : HTMLElement;
 
 	public Init() : void {
@@ -40,11 +44,15 @@ export default class InputManager extends Manager{
 		});
 		this.containerElement.addEventListener('mousedown', (e : MouseEvent) => {
 			this.mouseDown[e.button] = true;
-			this.mousePressed[e.button] = true;
+			if (!this.mouseWasPressed[e.button]) {
+				this.mousePressed[e.button] = true;
+				this.mouseWasPressed[e.button] = true;
+			}
 		});
 		this.containerElement.addEventListener('mouseup', (e : MouseEvent) => { 
 			this.mouseDown[e.button] = false;
 			this.mouseReleased[e.button] = true;
+			this.mouseWasPressed[e.button] = false;
 		});
 		this.containerElement.addEventListener('wheel', (e : WheelEvent) => {
 			this.mouseWheel.x += e.deltaX;
@@ -56,6 +64,9 @@ export default class InputManager extends Manager{
 	public Update() {
 		for (var i = 0, len = Object.keys(this.pressed).length; i < len; i++) {
 			this.pressed[Object.keys(this.pressed)[i]] = false;
+		}
+		for (var i = 0, len = Object.keys(this.mousePressed).length; i < len; i++) {
+			this.mousePressed[Object.keys(this.mousePressed)[i]] = false;
 		}
 		for (var i = 0, len = Object.keys(this.released).length; i < len; i++) {
 			this.released[Object.keys(this.released)[i]] = false;
@@ -75,6 +86,10 @@ export default class InputManager extends Manager{
 
 	public GetMouseDown(button : number) : boolean {
 		return this.mouseDown[button];
+	}
+
+	public GetMousePressed(button : number) : boolean {
+		return this.mousePressed[button];
 	}
 
 	public GetMouseReleased(button : number) : boolean {

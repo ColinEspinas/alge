@@ -55097,6 +55097,7 @@ var InputManager = /*#__PURE__*/function (_Manager4) {
     _this7.down = {};
     _this7.released = {};
     _this7.mousePressed = {};
+    _this7.mouseWasPressed = {};
     _this7.mouseDown = {};
     _this7.mouseReleased = {};
     _this7.mousePos = new Vec(0, 0);
@@ -55130,11 +55131,16 @@ var InputManager = /*#__PURE__*/function (_Manager4) {
       });
       this.containerElement.addEventListener('mousedown', function (e) {
         _this8.mouseDown[e.button] = true;
-        _this8.mousePressed[e.button] = true;
+
+        if (!_this8.mouseWasPressed[e.button]) {
+          _this8.mousePressed[e.button] = true;
+          _this8.mouseWasPressed[e.button] = true;
+        }
       });
       this.containerElement.addEventListener('mouseup', function (e) {
         _this8.mouseDown[e.button] = false;
         _this8.mouseReleased[e.button] = true;
+        _this8.mouseWasPressed[e.button] = false;
       });
       this.containerElement.addEventListener('wheel', function (e) {
         _this8.mouseWheel.x += e.deltaX;
@@ -55147,6 +55153,10 @@ var InputManager = /*#__PURE__*/function (_Manager4) {
     value: function Update() {
       for (var i = 0, len = Object.keys(this.pressed).length; i < len; i++) {
         this.pressed[Object.keys(this.pressed)[i]] = false;
+      }
+
+      for (var i = 0, len = Object.keys(this.mousePressed).length; i < len; i++) {
+        this.mousePressed[Object.keys(this.mousePressed)[i]] = false;
       }
 
       for (var i = 0, len = Object.keys(this.released).length; i < len; i++) {
@@ -55171,6 +55181,11 @@ var InputManager = /*#__PURE__*/function (_Manager4) {
     key: "GetMouseDown",
     value: function GetMouseDown(button) {
       return this.mouseDown[button];
+    }
+  }, {
+    key: "GetMousePressed",
+    value: function GetMousePressed(button) {
+      return this.mousePressed[button];
     }
   }, {
     key: "GetMouseReleased",
@@ -55351,7 +55366,7 @@ var PhysicsManager = /*#__PURE__*/function (_Manager5) {
     _this9._name = "PhysicsManager";
     _this9.timeManager = _this9.engine.GetManager(TimeManager);
     _this9.sceneManager = _this9.engine.GetManager(SceneManager);
-    _this9._physicEngine = Matter.Engine.create();
+    _this9._physicsEngine = Matter.Engine.create();
     return _this9;
   }
 
@@ -55359,14 +55374,19 @@ var PhysicsManager = /*#__PURE__*/function (_Manager5) {
     key: "Update",
     value: function Update() {
       if (this.sceneManager && this.timeManager) {
-        this._physicEngine.world = this.sceneManager.GetLoadedScene().world;
+        this._physicsEngine.world = this.sceneManager.GetLoadedScene().world;
         var delta = this.timeManager.deltaTime * 1000;
         var lastdelta = this.timeManager.lastDeltaTime * 1000;
-        Matter.Engine.update(this._physicEngine, // Not working even with the documentation pointing to that solution using default fixed instead
+        Matter.Engine.update(this._physicsEngine, // Not working even with the documentation pointing to that solution using default fixed instead
         // delta, 
         // delta / lastdelta,
         1000 / 60);
       }
+    }
+  }, {
+    key: "physicsEngine",
+    get: function get() {
+      return this._physicsEngine;
     }
   }]);
 
@@ -55580,7 +55600,13 @@ var Entity = /*#__PURE__*/function () {
     }
   }, {
     key: "AddComponent",
-    value: function AddComponent(c, name, properties) {
+    value: function AddComponent(c, properties) {
+      this.components.push(new c(this, c.name, properties));
+      return this.components[this.components.length - 1];
+    }
+  }, {
+    key: "AddComponentWithName",
+    value: function AddComponentWithName(c, name, properties) {
       if (name && name !== "") {
         this.components.push(new c(this, name, properties));
         return this.components[this.components.length - 1];
@@ -55593,10 +55619,19 @@ var Entity = /*#__PURE__*/function () {
       return this.components[this.components.length - 1];
     }
   }, {
-    key: "GetComponent",
-    value: function GetComponent(name) {
+    key: "GetComponentFromName",
+    value: function GetComponentFromName(name) {
       for (var i = 0, len = this.components.length; i < len; i++) {
         if (this.components[i].name == name) {
+          return this.components[i];
+        }
+      }
+    }
+  }, {
+    key: "GetComponent",
+    value: function GetComponent(c) {
+      for (var i = 0, len = this.components.length; i < len; i++) {
+        if (this.components[i].name === c.name) {
           return this.components[i];
         }
       }
@@ -55712,7 +55747,7 @@ var Sprite = /*#__PURE__*/function (_Component) {
       }
 
       this.position = this.properties["position"] || this.parent.transform.position;
-      this.anchor = this.properties["anchor"] || Vec.Zero();
+      this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
       this.scale = this.properties["scale"] || this.parent.transform.scale;
       this.sprite = new PIXI.Sprite(); // this.stretchMode = this.properties["stretchMode"];
     }
@@ -55785,27 +55820,73 @@ var RigidBody = /*#__PURE__*/function (_Component2) {
   var _super9 = _createSuper(RigidBody);
 
   function RigidBody() {
+    var _this10;
+
     _classCallCheck(this, RigidBody);
 
-    return _super9.apply(this, arguments);
+    _this10 = _super9.apply(this, arguments);
+    _this10.collisionCallbacks = {};
+    return _this10;
   }
 
   _createClass(RigidBody, [{
     key: "Create",
     value: function Create() {
+      var _this11 = this;
+
       var position = this.properties["position"] || this.parent.transform.position;
       var scale = this.properties["scale"] || this.parent.transform.scale;
       var isStatic = this.properties["static"];
       var bodyOptions = this.properties["options"];
       this._body = Matter.Bodies.rectangle(position.x, position.y, scale.x, scale.y, bodyOptions);
+      this._body.component = this; //==== Collision Events : ====//
+
+      Matter.Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionStart', function (event) {
+        var pairs = event.pairs;
+
+        for (var i = 0, len = pairs.length; i < len; ++i) {
+          var pair = pairs[i];
+
+          if (pair.bodyA === _this11._body && _this11.collisionCallbacks['collisionStart']) {
+            _this11.collisionCallbacks['collisionStart'](pair.bodyB);
+          } else if (pair.bodyB === _this11._body && _this11.collisionCallbacks['collisionStart']) {
+            _this11.collisionCallbacks['collisionStart'](pair.bodyA);
+          }
+        }
+      });
+      Matter.Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionEnd', function (event) {
+        var pairs = event.pairs;
+
+        for (var i = 0, len = pairs.length; i < len; ++i) {
+          var pair = pairs[i];
+
+          if (pair.bodyA === _this11._body && _this11.collisionCallbacks['collisionEnd']) {
+            _this11.collisionCallbacks['collisionEnd'](pair.bodyB);
+          } else if (pair.bodyB === _this11._body && _this11.collisionCallbacks['collisionEnd']) {
+            _this11.collisionCallbacks['collisionEnd'](pair.bodyA);
+          }
+        }
+      });
+      Matter.Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionActive', function (event) {
+        var pairs = event.pairs;
+
+        for (var i = 0, len = pairs.length; i < len; ++i) {
+          var pair = pairs[i];
+
+          if (pair.bodyA === _this11._body && _this11.collisionCallbacks['collisionActive']) {
+            _this11.collisionCallbacks['collisionActive'](pair.bodyB);
+          } else if (pair.bodyB === _this11._body && _this11.collisionCallbacks['collisionActive']) {
+            _this11.collisionCallbacks['collisionActive'](pair.bodyA);
+          }
+        }
+      });
     }
   }, {
     key: "Init",
     value: function Init() {
+      Matter.Body.setPosition(this._body, Matter.Vector.create(this.parent.transform.position.x, this.parent.transform.position.y));
+      Matter.Body.setAngle(this._body, Vec$1.DegToRad(this.parent.transform.rotation));
       Matter.World.add(this.GetManager(SceneManager).GetLoadedScene().world, this._body);
-      this.parent.transform.position.x = this.body.position.x;
-      this.parent.transform.position.y = this.body.position.y;
-      this.parent.transform.rotation = Vec$1.RadToDeg(this.body.angle);
     }
   }, {
     key: "Update",
@@ -55818,6 +55899,21 @@ var RigidBody = /*#__PURE__*/function (_Component2) {
     key: "ApplyForce",
     value: function ApplyForce(position, force) {
       Matter.Body.applyForce(this._body, Matter.Vector.create(position.x, position.y), Matter.Vector.create(force.x, force.y));
+    }
+  }, {
+    key: "OnCollisionStart",
+    value: function OnCollisionStart(callback) {
+      this.collisionCallbacks['collisionStart'] = callback;
+    }
+  }, {
+    key: "OnCollisionStay",
+    value: function OnCollisionStay(callback) {
+      this.collisionCallbacks['collisionActive'] = callback;
+    }
+  }, {
+    key: "OnCollisionEnd",
+    value: function OnCollisionEnd(callback) {
+      this.collisionCallbacks['collisionEnd'] = callback;
     }
   }, {
     key: "body",
@@ -55835,6 +55931,84 @@ var RigidBody = /*#__PURE__*/function (_Component2) {
   }]);
 
   return RigidBody;
+}(Component);
+
+var Tilemap = /*#__PURE__*/function (_Component3) {
+  _inherits(Tilemap, _Component3);
+
+  var _super10 = _createSuper(Tilemap);
+
+  function Tilemap() {
+    _classCallCheck(this, Tilemap);
+
+    return _super10.apply(this, arguments);
+  }
+
+  _createClass(Tilemap, [{
+    key: "Create",
+    value: function Create() {
+      this.tileset = this.properties["tileset"];
+      this.map = this.properties["map"];
+      this.width = this.properties["width"];
+      this.height = this.properties["height"];
+      this.position = this.properties["position"] || this.parent.transform.position;
+      this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
+      this.scale = this.properties["scale"] || new Vec(this.width * this.tileset.tileWidth, this.height * this.tileset.tileHeight);
+      this.sprite = new PIXI.Sprite();
+      this.UpdateTilemap();
+    }
+  }, {
+    key: "Init",
+    value: function Init() {
+      this.GetManager(SceneManager).GetLoadedScene().container.addChild(this.sprite);
+    }
+  }, {
+    key: "Update",
+    value: function Update() {
+      // Render tiles to texture:
+      this.GetManager(PixiRenderManager).renderer.render(this.tilesContainer, this.texture);
+    }
+  }, {
+    key: "UpdateTilemap",
+    value: function UpdateTilemap() {
+      this.tilesContainer = new PIXI.Container();
+
+      for (var i = 0, len = this.width * this.height; i < len; i++) {
+        var tile = PIXI.Sprite.from(this.tileset.GetTile(this.map[i]));
+        tile.position.x = i % this.width * this.tileset.tileWidth;
+        tile.position.y = Math.floor(i / this.width) * this.tileset.tileHeight;
+        this.tilesContainer.addChild(tile);
+      }
+
+      this.texture = new PIXI.RenderTexture(new PIXI.BaseRenderTexture({
+        width: this.width * this.tileset.tileWidth,
+        height: this.height * this.tileset.tileHeight,
+        scaleMode: PIXI.SCALE_MODES.NEAREST,
+        resolution: 1
+      })); // Set sprite position:
+
+      this.sprite.position.x = this.position.x;
+      this.sprite.position.y = this.position.y; // Set sprite scale:
+
+      this.sprite.width = this.scale.x;
+      this.sprite.height = this.scale.y;
+      this.parent.transform.scale = this.scale; // Set sprite rotation (in degrees):
+
+      this.sprite.angle = this.parent.transform.rotation; // Set anchor point:
+
+      this.sprite.anchor.x = this.anchor.x;
+      this.sprite.anchor.y = this.anchor.y;
+      this.sprite.texture = this.texture;
+    }
+  }, {
+    key: "ReplaceTile",
+    value: function ReplaceTile(index, position) {
+      this.map[position.x + this.width * position.y] = index;
+      this.UpdateTilemap();
+    }
+  }]);
+
+  return Tilemap;
 }(Component);
 
 var Tileset = /*#__PURE__*/function () {
@@ -55887,6 +56061,16 @@ var Tileset = /*#__PURE__*/function () {
     get: function get() {
       return this._tiles;
     }
+  }, {
+    key: "tileWidth",
+    get: function get() {
+      return this.tileSize.x;
+    }
+  }, {
+    key: "tileHeight",
+    get: function get() {
+      return this.tileSize.y;
+    }
   }]);
 
   return Tileset;
@@ -55905,6 +56089,7 @@ exports.RigidBody = RigidBody;
 exports.Scene = Scene;
 exports.SceneManager = SceneManager;
 exports.Sprite = Sprite;
+exports.Tilemap = Tilemap;
 exports.Tileset = Tileset;
 exports.TimeManager = TimeManager;
 exports.Transform = Transform;
@@ -55964,14 +56149,13 @@ var Box = /*#__PURE__*/function (_alge_1$Entity) {
   _createClass(Box, [{
     key: "Create",
     value: function Create() {
-      this.transform.scale = new alge_1.Vec(4, 4);
+      this.transform.scale = new alge_1.Vec(22, 16);
       this.transform.position = this.properties["position"] || new alge_1.Vec(100, 100);
       var tileset = new alge_1.Tileset(Box_png_1.default, 1, 1, 22, 16);
-      this.AddComponent(alge_1.Sprite, "BoxSprite", {
-        src: tileset.GetTile(0),
-        anchor: new alge_1.Vec(0.5, 0.5)
+      this.AddComponent(alge_1.Sprite, {
+        src: tileset.GetTile(0)
       });
-      this.AddComponent(alge_1.RigidBody, "RigidBody");
+      this.AddComponent(alge_1.RigidBody);
     }
   }]);
 
@@ -56038,7 +56222,7 @@ var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
   _createClass(PlayerController, [{
     key: "Init",
     value: function Init() {
-      this.rb = this.parent.GetComponent("RigidBody"); // this.inputManager.SetCursor(Cursor.Hidden);
+      this.rb = this.parent.GetComponent(alge_1.RigidBody); // this.inputManager.SetCursor(Cursor.Hidden);
     }
   }, {
     key: "Update",
@@ -56127,13 +56311,13 @@ var Player = /*#__PURE__*/function (_alge_1$Entity) {
       // 	stretchMode : SpriteMode.Cover,
       // 	anchor: new Vec(0.5, 0.5),
       // });
-      // this.AddComponent(RigidBody, "RigidBody", {
+      // this.AddComponent(RigidBody, {
       // 	options: {
       // 		inertia: Infinity
       // 	}
       // });
 
-      this.AddComponent(PlayerController_1.default, "PlayerController");
+      this.AddComponent(PlayerController_1.default);
     }
   }]);
 
@@ -56196,14 +56380,15 @@ var Ground = /*#__PURE__*/function (_alge_1$Entity) {
   _createClass(Ground, [{
     key: "Create",
     value: function Create() {
-      this.transform.scale = new alge_1.Vec(1000, 32);
+      this.transform.scale = new alge_1.Vec(192, 32);
       this.transform.position.Add(new alge_1.Vec(700, 500));
-      var tileset = new alge_1.Tileset(Terrain_32_png_1.default, 19, 13, 32, 32);
-      this.AddComponent(alge_1.Sprite, "Sprite", {
-        src: tileset.GetTile(21),
-        anchor: new alge_1.Vec(0.5, 0.5)
+      var tilemap = this.AddComponent(alge_1.Tilemap, {
+        tileset: new alge_1.Tileset(Terrain_32_png_1.default, 19, 13, 32, 32),
+        width: 6,
+        height: 2,
+        map: [20, 21, 21, 21, 21, 22, 58, 59, 59, 59, 59, 60]
       });
-      this.AddComponent(alge_1.RigidBody, "RigidBody", {
+      this.rb = this.AddComponent(alge_1.RigidBody, {
         options: {
           isStatic: true
         }
@@ -56271,7 +56456,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "35815" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "45085" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -23,9 +23,11 @@ export default class Entity {
     InitComponents(): void;
     UpdateComponents(): void;
     UnloadComponents(): void;
-    AddComponent<ComponentType extends Component>(c: new (...args: any[]) => ComponentType, name: string, properties?: Object): Component;
+    AddComponent<ComponentType extends Component>(c: new (...args: any[]) => ComponentType, properties?: Object): ComponentType;
+    AddComponentWithName<ComponentType extends Component>(c: new (...args: any[]) => ComponentType, name: string, properties?: Object): Component;
     AddSharedComponent<ComponentType extends Component>(c: ComponentType): Component;
-    GetComponent(name: string): any;
+    GetComponentFromName(name: string): any;
+    GetComponent<ComponentType extends Component>(c: new (...args: any[]) => ComponentType): ComponentType;
     GetComponents<ComponentType extends Component>(c: new (...args: any[]) => ComponentType): ComponentType[];
     RemoveComponent(name: string): void;
 }

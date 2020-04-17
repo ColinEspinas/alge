@@ -7,6 +7,8 @@ export default class Tileset {
     private size;
     private tileSize;
     get tiles(): PIXI.Texture[];
+    get tileWidth(): number;
+    get tileHeight(): number;
     constructor(src: string, width: number, height: number, tileWidth: number, tileHeight: number);
     /**
      * Give an alias to a tile index

@@ -27,7 +27,7 @@ export default class Sprite extends Component {
 		}
 
 		this.position = this.properties["position"] || this.parent.transform.position;
-		this.anchor = this.properties["anchor"] || Vec.Zero();
+		this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
 		this.scale = this.properties["scale"] || this.parent.transform.scale;
 
 		this.sprite = new PIXI.Sprite();

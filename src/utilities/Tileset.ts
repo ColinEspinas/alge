@@ -14,6 +14,8 @@ export default class Tileset {
 	private tileSize : Vec;
 
 	public get tiles() { return this._tiles; }
+	public get tileWidth() { return this.tileSize.x; }
+	public get tileHeight() { return this.tileSize.y; }
 
 	public constructor(src : string, width : number, height : number, tileWidth : number, tileHeight : number) {
 		this.src = src;

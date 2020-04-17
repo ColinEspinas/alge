@@ -6,6 +6,7 @@ export default class InputManager extends Manager {
     private down;
     private released;
     private mousePressed;
+    private mouseWasPressed;
     private mouseDown;
     private mouseReleased;
     private mousePos;
@@ -16,6 +17,7 @@ export default class InputManager extends Manager {
     GetKeyDown(key: number): boolean;
     GetMousePosition(): Vec;
     GetMouseDown(button: number): boolean;
+    GetMousePressed(button: number): boolean;
     GetMouseReleased(button: number): boolean;
     GetMouseWheel(): Vec;
     SetCursor(type: Cursor): void;

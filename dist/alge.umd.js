@@ -443,6 +443,7 @@
 	        this.down = {};
 	        this.released = {};
 	        this.mousePressed = {};
+	        this.mouseWasPressed = {};
 	        this.mouseDown = {};
 	        this.mouseReleased = {};
 	        this.mousePos = new Vec(0, 0);
@@ -469,11 +470,15 @@
 	        });
 	        this.containerElement.addEventListener('mousedown', (e) => {
 	            this.mouseDown[e.button] = true;
-	            this.mousePressed[e.button] = true;
+	            if (!this.mouseWasPressed[e.button]) {
+	                this.mousePressed[e.button] = true;
+	                this.mouseWasPressed[e.button] = true;
+	            }
 	        });
 	        this.containerElement.addEventListener('mouseup', (e) => {
 	            this.mouseDown[e.button] = false;
 	            this.mouseReleased[e.button] = true;
+	            this.mouseWasPressed[e.button] = false;
 	        });
 	        this.containerElement.addEventListener('wheel', (e) => {
 	            this.mouseWheel.x += e.deltaX;
@@ -484,6 +489,9 @@
 	    Update() {
 	        for (var i = 0, len = Object.keys(this.pressed).length; i < len; i++) {
 	            this.pressed[Object.keys(this.pressed)[i]] = false;
+	        }
+	        for (var i = 0, len = Object.keys(this.mousePressed).length; i < len; i++) {
+	            this.mousePressed[Object.keys(this.mousePressed)[i]] = false;
 	        }
 	        for (var i = 0, len = Object.keys(this.released).length; i < len; i++) {
 	            this.released[Object.keys(this.released)[i]] = false;
@@ -500,6 +508,9 @@
 	    }
 	    GetMouseDown(button) {
 	        return this.mouseDown[button];
+	    }
+	    GetMousePressed(button) {
+	        return this.mousePressed[button];
 	    }
 	    GetMouseReleased(button) {
 	        return this.mouseReleased[button];
@@ -656,14 +667,15 @@
 	        this._name = "PhysicsManager";
 	        this.timeManager = this.engine.GetManager(TimeManager);
 	        this.sceneManager = this.engine.GetManager(SceneManager);
-	        this._physicEngine = Matter.Engine.create();
+	        this._physicsEngine = Matter.Engine.create();
 	    }
+	    get physicsEngine() { return this._physicsEngine; }
 	    Update() {
 	        if (this.sceneManager && this.timeManager) {
-	            this._physicEngine.world = this.sceneManager.GetLoadedScene().world;
+	            this._physicsEngine.world = this.sceneManager.GetLoadedScene().world;
 	            const delta = this.timeManager.deltaTime * 1000;
 	            const lastdelta = this.timeManager.lastDeltaTime * 1000;
-	            Matter.Engine.update(this._physicEngine, 
+	            Matter.Engine.update(this._physicsEngine, 
 	            // Not working even with the documentation pointing to that solution using default fixed instead
 	            // delta, 
 	            // delta / lastdelta,
@@ -806,7 +818,11 @@
 	            this.components[i].Unload();
 	        }
 	    }
-	    AddComponent(c, name, properties) {
+	    AddComponent(c, properties) {
+	        this.components.push(new c(this, c.name, properties));
+	        return this.components[this.components.length - 1];
+	    }
+	    AddComponentWithName(c, name, properties) {
 	        if (name && name !== "") {
 	            this.components.push(new c(this, name, properties));
 	            return this.components[this.components.length - 1];
@@ -818,9 +834,16 @@
 	        this.components.push(c);
 	        return this.components[this.components.length - 1];
 	    }
-	    GetComponent(name) {
+	    GetComponentFromName(name) {
 	        for (var i = 0, len = this.components.length; i < len; i++) {
 	            if (this.components[i].name == name) {
+	                return this.components[i];
+	            }
+	        }
+	    }
+	    GetComponent(c) {
+	        for (var i = 0, len = this.components.length; i < len; i++) {
+	            if (this.components[i].name === c.name) {
 	                return this.components[i];
 	            }
 	        }
@@ -874,7 +897,7 @@
 	            this.texture = this.properties["src"];
 	        }
 	        this.position = this.properties["position"] || this.parent.transform.position;
-	        this.anchor = this.properties["anchor"] || Vec.Zero();
+	        this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
 	        this.scale = this.properties["scale"] || this.parent.transform.scale;
 	        this.sprite = new PIXI.Sprite();
 	        // this.stretchMode = this.properties["stretchMode"];
@@ -924,19 +947,60 @@
 	}
 
 	class RigidBody extends Component {
+	    constructor() {
+	        super(...arguments);
+	        this.collisionCallbacks = {};
+	    }
+	    get body() { return this._body; }
 	    Create() {
 	        const position = this.properties["position"] || this.parent.transform.position;
 	        const scale = this.properties["scale"] || this.parent.transform.scale;
 	        const isStatic = this.properties["static"];
 	        const bodyOptions = this.properties["options"];
 	        this._body = Matter.Bodies.rectangle(position.x, position.y, scale.x, scale.y, bodyOptions);
+	        this._body.component = this;
+	        //==== Collision Events : ====//
+	        Matter.Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionStart', event => {
+	            var pairs = event.pairs;
+	            for (var i = 0, len = pairs.length; i < len; ++i) {
+	                const pair = pairs[i];
+	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionStart']) {
+	                    this.collisionCallbacks['collisionStart'](pair.bodyB);
+	                }
+	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionStart']) {
+	                    this.collisionCallbacks['collisionStart'](pair.bodyA);
+	                }
+	            }
+	        });
+	        Matter.Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionEnd', event => {
+	            var pairs = event.pairs;
+	            for (var i = 0, len = pairs.length; i < len; ++i) {
+	                const pair = pairs[i];
+	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionEnd']) {
+	                    this.collisionCallbacks['collisionEnd'](pair.bodyB);
+	                }
+	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionEnd']) {
+	                    this.collisionCallbacks['collisionEnd'](pair.bodyA);
+	                }
+	            }
+	        });
+	        Matter.Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionActive', event => {
+	            var pairs = event.pairs;
+	            for (var i = 0, len = pairs.length; i < len; ++i) {
+	                const pair = pairs[i];
+	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionActive']) {
+	                    this.collisionCallbacks['collisionActive'](pair.bodyB);
+	                }
+	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionActive']) {
+	                    this.collisionCallbacks['collisionActive'](pair.bodyA);
+	                }
+	            }
+	        });
 	    }
-	    get body() { return this._body; }
 	    Init() {
+	        Matter.Body.setPosition(this._body, Matter.Vector.create(this.parent.transform.position.x, this.parent.transform.position.y));
+	        Matter.Body.setAngle(this._body, Vec$1.DegToRad(this.parent.transform.rotation));
 	        Matter.World.add(this.GetManager(SceneManager).GetLoadedScene().world, this._body);
-	        this.parent.transform.position.x = this.body.position.x;
-	        this.parent.transform.position.y = this.body.position.y;
-	        this.parent.transform.rotation = Vec$1.RadToDeg(this.body.angle);
 	    }
 	    Update() {
 	        this.parent.transform.position.x = this.body.position.x;
@@ -951,6 +1015,68 @@
 	    }
 	    get velocity() {
 	        return new Vec(this._body.velocity.x, this._body.velocity.y);
+	    }
+	    OnCollisionStart(callback) {
+	        this.collisionCallbacks['collisionStart'] = callback;
+	    }
+	    OnCollisionStay(callback) {
+	        this.collisionCallbacks['collisionActive'] = callback;
+	    }
+	    OnCollisionEnd(callback) {
+	        this.collisionCallbacks['collisionEnd'] = callback;
+	    }
+	}
+
+	class Tilemap extends Component {
+	    Create() {
+	        this.tileset = this.properties["tileset"];
+	        this.map = this.properties["map"];
+	        this.width = this.properties["width"];
+	        this.height = this.properties["height"];
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
+	        this.scale = this.properties["scale"] || new Vec(this.width * this.tileset.tileWidth, this.height * this.tileset.tileHeight);
+	        this.sprite = new PIXI.Sprite();
+	        this.UpdateTilemap();
+	    }
+	    Init() {
+	        this.GetManager(SceneManager).GetLoadedScene().container.addChild(this.sprite);
+	    }
+	    Update() {
+	        // Render tiles to texture:
+	        this.GetManager(PixiRenderManager).renderer.render(this.tilesContainer, this.texture);
+	    }
+	    UpdateTilemap() {
+	        this.tilesContainer = new PIXI.Container();
+	        for (var i = 0, len = this.width * this.height; i < len; i++) {
+	            let tile = PIXI.Sprite.from(this.tileset.GetTile(this.map[i]));
+	            tile.position.x = (i % this.width) * this.tileset.tileWidth;
+	            tile.position.y = Math.floor(i / this.width) * this.tileset.tileHeight;
+	            this.tilesContainer.addChild(tile);
+	        }
+	        this.texture = new PIXI.RenderTexture(new PIXI.BaseRenderTexture({
+	            width: this.width * this.tileset.tileWidth,
+	            height: this.height * this.tileset.tileHeight,
+	            scaleMode: PIXI.SCALE_MODES.NEAREST,
+	            resolution: 1
+	        }));
+	        // Set sprite position:
+	        this.sprite.position.x = this.position.x;
+	        this.sprite.position.y = this.position.y;
+	        // Set sprite scale:
+	        this.sprite.width = this.scale.x;
+	        this.sprite.height = this.scale.y;
+	        this.parent.transform.scale = this.scale;
+	        // Set sprite rotation (in degrees):
+	        this.sprite.angle = this.parent.transform.rotation;
+	        // Set anchor point:
+	        this.sprite.anchor.x = this.anchor.x;
+	        this.sprite.anchor.y = this.anchor.y;
+	        this.sprite.texture = this.texture;
+	    }
+	    ReplaceTile(index, position) {
+	        this.map[position.x + this.width * position.y] = index;
+	        this.UpdateTilemap();
 	    }
 	}
 
@@ -969,6 +1095,8 @@
 	        }
 	    }
 	    get tiles() { return this._tiles; }
+	    get tileWidth() { return this.tileSize.x; }
+	    get tileHeight() { return this.tileSize.y; }
 	    /**
 	     * Give an alias to a tile index
 	     * @param index Index the alias is going to point to
@@ -1005,6 +1133,7 @@
 	exports.Scene = Scene;
 	exports.SceneManager = SceneManager;
 	exports.Sprite = Sprite;
+	exports.Tilemap = Tilemap;
 	exports.Tileset = Tileset;
 	exports.TimeManager = TimeManager;
 	exports.Transform = Transform;

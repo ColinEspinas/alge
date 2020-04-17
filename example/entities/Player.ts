@@ -17,12 +17,12 @@ export default class Player extends Entity {
 		// 	anchor: new Vec(0.5, 0.5),
 		// });
 
-		// this.AddComponent(RigidBody, "RigidBody", {
+		// this.AddComponent(RigidBody, {
 		// 	options: {
 		// 		inertia: Infinity
 		// 	}
 		// });
 
-		this.AddComponent(PlayerController, "PlayerController");
+		this.AddComponent(PlayerController);
 	}
 }

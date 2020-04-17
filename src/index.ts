@@ -16,6 +16,7 @@ import PhysicsManager from './managers/PhysicsManager';
 // Base Components:
 import Sprite from './components/Sprite';
 import RigidBody from './components/RigidBody';
+import Tilemap from './components/Tilemap';
 
 // Base Scenes:
 import BaseScene from './scenes/BaseScene';
@@ -47,6 +48,7 @@ export {
 	// Base Components:
 	Sprite,
 	RigidBody,
+	Tilemap,
 
 	// Base Scenes:
 	BaseScene,

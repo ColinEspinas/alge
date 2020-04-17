@@ -10,7 +10,7 @@ export default class PlayerController extends Component {
 
 	public Init() {
 
-		this.rb = this.parent.GetComponent("RigidBody");
+		this.rb = this.parent.GetComponent(RigidBody);
 		
 		// this.inputManager.SetCursor(Cursor.Hidden);
 	}
