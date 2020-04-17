@@ -819,16 +819,8 @@
 	        }
 	    }
 	    AddComponent(c, properties) {
-	        this.components.push(new c(this, c.name, properties));
+	        this.components.push(new c(this, properties["name"] || c.name, properties));
 	        return this.components[this.components.length - 1];
-	    }
-	    AddComponentWithName(c, name, properties) {
-	        if (name && name !== "") {
-	            this.components.push(new c(this, name, properties));
-	            return this.components[this.components.length - 1];
-	        }
-	        else
-	            throw Error("Component name is null or empty");
 	    }
 	    AddSharedComponent(c) {
 	        this.components.push(c);

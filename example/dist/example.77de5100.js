@@ -56239,7 +56239,7 @@ var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
         this.rb.velocity = this.rb.velocity.Add(alge_1.Vec.Right());
       }
 
-      if (this.inputManager.GetMouseDown(alge_1.Mouse.Left)) {
+      if (this.inputManager.GetMousePressed(alge_1.Mouse.Left)) {
         this.sceneManager.GetLoadedScene().AddEntity(Box_1.default, "Box", {
           position: alge_1.Vec.From(this.inputManager.GetMousePosition())
         });
@@ -56380,7 +56380,6 @@ var Ground = /*#__PURE__*/function (_alge_1$Entity) {
   _createClass(Ground, [{
     key: "Create",
     value: function Create() {
-      this.transform.scale = new alge_1.Vec(192, 32);
       this.transform.position.Add(new alge_1.Vec(700, 500));
       var tilemap = this.AddComponent(alge_1.Tilemap, {
         tileset: new alge_1.Tileset(Terrain_32_png_1.default, 19, 13, 32, 32),
@@ -56392,6 +56391,9 @@ var Ground = /*#__PURE__*/function (_alge_1$Entity) {
         options: {
           isStatic: true
         }
+      });
+      this.rb.OnCollisionEnd(function (other) {
+        console.log(other.velocity);
       });
     }
   }]);
@@ -56456,7 +56458,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "45085" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "46395" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

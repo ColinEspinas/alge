@@ -8,7 +8,6 @@ export default class Ground extends Entity {
 
 	public Create() {
 
-		this.transform.scale = new Vec(192, 32);
 		this.transform.position.Add(new Vec(700, 500));
 
 		
@@ -26,6 +25,10 @@ export default class Ground extends Entity {
 			options: {
 				isStatic: true 
 			},
+		});
+
+		this.rb.OnCollisionEnd((other)=>{
+			console.log(other.velocity);
 		});
 	}
 }

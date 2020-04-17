@@ -56,16 +56,8 @@ export default class Entity {
 	}
 
 	public AddComponent<ComponentType extends Component>(c : new (...args : any[]) => ComponentType, properties ?: Object) : ComponentType {
-		this.components.push(new c(this, c.name, properties));
+		this.components.push(new c(this, properties["name"] || c.name, properties));
 		return this.components[this.components.length - 1];
-	}
-
-	public AddComponentWithName<ComponentType extends Component>(c : new (...args : any[]) => ComponentType, name : string, properties ?: Object) : Component {
-		if (name && name !== "") {
-			this.components.push(new c(this, name, properties));
-			return this.components[this.components.length - 1];
-		}
-		else throw Error("Component name is null or empty");
 	}
 
 	public AddSharedComponent<ComponentType extends Component>(c : ComponentType) : Component {

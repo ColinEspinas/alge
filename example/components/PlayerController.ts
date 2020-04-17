@@ -27,7 +27,7 @@ export default class PlayerController extends Component {
 			this.rb.velocity = this.rb.velocity.Add(Vec.Right());
 		}
 
-		if (this.inputManager.GetMouseDown(Mouse.Left)) {
+		if (this.inputManager.GetMousePressed(Mouse.Left)) {
 			this.sceneManager.GetLoadedScene().AddEntity(Box, "Box", {
 				position: Vec.From(this.inputManager.GetMousePosition())
 			});
