@@ -818,7 +818,12 @@ class Entity {
         }
     }
     AddComponent(c, properties) {
-        this.components.push(new c(this, properties["name"] || c.name, properties));
+        let name;
+        if (properties && properties["name"])
+            name = properties["name"];
+        else
+            name = c.name;
+        this.components.push(new c(this, name, properties));
         return this.components[this.components.length - 1];
     }
     AddSharedComponent(c) {

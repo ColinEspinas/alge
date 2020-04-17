@@ -55601,16 +55601,10 @@ var Entity = /*#__PURE__*/function () {
   }, {
     key: "AddComponent",
     value: function AddComponent(c, properties) {
-      this.components.push(new c(this, c.name, properties));
+      var name;
+      if (properties && properties["name"]) name = properties["name"];else name = c.name;
+      this.components.push(new c(this, name, properties));
       return this.components[this.components.length - 1];
-    }
-  }, {
-    key: "AddComponentWithName",
-    value: function AddComponentWithName(c, name, properties) {
-      if (name && name !== "") {
-        this.components.push(new c(this, name, properties));
-        return this.components[this.components.length - 1];
-      } else throw Error("Component name is null or empty");
     }
   }, {
     key: "AddSharedComponent",
@@ -56458,7 +56452,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "46395" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "34039" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

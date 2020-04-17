@@ -56,7 +56,10 @@ export default class Entity {
 	}
 
 	public AddComponent<ComponentType extends Component>(c : new (...args : any[]) => ComponentType, properties ?: Object) : ComponentType {
-		this.components.push(new c(this, properties["name"] || c.name, properties));
+		let name : string;
+		if (properties && properties["name"]) name = properties["name"];
+		else name = c.name;
+		this.components.push(new c(this, name, properties));
 		return this.components[this.components.length - 1];
 	}
 
