@@ -60825,12 +60825,13 @@ var Tilemap = /*#__PURE__*/function (_Component3) {
         tile.position.x = i % this.width * this.tileset.tileWidth;
         tile.position.y = Math.floor(i / this.width) * this.tileset.tileHeight;
         this.tilesContainer.addChild(tile);
-      }
+      } // let scaleMode = (this.parent.engine.scaleMode == 
+
 
       this.texture = new PIXI.RenderTexture(new PIXI.BaseRenderTexture({
         width: this.width * this.tileset.tileWidth,
         height: this.height * this.tileset.tileHeight,
-        scaleMode: PIXI.SCALE_MODES.LINEAR,
+        // scaleMode: this.parent.engine.scaleMode, 
         resolution: 1
       })); // Set sprite position:
 
@@ -61783,7 +61784,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "38925" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "38893" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

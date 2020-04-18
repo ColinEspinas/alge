@@ -1077,10 +1077,11 @@ class Tilemap extends Component {
             tile.position.y = Math.floor(i / this.width) * this.tileset.tileHeight;
             this.tilesContainer.addChild(tile);
         }
+        // let scaleMode = (this.parent.engine.scaleMode == 
         this.texture = new RenderTexture(new BaseRenderTexture({
             width: this.width * this.tileset.tileWidth,
             height: this.height * this.tileset.tileHeight,
-            scaleMode: SCALE_MODES.LINEAR,
+            // scaleMode: this.parent.engine.scaleMode, 
             resolution: 1
         }));
         // Set sprite position:
