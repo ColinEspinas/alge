@@ -17,10 +17,10 @@ export default class Transform {
 	}
 
 	public WorldToLocal(position : Vec) {
-		return position.Sub(this.position);
+		return Vec.From(position).Sub(this.position);
 	}
 
 	public LocalToWorld(position : Vec) {
-		return position.Add(this.position);
+		return Vec.From(position).Add(this.position);
 	}
 }

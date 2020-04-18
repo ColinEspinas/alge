@@ -25,6 +25,9 @@ import Scene from './scenes/Scene';
 // Base Utilities:
 import Vec from './utilities/Vec';
 import Angle from './utilities/Angle';
+import Camera from './utilities/Camera';
+import Ease from './utilities/Ease';
+import Noise from './utilities/Noise';
 import Tileset from './utilities/Tileset';
 
 import { Key, Cursor, Mouse } from './managers/InputManager';
@@ -57,6 +60,9 @@ export {
 	// Base Utilities:
 	Vec,
 	Angle,
+	Camera,
+	Ease,
+	Noise,
 	Tileset,
 	SpriteMode,
 	Key,

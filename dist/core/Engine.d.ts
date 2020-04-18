@@ -7,6 +7,7 @@ export declare type Options = {
     container?: string;
     managers?: any[];
     renderer?: string;
+    scaleMode?: string;
     physics?: string;
 };
 export default class engine {
@@ -14,6 +15,7 @@ export default class engine {
     private _height;
     private _fullscreen;
     private _resolution;
+    private _scaleMode;
     private _container;
     private managers;
     constructor(options?: Partial<Options>);
@@ -22,6 +24,7 @@ export default class engine {
     get resolution(): number;
     get fullscreen(): boolean;
     get container(): string;
+    get scaleMode(): string;
     Run(): number;
     Update(): void;
     protected AddManager<ManagerType extends Manager>(c: new (...args: any[]) => ManagerType, ...args: any[]): Manager;

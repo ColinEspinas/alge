@@ -13,6 +13,7 @@ export type Options  = {
 	container ?: string;
 	managers ?: any[];
 	renderer ?: string;
+	scaleMode ?: string;
 	physics ?: string;
 }
 
@@ -22,6 +23,7 @@ export default class engine {
 	private _height : number;
 	private _fullscreen : boolean;
 	private _resolution : number;
+	private _scaleMode : string;
 
 	private _container : string;
 
@@ -37,14 +39,15 @@ export default class engine {
 			container : "body",
 			managers: [],
 			renderer: 'pixi',
+			scaleMode : 'nearest',
 			physics: 'matter',
 		}, options);
 
 		this.managers = [];
 
 		if (options.renderer == 'pixi') {
-			this.managers.push(new SceneManager(this));
 			this.managers.push(new RenderManager(this));
+			this.managers.push(new SceneManager(this));
 		}
 		this.managers.push(new TimeManager(this));
 
@@ -64,6 +67,8 @@ export default class engine {
 		this._fullscreen = options.fullscreen;
 		this._container = options.container;
 
+		this._scaleMode = options.scaleMode;
+
 		for (var i = 0, len = this.managers.length; i < len; i++) {
 			this.managers[i].PreInit(options);
 		}
@@ -74,6 +79,7 @@ export default class engine {
 	public get resolution() { return this._resolution; }
 	public get fullscreen() { return this._fullscreen; }
 	public get container() { return this._container; }
+	public get scaleMode() { return this._scaleMode; }
 
 	public Run() : number {
 

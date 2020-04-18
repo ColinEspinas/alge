@@ -1,4 +1,4 @@
-export default class Vec {
+export default class Angle {
     static DegToRad(degrees: number): number;
     static RadToDeg(radians: number): number;
 }

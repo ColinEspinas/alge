@@ -30,6 +30,7 @@
     "pixi-viewport": "^4.10.0",
     "pixi.js": "^5.2.1",
     "shortid": "^2.2.15",
+    "tumult": "^3.0.14",
     "two.js": "^0.7.0-beta.3"
   }
 }

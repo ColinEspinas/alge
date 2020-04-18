@@ -1,4 +1,4 @@
-export default class Vec {
+export default class Angle {
 
 	public static DegToRad(degrees : number) {
 		return degrees * Math.PI / 180;

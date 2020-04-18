@@ -49,7 +49,7 @@ export default class Sprite extends Component {
 
 		this.sprite.texture = this.texture;
 
-		this.GetManager(SceneManager).GetLoadedScene().container.addChild(this.sprite);
+		this.GetManager(SceneManager).GetLoadedScene().stage.addChild(this.sprite);
 	}
 
 	public Update() {

@@ -1,0 +1,34 @@
+export default class Ease {
+    static lerp(b: any, c: any, t: any): number;
+    static linear(t: any, b: any, _c: any, d: any): any;
+    static easeInQuad(t: any, b: any, _c: any, d: any): any;
+    static easeOutQuad(t: any, b: any, _c: any, d: any): any;
+    static easeInOutQuad(t: any, b: any, _c: any, d: any): any;
+    static easeInCubic(t: any, b: any, _c: any, d: any): any;
+    static easeOutCubic(t: any, b: any, _c: any, d: any): any;
+    static easeInOutCubic(t: any, b: any, _c: any, d: any): any;
+    static easeInQuart(t: any, b: any, _c: any, d: any): any;
+    static easeOutQuart(t: any, b: any, _c: any, d: any): any;
+    static easeInOutQuart(t: any, b: any, _c: any, d: any): any;
+    static easeInQuint(t: any, b: any, _c: any, d: any): any;
+    static easeOutQuint(t: any, b: any, _c: any, d: any): any;
+    static easeInOutQuint(t: any, b: any, _c: any, d: any): any;
+    static easeInSine(t: any, b: any, _c: any, d: any): any;
+    static easeOutSine(t: any, b: any, _c: any, d: any): any;
+    static easeInOutSine(t: any, b: any, _c: any, d: any): any;
+    static easeInExpo(t: any, b: any, _c: any, d: any): any;
+    static easeOutExpo(t: any, b: any, _c: any, d: any): any;
+    static easeInOutExpo(t: any, b: any, _c: any, d: any): any;
+    static easeInCirc(t: any, b: any, _c: any, d: any): any;
+    static easeOutCirc(t: any, b: any, _c: any, d: any): any;
+    static easeInOutCirc(t: any, b: any, _c: any, d: any): any;
+    static easeInElastic(t: any, b: any, _c: any, d: any): any;
+    static easeOutElastic(t: any, b: any, _c: any, d: any): any;
+    static easeInOutElastic(t: any, b: any, _c: any, d: any): any;
+    static easeInBack(t: any, b: any, _c: any, d: any, s: any): any;
+    static easeOutBack(t: any, b: any, _c: any, d: any, s: any): any;
+    static easeInOutBack(t: any, b: any, _c: any, d: any, s: any): any;
+    static easeInBounce(t: any, b: any, _c: any, d: any): any;
+    static easeOutBounce(t: any, b: any, _c: any, d: any): any;
+    static easeInOutBounce(t: any, b: any, _c: any, d: any): any;
+}

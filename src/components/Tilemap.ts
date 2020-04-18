@@ -38,7 +38,7 @@ export default class Tilemap extends Component {
 	}
 
 	public Init() {
-		this.GetManager(SceneManager).GetLoadedScene().container.addChild(this.sprite);
+		this.GetManager(SceneManager).GetLoadedScene().stage.addChild(this.sprite);
 	}
 
 	public Update() {
@@ -60,7 +60,7 @@ export default class Tilemap extends Component {
 			new PIXI.BaseRenderTexture({
 				width: this.width * this.tileset.tileWidth, 
 				height: this.height * this.tileset.tileHeight, 
-				scaleMode: PIXI.SCALE_MODES.NEAREST, 
+				scaleMode: PIXI.SCALE_MODES.LINEAR, 
 				resolution: 1
 			})
 		);

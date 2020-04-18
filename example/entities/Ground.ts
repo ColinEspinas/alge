@@ -26,9 +26,5 @@ export default class Ground extends Entity {
 				isStatic: true 
 			},
 		});
-
-		this.rb.OnCollisionEnd((other)=>{
-			console.log(other.velocity);
-		});
 	}
 }

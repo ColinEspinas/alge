@@ -1,4 +1,4 @@
-import { Component, InputManager, Key , TimeManager, SceneManager, RigidBody, Vec, Mouse } from "../../dist/alge";
+import { Component, InputManager, Key , TimeManager, SceneManager, RigidBody, Vec, Mouse, Camera, RenderManager, Entity, Ease, Noise } from "../../dist/alge";
 import Box from "../entities/Box";
 
 export default class PlayerController extends Component {
@@ -7,30 +7,48 @@ export default class PlayerController extends Component {
 	protected time : TimeManager = this.parent.engine.GetManager(TimeManager);
 	protected sceneManager : SceneManager = this.parent.engine.GetManager(SceneManager);
 	protected rb : RigidBody;
+	protected camera : Camera;
+	protected lastbox : Box;
+	test = 0;
 
 	public Init() {
 
-		this.rb = this.parent.GetComponent(RigidBody);
+		this.camera = new Camera(this.GetManager(RenderManager).viewport);
 		
 		// this.inputManager.SetCursor(Cursor.Hidden);
 	}
 	
 	public Update() {
 
-		if (this.inputManager.GetKeyPressed(Key.UpArrow)) {
-			this.rb.ApplyForce(this.parent.transform.position, Vec.Up().Scale(0.02));
+		if (this.inputManager.GetKeyDown(Key.UpArrow)) {
+			this.camera.Move(Vec.Up(), 10);
 		}
 		if (this.inputManager.GetKeyDown(Key.LeftArrow)) {
-			this.rb.velocity = this.rb.velocity.Add(Vec.Left());
+			this.camera.Move(Vec.Left(), 10);
 		}
 		if (this.inputManager.GetKeyDown(Key.RightArrow)) {
-			this.rb.velocity = this.rb.velocity.Add(Vec.Right());
+			this.camera.Move(Vec.Right(), 10);
+		}
+		if (this.inputManager.GetKeyDown(Key.DownArrow)) {
+			this.camera.Move(Vec.Down(), 10);
 		}
 
 		if (this.inputManager.GetMousePressed(Mouse.Left)) {
-			this.sceneManager.GetLoadedScene().AddEntity(Box, "Box", {
-				position: Vec.From(this.inputManager.GetMousePosition())
+			this.lastbox = this.sceneManager.GetLoadedScene().AddEntity(Box, "Box", {
+				position: this.camera.WorldToCamera(this.inputManager.GetMousePosition())
 			});
+		}
+
+		if (this.lastbox) {
+			this.camera.Follow(this.lastbox, {
+				function: Ease.linear,
+				duration: 20,
+			});
+		}
+
+		if (this.inputManager.GetKeyDown(Key.N)) {
+			let noise = Noise.Perlin(2, "test");
+			console.log("test= " + this.test + " noise = " + ((noise.gen(this.test++, this.test++)  + 1) * 128));
 		}
 	}
 }

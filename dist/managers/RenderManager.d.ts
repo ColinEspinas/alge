@@ -1,11 +1,14 @@
 import Manager from '../core/Manager';
-import SceneManager from './SceneManager';
 import * as PIXI from 'pixi.js';
-export default class PixiRenderManager extends Manager {
+import { Viewport } from 'pixi-viewport';
+import Scene from '../scenes/Scene';
+export default class RenderManager extends Manager {
     protected _name: string;
     protected _renderer: PIXI.Renderer;
-    protected sceneManager: SceneManager;
+    protected _viewport: Viewport;
     Init(): void;
     Update(): void;
+    LoadSceneToViewport(scene: Scene): void;
     get renderer(): PIXI.Renderer;
+    get viewport(): Viewport;
 }
