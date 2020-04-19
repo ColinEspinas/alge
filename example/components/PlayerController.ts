@@ -13,7 +13,7 @@ export default class PlayerController extends Component {
 
 	public Init() {
 
-		this.camera = new Camera(this.GetManager(RenderManager).viewport);
+		this.camera = new Camera(this.GetManager(RenderManager).viewport, this.GetManager(TimeManager));
 		
 		// this.inputManager.SetCursor(Cursor.Hidden);
 	}
@@ -32,23 +32,31 @@ export default class PlayerController extends Component {
 		if (this.inputManager.GetKeyDown(Key.DownArrow)) {
 			this.camera.Move(Vec.Down(), 10);
 		}
+		if (this.inputManager.GetKeyPressed(Key.S)) {
+			this.camera.AddTrauma(0.3);
+		}
 
 		if (this.inputManager.GetMousePressed(Mouse.Left)) {
 			this.lastbox = this.sceneManager.GetLoadedScene().AddEntity(Box, "Box", {
 				position: this.camera.WorldToCamera(this.inputManager.GetMousePosition())
 			});
+			this.camera.target = {
+				entity: this.lastbox, 
+				options: {
+					function: Ease.linear,
+					duration: 20,
+				},
+				horizontal: true,
+				vertical: true,
+			};
 		}
 
-		if (this.lastbox) {
-			this.camera.Follow(this.lastbox, {
-				function: Ease.linear,
-				duration: 20,
-			});
-		}
+		this.camera.Update();
 
 		if (this.inputManager.GetKeyDown(Key.N)) {
 			let noise = Noise.Perlin(2, "test");
-			console.log("test= " + this.test + " noise = " + ((noise.gen(this.test++, this.test++)  + 1) * 128));
+			console.log("test= " + this.test + " noise = " + noise.gen(this.test + 0.5, this.test + 0.5));
+			this.test++;
 		}
 	}
 }

@@ -6,6 +6,7 @@ export default class RenderManager extends Manager {
     protected _name: string;
     protected _renderer: PIXI.Renderer;
     protected _viewport: Viewport;
+    protected mainContainer: PIXI.Container;
     Init(): void;
     Update(): void;
     LoadSceneToViewport(scene: Scene): void;

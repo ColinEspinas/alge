@@ -59483,6 +59483,7 @@ var RenderManager = /*#__PURE__*/function (_Manager2) {
 
     _this2 = _super2.apply(this, arguments);
     _this2._name = "RenderManager";
+    _this2.mainContainer = new PIXI.Container();
     return _this2;
   }
 
@@ -59528,13 +59529,14 @@ var RenderManager = /*#__PURE__*/function (_Manager2) {
         });
       }
 
+      this.mainContainer.addChild(this._viewport);
       container.appendChild(this.renderer.view);
       if (this.engine.scaleMode === "linear") PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR;else PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
     }
   }, {
     key: "Update",
     value: function Update() {
-      this.renderer.render(this._viewport);
+      this.renderer.render(this.mainContainer);
     }
   }, {
     key: "LoadSceneToViewport",
@@ -60825,14 +60827,13 @@ var Tilemap = /*#__PURE__*/function (_Component3) {
         tile.position.x = i % this.width * this.tileset.tileWidth;
         tile.position.y = Math.floor(i / this.width) * this.tileset.tileHeight;
         this.tilesContainer.addChild(tile);
-      } // let scaleMode = (this.parent.engine.scaleMode == 
-
+      }
 
       this.texture = new PIXI.RenderTexture(new PIXI.BaseRenderTexture({
         width: this.width * this.tileset.tileWidth,
         height: this.height * this.tileset.tileHeight,
-        // scaleMode: this.parent.engine.scaleMode, 
-        resolution: 1
+        resolution: 1,
+        scaleMode: this.parent.engine.scaleMode == "linear" ? PIXI.SCALE_MODES.LINEAR : PIXI.SCALE_MODES.NEAREST
       })); // Set sprite position:
 
       this.sprite.position.x = this.position.x;
@@ -60860,10 +60861,16 @@ var Tilemap = /*#__PURE__*/function (_Component3) {
 }(Component);
 
 var Camera = /*#__PURE__*/function () {
-  function Camera(viewport) {
+  function Camera(viewport, timeManager) {
     _classCallCheck(this, Camera);
 
+    this.trauma = 0;
+    this.traumaPower = 2;
+    this.traumaDecay = 0.8;
+    this.maxShakeOffset = new Vec(100, 75);
+    this.maxShakeRoll = 10;
     this.viewport = viewport;
+    this.timeManager = timeManager;
   }
 
   _createClass(Camera, [{
@@ -60885,42 +60892,113 @@ var Camera = /*#__PURE__*/function () {
         this.viewport.moveCenter(new PIXI.Point(position.x, position.y));
         this.viewport.zoom(amount, false);
       } else this.viewport.zoom(amount, true);
-    }
+    } // public CenterPivot() {
+    // 	const center : Vec = Vec.From(this.position);
+    // 	this.viewport.x = ;
+    // 	this.viewport.y = ;
+    // 	this.viewport.pivot.x = ;
+    // 	this.viewport.pivot.y = ;
+    // 	const debug = new PIXI.Graphics();
+    // 	// Set the fill color
+    // 	debug.beginFill(0xe74c3c); // Red
+    // 	// Draw a circle
+    // 	debug.drawCircle(this.viewport.pivot.x, this.viewport.pivot.y, 10); // drawCircle(x, y, radius)
+    // 	// Applies fill to lines and shapes since the last call to beginFill.
+    // 	debug.endFill();
+    // 	this.viewport.addChild(debug);
+    // }
+
   }, {
     key: "Move",
     value: function Move(direction, speed) {
       speed = speed || 1;
-      this.viewport.center.x -= direction.x * speed;
-      this.viewport.center.y -= direction.y * speed;
+      this.viewport.x -= direction.x * speed * this.timeManager.deltaTime * 100;
+      this.viewport.y -= direction.y * speed * this.timeManager.deltaTime * 100;
     }
   }, {
     key: "MoveTo",
-    value: function MoveTo(position) {}
-  }, {
-    key: "Follow",
-    value: function Follow(e, options) {
-      var point = new PIXI.Point(options.function(options.time || 1, this.viewport.center.x, e.transform.position.x, options.duration), options.function(options.time || 1, this.viewport.center.y, e.transform.position.y, options.duration));
-      this.viewport.moveCenter(point);
+    value: function MoveTo(position, options) {
+      var tolerance = options.tolerance || 0.5;
+
+      if (position.Distance(this.position) > tolerance) {
+        var point = new PIXI.Point(options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+        this.viewport.moveCenter(point);
+      }
     }
   }, {
-    key: "FollowHorizontal",
-    value: function FollowHorizontal(e, options) {
-      var point = new PIXI.Point(options.function(options.time || 1, this.viewport.center.x, e.transform.position.x, options.duration), e.transform.position.y);
-      this.viewport.moveCenter(point);
+    key: "MoveToHorizontal",
+    value: function MoveToHorizontal(position, options) {
+      var tolerance = options.tolerance || 0.5;
+
+      if (position.Distance(this.position) > tolerance) {
+        var point = new PIXI.Point(options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, this.viewport.center.y);
+        this.viewport.moveCenter(point);
+      }
     }
   }, {
-    key: "FollowVertical",
-    value: function FollowVertical(e, options) {
-      var point = new PIXI.Point(this.viewport.center.x, options.function(options.time || 1, this.viewport.center.y, e.transform.position.y, options.duration));
-      this.viewport.moveCenter(point);
+    key: "MoveToVertical",
+    value: function MoveToVertical(position, options) {
+      var tolerance = options.tolerance || 0.5;
+
+      if (position.Distance(this.position) > tolerance) {
+        var point = new PIXI.Point(this.viewport.center.x, options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+        this.viewport.moveCenter(point);
+      }
+    }
+  }, {
+    key: "AddTrauma",
+    value: function AddTrauma(amount) {
+      this.trauma = Math.min(this.trauma + amount, 1);
     }
   }, {
     key: "Shake",
-    value: function Shake() {}
+    value: function Shake() {
+      var amount = Math.pow(this.trauma, this.traumaPower); // Waiting for viewport centered pivot solution:
+      // this.viewport.angle = this.maxShakeRoll * amount * Math.random();
+
+      var shakeOffset = new Vec(this.maxShakeOffset.x * amount * (Math.random() * 2 - 1), this.maxShakeOffset.y * amount * (Math.random() * 2 - 1));
+      this.viewport.moveCenter(this.viewport.center.x + shakeOffset.x, this.viewport.center.y + shakeOffset.y);
+    }
+  }, {
+    key: "Update",
+    value: function Update() {
+      if (this._target && this._target.position && this._target.position instanceof Vec) {
+        if (this.target.horizontal && this.target.vertical) {
+          this.MoveTo(this.target.position, this.target.options);
+        } else if (this.target.horizontal) {
+          this.MoveToHorizontal(this.target.position, this.target.options);
+        } else if (this.target.vertical) {
+          this.MoveToVertical(this.target.position, this.target.options);
+        }
+      }
+
+      if (this._target && this._target.entity && this._target.entity instanceof Entity) {
+        if (this.target.horizontal && this.target.vertical) {
+          this.MoveTo(this.target.entity.transform.position, this.target.options);
+        } else if (this.target.horizontal) {
+          this.MoveToHorizontal(this.target.entity.transform.position, this.target.options);
+        } else if (this.target.vertical) {
+          this.MoveToVertical(this.target.entity.transform.position, this.target.options);
+        }
+      }
+
+      if (this.trauma > 0) {
+        this.trauma = Math.max(this.trauma - this.traumaDecay * this.timeManager.deltaTime, 0);
+        this.Shake();
+      }
+    }
+  }, {
+    key: "target",
+    set: function set(target) {
+      this._target = target;
+    },
+    get: function get() {
+      return this._target;
+    }
   }, {
     key: "position",
     get: function get() {
-      return new Vec(this.viewport.x, this.viewport.y);
+      return new Vec(this.viewport.center.x, this.viewport.center.y);
     }
   }]);
 
@@ -61535,7 +61613,7 @@ var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
   _createClass(PlayerController, [{
     key: "Init",
     value: function Init() {
-      this.camera = new alge_1.Camera(this.GetManager(alge_1.RenderManager).viewport); // this.inputManager.SetCursor(Cursor.Hidden);
+      this.camera = new alge_1.Camera(this.GetManager(alge_1.RenderManager).viewport, this.GetManager(alge_1.TimeManager)); // this.inputManager.SetCursor(Cursor.Hidden);
     }
   }, {
     key: "Update",
@@ -61556,22 +61634,31 @@ var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
         this.camera.Move(alge_1.Vec.Down(), 10);
       }
 
+      if (this.inputManager.GetKeyPressed(alge_1.Key.S)) {
+        this.camera.AddTrauma(0.3);
+      }
+
       if (this.inputManager.GetMousePressed(alge_1.Mouse.Left)) {
         this.lastbox = this.sceneManager.GetLoadedScene().AddEntity(Box_1.default, "Box", {
           position: this.camera.WorldToCamera(this.inputManager.GetMousePosition())
         });
+        this.camera.target = {
+          entity: this.lastbox,
+          options: {
+            function: alge_1.Ease.linear,
+            duration: 20
+          },
+          horizontal: true,
+          vertical: true
+        };
       }
 
-      if (this.lastbox) {
-        this.camera.Follow(this.lastbox, {
-          function: alge_1.Ease.linear,
-          duration: 20
-        });
-      }
+      this.camera.Update();
 
       if (this.inputManager.GetKeyDown(alge_1.Key.N)) {
         var noise = alge_1.Noise.Perlin(2, "test");
-        console.log("test= " + this.test + " noise = " + (noise.gen(this.test++, this.test++) + 1) * 128);
+        console.log("test= " + this.test + " noise = " + noise.gen(this.test + 0.5, this.test + 0.5));
+        this.test++;
       }
     }
   }]);
@@ -61784,7 +61871,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "38893" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "37875" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

@@ -182,6 +182,7 @@
 	    constructor() {
 	        super(...arguments);
 	        this._name = "RenderManager";
+	        this.mainContainer = new PIXI.Container();
 	    }
 	    Init() {
 	        PIXI.utils.skipHello();
@@ -219,6 +220,7 @@
 	                screenHeight: this.engine.height,
 	            });
 	        }
+	        this.mainContainer.addChild(this._viewport);
 	        container.appendChild(this.renderer.view);
 	        if (this.engine.scaleMode === "linear")
 	            PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR;
@@ -226,7 +228,7 @@
 	            PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 	    }
 	    Update() {
-	        this.renderer.render(this._viewport);
+	        this.renderer.render(this.mainContainer);
 	    }
 	    LoadSceneToViewport(scene) {
 	        this._viewport.removeChildren();
@@ -1076,12 +1078,11 @@
 	            tile.position.y = Math.floor(i / this.width) * this.tileset.tileHeight;
 	            this.tilesContainer.addChild(tile);
 	        }
-	        // let scaleMode = (this.parent.engine.scaleMode == 
 	        this.texture = new PIXI.RenderTexture(new PIXI.BaseRenderTexture({
 	            width: this.width * this.tileset.tileWidth,
 	            height: this.height * this.tileset.tileHeight,
-	            // scaleMode: this.parent.engine.scaleMode, 
-	            resolution: 1
+	            resolution: 1,
+	            scaleMode: (this.parent.engine.scaleMode == "linear") ? PIXI.SCALE_MODES.LINEAR : PIXI.SCALE_MODES.NEAREST,
 	        }));
 	        // Set sprite position:
 	        this.sprite.position.x = this.position.x;
@@ -1104,10 +1105,18 @@
 	}
 
 	class Camera {
-	    constructor(viewport) {
+	    constructor(viewport, timeManager) {
+	        this.trauma = 0;
+	        this.traumaPower = 2;
+	        this.traumaDecay = 0.8;
+	        this.maxShakeOffset = new Vec(100, 75);
+	        this.maxShakeRoll = 10;
 	        this.viewport = viewport;
+	        this.timeManager = timeManager;
 	    }
-	    get position() { return new Vec(this.viewport.x, this.viewport.y); }
+	    set target(target) { this._target = target; }
+	    get target() { return this._target; }
+	    get position() { return new Vec(this.viewport.center.x, this.viewport.center.y); }
 	    WorldToCamera(position) {
 	        const point = this.viewport.toLocal(new PIXI.Point(position.x, position.y));
 	        return new Vec(point.x, point.y);
@@ -1124,26 +1133,84 @@
 	        else
 	            this.viewport.zoom(amount, true);
 	    }
+	    // public CenterPivot() {
+	    // 	const center : Vec = Vec.From(this.position);
+	    // 	this.viewport.x = ;
+	    // 	this.viewport.y = ;
+	    // 	this.viewport.pivot.x = ;
+	    // 	this.viewport.pivot.y = ;
+	    // 	const debug = new PIXI.Graphics();
+	    // 	// Set the fill color
+	    // 	debug.beginFill(0xe74c3c); // Red
+	    // 	// Draw a circle
+	    // 	debug.drawCircle(this.viewport.pivot.x, this.viewport.pivot.y, 10); // drawCircle(x, y, radius)
+	    // 	// Applies fill to lines and shapes since the last call to beginFill.
+	    // 	debug.endFill();
+	    // 	this.viewport.addChild(debug);
+	    // }
 	    Move(direction, speed) {
 	        speed = speed || 1;
-	        this.viewport.center.x -= direction.x * speed;
-	        this.viewport.center.y -= direction.y * speed;
+	        this.viewport.x -= direction.x * speed * this.timeManager.deltaTime * 100;
+	        this.viewport.y -= direction.y * speed * this.timeManager.deltaTime * 100;
 	    }
-	    MoveTo(position) {
+	    MoveTo(position, options) {
+	        const tolerance = options.tolerance || 0.5;
+	        if (position.Distance(this.position) > tolerance) {
+	            const point = new PIXI.Point(options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+	            this.viewport.moveCenter(point);
+	        }
 	    }
-	    Follow(e, options) {
-	        const point = new PIXI.Point(options.function(options.time || 1, this.viewport.center.x, e.transform.position.x, options.duration), options.function(options.time || 1, this.viewport.center.y, e.transform.position.y, options.duration));
-	        this.viewport.moveCenter(point);
+	    MoveToHorizontal(position, options) {
+	        const tolerance = options.tolerance || 0.5;
+	        if (position.Distance(this.position) > tolerance) {
+	            const point = new PIXI.Point(options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, this.viewport.center.y);
+	            this.viewport.moveCenter(point);
+	        }
 	    }
-	    FollowHorizontal(e, options) {
-	        const point = new PIXI.Point(options.function(options.time || 1, this.viewport.center.x, e.transform.position.x, options.duration), e.transform.position.y);
-	        this.viewport.moveCenter(point);
+	    MoveToVertical(position, options) {
+	        const tolerance = options.tolerance || 0.5;
+	        if (position.Distance(this.position) > tolerance) {
+	            const point = new PIXI.Point(this.viewport.center.x, options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+	            this.viewport.moveCenter(point);
+	        }
 	    }
-	    FollowVertical(e, options) {
-	        const point = new PIXI.Point(this.viewport.center.x, options.function(options.time || 1, this.viewport.center.y, e.transform.position.y, options.duration));
-	        this.viewport.moveCenter(point);
+	    AddTrauma(amount) {
+	        this.trauma = Math.min(this.trauma + amount, 1);
 	    }
 	    Shake() {
+	        const amount = Math.pow(this.trauma, this.traumaPower);
+	        // Waiting for viewport centered pivot solution:
+	        // this.viewport.angle = this.maxShakeRoll * amount * Math.random();
+	        const shakeOffset = new Vec(this.maxShakeOffset.x * amount * ((Math.random() * 2) - 1), this.maxShakeOffset.y * amount * ((Math.random() * 2) - 1));
+	        this.viewport.moveCenter(this.viewport.center.x + shakeOffset.x, this.viewport.center.y + shakeOffset.y);
+	    }
+	    Update() {
+	        if (this._target && this._target.position && this._target.position instanceof Vec) {
+	            if (this.target.horizontal && this.target.vertical) {
+	                this.MoveTo(this.target.position, this.target.options);
+	            }
+	            else if (this.target.horizontal) {
+	                this.MoveToHorizontal(this.target.position, this.target.options);
+	            }
+	            else if (this.target.vertical) {
+	                this.MoveToVertical(this.target.position, this.target.options);
+	            }
+	        }
+	        if (this._target && this._target.entity && this._target.entity instanceof Entity) {
+	            if (this.target.horizontal && this.target.vertical) {
+	                this.MoveTo(this.target.entity.transform.position, this.target.options);
+	            }
+	            else if (this.target.horizontal) {
+	                this.MoveToHorizontal(this.target.entity.transform.position, this.target.options);
+	            }
+	            else if (this.target.vertical) {
+	                this.MoveToVertical(this.target.entity.transform.position, this.target.options);
+	            }
+	        }
+	        if (this.trauma > 0) {
+	            this.trauma = Math.max(this.trauma - this.traumaDecay * this.timeManager.deltaTime, 0);
+	            this.Shake();
+	        }
 	    }
 	}
 

@@ -60,7 +60,8 @@ export default class Tilemap extends Component {
 			new PIXI.BaseRenderTexture({
 				width: this.width * this.tileset.tileWidth, 
 				height: this.height * this.tileset.tileHeight,
-				resolution: 1
+				resolution: 1,
+				scaleMode: (this.parent.engine.scaleMode == "linear") ? PIXI.SCALE_MODES.LINEAR : PIXI.SCALE_MODES.NEAREST,
 			})
 		);
 

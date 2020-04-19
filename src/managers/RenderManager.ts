@@ -8,6 +8,7 @@ export default class RenderManager extends Manager{
 	protected _name: string = "RenderManager";
 	protected _renderer : PIXI.Renderer;
 	protected _viewport : Viewport;
+	protected mainContainer : PIXI.Container = new PIXI.Container();
 
 	public Init() {
 
@@ -48,6 +49,9 @@ export default class RenderManager extends Manager{
 				screenHeight: this.engine.height,
 			});
 		}
+
+		this.mainContainer.addChild(this._viewport);
+		
 		container.appendChild(this.renderer.view);
 		
 		if (this.engine.scaleMode === "linear")
@@ -56,7 +60,7 @@ export default class RenderManager extends Manager{
 	}
 
 	public Update() {
-		this.renderer.render(this._viewport);
+		this.renderer.render(this.mainContainer);
 	}
 
 	public LoadSceneToViewport(scene : Scene) {
