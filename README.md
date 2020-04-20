@@ -1,4 +1,4 @@
-# A<sub><sup>wesome</sup></sub>L<sub><sup>ittle</sup></sub>G<sub><sup>ame</sup></sub>E<sub><sup>ngine</sup></sub>
+# alge
 
 Scene -> Entity -> Component based game engine written in Typescript.
 
@@ -57,16 +57,15 @@ export default class PlayerController extends Component {
 Create a `Player` entity and add a `SpriteRenderer` component to display a sprite and the `PlayerController` component previously created:
 ```typescript
 // entities/Player.ts
-import { Entity, SpriteRenderer, SpriteMode, Engine} from "alge";
+import { Entity, Sprite, Engine} from "alge";
 import PlayerController from "../components/PlayerController";
 
 export default class Player extends Entity {
 	public Create() {
-		this.AddComponent(SpriteRenderer, "Sprite", { 
-			image: this.properties["sprite"], 
-			stretchMode : SpriteMode.Cover,
+		this.AddComponent(Sprite, { 
+			src: this.properties["sprite"],
 		});
-		this.AddComponent(PlayerController, "Controller");
+		this.AddComponent(PlayerController);
 	}
 }
 ```

@@ -10,7 +10,7 @@ import RenderManager from '../managers/RenderManager';
 export default class Camera {
 	
 	protected viewport : Viewport;
-	protected timeManager : TimeManager;
+	protected deltaTime : number;
 
 	protected _target : ITarget;
 
@@ -20,9 +20,9 @@ export default class Camera {
 	protected maxShakeOffset : Vec = new Vec(100, 75);
 	protected maxShakeRoll : number = 10;
 
-	constructor(viewport : Viewport, timeManager : TimeManager) {
+	constructor(viewport : Viewport) {
 		this.viewport = viewport;
-		this.timeManager = timeManager;
+		// this.CenterPivot();
 	}
 
 	public set target(target : ITarget) { this._target = target; }
@@ -49,14 +49,11 @@ export default class Camera {
 	}
 
 	// public CenterPivot() {
-	// 	const center : Vec = Vec.From(this.position);
 
-	// 	this.viewport.x = ;
-	// 	this.viewport.y = ;
+	// 	this.viewport.pivot = this.viewport.center;
 
-
-	// 	this.viewport.pivot.x = ;
-	// 	this.viewport.pivot.y = ;
+	// 	this.viewport.x = -this.viewport.pivot.x;
+	// 	this.viewport.y = -this.viewport.pivot.y;
 
 	// 	const debug = new PIXI.Graphics();
 
@@ -74,16 +71,16 @@ export default class Camera {
 
 	public Move(direction : Vec, speed ?: number) {
 		speed = speed || 1;
-		this.viewport.x -= direction.x * speed * this.timeManager.deltaTime * 100;
-		this.viewport.y -= direction.y * speed * this.timeManager.deltaTime * 100;
+		this.viewport.x -= direction.x * speed * this.deltaTime * 100;
+		this.viewport.y -= direction.y * speed * this.deltaTime * 100;
 	}
 
 	public MoveTo(position : Vec, options : IMoveOptions) : void {
 		const tolerance = options.tolerance || 0.5;
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
-				options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, 
-				options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y
+				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, 
+				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y
 			);
 			this.viewport.moveCenter(point);
 		}
@@ -93,7 +90,7 @@ export default class Camera {
 		const tolerance = options.tolerance || 0.5;
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
-				options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, 
+				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, 
 				this.viewport.center.y,
 			);
 			this.viewport.moveCenter(point);
@@ -105,7 +102,7 @@ export default class Camera {
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
 				this.viewport.center.x, 
-				options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y
+				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y
 			);
 			this.viewport.moveCenter(point);
 		}
@@ -126,7 +123,9 @@ export default class Camera {
 		this.viewport.moveCenter(this.viewport.center.x + shakeOffset.x, this.viewport.center.y + shakeOffset.y);
 	}
 
-	public Update() : void {
+	public Update(deltaTime : number) : void {
+		this.deltaTime = deltaTime;
+
 		if (this._target && this._target.position && this._target.position instanceof Vec) {
 			if (this.target.horizontal && this.target.vertical) {
 				this.MoveTo(this.target.position, this.target.options);
@@ -150,7 +149,7 @@ export default class Camera {
 			}
 		}
 		if (this.trauma > 0) {
-			this.trauma = Math.max(this.trauma - this.traumaDecay * this.timeManager.deltaTime, 0);
+			this.trauma = Math.max(this.trauma - this.traumaDecay * this.deltaTime, 0);
 			this.Shake();
 		}
 	}

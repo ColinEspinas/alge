@@ -722,11 +722,11 @@ class engine {
             physics: 'matter',
         }, options);
         this.managers = [];
+        this.managers.push(new TimeManager(this));
         if (options.renderer == 'pixi') {
             this.managers.push(new RenderManager(this));
             this.managers.push(new SceneManager(this));
         }
-        this.managers.push(new TimeManager(this));
         if (options.physics == 'matter') {
             this.managers.push(new PhysicsManager(this));
         }
@@ -1106,14 +1106,14 @@ class Tilemap extends Component {
 }
 
 class Camera {
-    constructor(viewport, timeManager) {
+    constructor(viewport) {
         this.trauma = 0;
         this.traumaPower = 2;
         this.traumaDecay = 0.8;
         this.maxShakeOffset = new Vec(100, 75);
         this.maxShakeRoll = 10;
         this.viewport = viewport;
-        this.timeManager = timeManager;
+        // this.CenterPivot();
     }
     set target(target) { this._target = target; }
     get target() { return this._target; }
@@ -1135,11 +1135,9 @@ class Camera {
             this.viewport.zoom(amount, true);
     }
     // public CenterPivot() {
-    // 	const center : Vec = Vec.From(this.position);
-    // 	this.viewport.x = ;
-    // 	this.viewport.y = ;
-    // 	this.viewport.pivot.x = ;
-    // 	this.viewport.pivot.y = ;
+    // 	this.viewport.pivot = this.viewport.center;
+    // 	this.viewport.x = -this.viewport.pivot.x;
+    // 	this.viewport.y = -this.viewport.pivot.y;
     // 	const debug = new PIXI.Graphics();
     // 	// Set the fill color
     // 	debug.beginFill(0xe74c3c); // Red
@@ -1151,27 +1149,27 @@ class Camera {
     // }
     Move(direction, speed) {
         speed = speed || 1;
-        this.viewport.x -= direction.x * speed * this.timeManager.deltaTime * 100;
-        this.viewport.y -= direction.y * speed * this.timeManager.deltaTime * 100;
+        this.viewport.x -= direction.x * speed * this.deltaTime * 100;
+        this.viewport.y -= direction.y * speed * this.deltaTime * 100;
     }
     MoveTo(position, options) {
         const tolerance = options.tolerance || 0.5;
         if (position.Distance(this.position) > tolerance) {
-            const point = new Point(options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+            const point = new Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
             this.viewport.moveCenter(point);
         }
     }
     MoveToHorizontal(position, options) {
         const tolerance = options.tolerance || 0.5;
         if (position.Distance(this.position) > tolerance) {
-            const point = new Point(options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, this.viewport.center.y);
+            const point = new Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, this.viewport.center.y);
             this.viewport.moveCenter(point);
         }
     }
     MoveToVertical(position, options) {
         const tolerance = options.tolerance || 0.5;
         if (position.Distance(this.position) > tolerance) {
-            const point = new Point(this.viewport.center.x, options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+            const point = new Point(this.viewport.center.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
             this.viewport.moveCenter(point);
         }
     }
@@ -1185,7 +1183,8 @@ class Camera {
         const shakeOffset = new Vec(this.maxShakeOffset.x * amount * ((Math.random() * 2) - 1), this.maxShakeOffset.y * amount * ((Math.random() * 2) - 1));
         this.viewport.moveCenter(this.viewport.center.x + shakeOffset.x, this.viewport.center.y + shakeOffset.y);
     }
-    Update() {
+    Update(deltaTime) {
+        this.deltaTime = deltaTime;
         if (this._target && this._target.position && this._target.position instanceof Vec) {
             if (this.target.horizontal && this.target.vertical) {
                 this.MoveTo(this.target.position, this.target.options);
@@ -1209,7 +1208,7 @@ class Camera {
             }
         }
         if (this.trauma > 0) {
-            this.trauma = Math.max(this.trauma - this.traumaDecay * this.timeManager.deltaTime, 0);
+            this.trauma = Math.max(this.trauma - this.traumaDecay * this.deltaTime, 0);
             this.Shake();
         }
     }

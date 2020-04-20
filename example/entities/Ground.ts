@@ -10,7 +10,6 @@ export default class Ground extends Entity {
 
 		this.transform.position.Add(new Vec(700, 500));
 
-		
 		let tilemap = this.AddComponent(Tilemap, {
 			tileset: new Tileset(image, 19, 13, 32, 32),
 			width: 6,

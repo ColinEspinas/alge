@@ -60259,13 +60259,12 @@ var engine = /*#__PURE__*/function () {
       physics: 'matter'
     }, options);
     this.managers = [];
+    this.managers.push(new TimeManager(this));
 
     if (options.renderer == 'pixi') {
       this.managers.push(new RenderManager(this));
       this.managers.push(new SceneManager(this));
     }
-
-    this.managers.push(new TimeManager(this));
 
     if (options.physics == 'matter') {
       this.managers.push(new PhysicsManager(this));
@@ -60861,7 +60860,7 @@ var Tilemap = /*#__PURE__*/function (_Component3) {
 }(Component);
 
 var Camera = /*#__PURE__*/function () {
-  function Camera(viewport, timeManager) {
+  function Camera(viewport) {
     _classCallCheck(this, Camera);
 
     this.trauma = 0;
@@ -60869,8 +60868,7 @@ var Camera = /*#__PURE__*/function () {
     this.traumaDecay = 0.8;
     this.maxShakeOffset = new Vec(100, 75);
     this.maxShakeRoll = 10;
-    this.viewport = viewport;
-    this.timeManager = timeManager;
+    this.viewport = viewport; // this.CenterPivot();
   }
 
   _createClass(Camera, [{
@@ -60893,11 +60891,9 @@ var Camera = /*#__PURE__*/function () {
         this.viewport.zoom(amount, false);
       } else this.viewport.zoom(amount, true);
     } // public CenterPivot() {
-    // 	const center : Vec = Vec.From(this.position);
-    // 	this.viewport.x = ;
-    // 	this.viewport.y = ;
-    // 	this.viewport.pivot.x = ;
-    // 	this.viewport.pivot.y = ;
+    // 	this.viewport.pivot = this.viewport.center;
+    // 	this.viewport.x = -this.viewport.pivot.x;
+    // 	this.viewport.y = -this.viewport.pivot.y;
     // 	const debug = new PIXI.Graphics();
     // 	// Set the fill color
     // 	debug.beginFill(0xe74c3c); // Red
@@ -60912,8 +60908,8 @@ var Camera = /*#__PURE__*/function () {
     key: "Move",
     value: function Move(direction, speed) {
       speed = speed || 1;
-      this.viewport.x -= direction.x * speed * this.timeManager.deltaTime * 100;
-      this.viewport.y -= direction.y * speed * this.timeManager.deltaTime * 100;
+      this.viewport.x -= direction.x * speed * this.deltaTime * 100;
+      this.viewport.y -= direction.y * speed * this.deltaTime * 100;
     }
   }, {
     key: "MoveTo",
@@ -60921,7 +60917,7 @@ var Camera = /*#__PURE__*/function () {
       var tolerance = options.tolerance || 0.5;
 
       if (position.Distance(this.position) > tolerance) {
-        var point = new PIXI.Point(options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+        var point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
         this.viewport.moveCenter(point);
       }
     }
@@ -60931,7 +60927,7 @@ var Camera = /*#__PURE__*/function () {
       var tolerance = options.tolerance || 0.5;
 
       if (position.Distance(this.position) > tolerance) {
-        var point = new PIXI.Point(options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, this.viewport.center.y);
+        var point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, this.viewport.center.y);
         this.viewport.moveCenter(point);
       }
     }
@@ -60941,7 +60937,7 @@ var Camera = /*#__PURE__*/function () {
       var tolerance = options.tolerance || 0.5;
 
       if (position.Distance(this.position) > tolerance) {
-        var point = new PIXI.Point(this.viewport.center.x, options.function(options.time * this.timeManager.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+        var point = new PIXI.Point(this.viewport.center.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
         this.viewport.moveCenter(point);
       }
     }
@@ -60961,7 +60957,9 @@ var Camera = /*#__PURE__*/function () {
     }
   }, {
     key: "Update",
-    value: function Update() {
+    value: function Update(deltaTime) {
+      this.deltaTime = deltaTime;
+
       if (this._target && this._target.position && this._target.position instanceof Vec) {
         if (this.target.horizontal && this.target.vertical) {
           this.MoveTo(this.target.position, this.target.options);
@@ -60983,7 +60981,7 @@ var Camera = /*#__PURE__*/function () {
       }
 
       if (this.trauma > 0) {
-        this.trauma = Math.max(this.trauma - this.traumaDecay * this.timeManager.deltaTime, 0);
+        this.trauma = Math.max(this.trauma - this.traumaDecay * this.deltaTime, 0);
         this.Shake();
       }
     }
@@ -61604,7 +61602,6 @@ var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
 
     _this = _super.apply(this, arguments);
     _this.inputManager = _this.parent.engine.GetManager(alge_1.InputManager);
-    _this.time = _this.parent.engine.GetManager(alge_1.TimeManager);
     _this.sceneManager = _this.parent.engine.GetManager(alge_1.SceneManager);
     _this.test = 0;
     return _this;
@@ -61613,7 +61610,7 @@ var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
   _createClass(PlayerController, [{
     key: "Init",
     value: function Init() {
-      this.camera = new alge_1.Camera(this.GetManager(alge_1.RenderManager).viewport, this.GetManager(alge_1.TimeManager)); // this.inputManager.SetCursor(Cursor.Hidden);
+      this.camera = new alge_1.Camera(this.GetManager(alge_1.RenderManager).viewport); // this.inputManager.SetCursor(Cursor.Hidden);
     }
   }, {
     key: "Update",
@@ -61653,7 +61650,7 @@ var PlayerController = /*#__PURE__*/function (_alge_1$Component) {
         };
       }
 
-      this.camera.Update();
+      this.camera.Update(this.GetManager(alge_1.TimeManager).deltaTime);
 
       if (this.inputManager.GetKeyDown(alge_1.Key.N)) {
         var noise = alge_1.Noise.Perlin(2, "test");
@@ -61871,7 +61868,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "37875" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "43217" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

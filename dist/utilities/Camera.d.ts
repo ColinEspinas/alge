@@ -1,17 +1,16 @@
 import { Viewport } from 'pixi-viewport';
 import Vec from './Vec';
 import Entity from '../core/Entity';
-import TimeManager from '../managers/TimeManager';
 export default class Camera {
     protected viewport: Viewport;
-    protected timeManager: TimeManager;
+    protected deltaTime: number;
     protected _target: ITarget;
     protected trauma: number;
     protected traumaPower: number;
     protected traumaDecay: number;
     protected maxShakeOffset: Vec;
     protected maxShakeRoll: number;
-    constructor(viewport: Viewport, timeManager: TimeManager);
+    constructor(viewport: Viewport);
     set target(target: ITarget);
     get target(): ITarget;
     get position(): Vec;
@@ -24,7 +23,7 @@ export default class Camera {
     MoveToVertical(position: Vec, options: IMoveOptions): void;
     AddTrauma(amount: number): void;
     protected Shake(): void;
-    Update(): void;
+    Update(deltaTime: number): void;
 }
 export interface IMoveOptions {
     function: Function;

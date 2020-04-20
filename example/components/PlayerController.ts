@@ -4,7 +4,6 @@ import Box from "../entities/Box";
 export default class PlayerController extends Component {
 	
 	protected inputManager : InputManager = this.parent.engine.GetManager(InputManager);
-	protected time : TimeManager = this.parent.engine.GetManager(TimeManager);
 	protected sceneManager : SceneManager = this.parent.engine.GetManager(SceneManager);
 	protected rb : RigidBody;
 	protected camera : Camera;
@@ -13,7 +12,7 @@ export default class PlayerController extends Component {
 
 	public Init() {
 
-		this.camera = new Camera(this.GetManager(RenderManager).viewport, this.GetManager(TimeManager));
+		this.camera = new Camera(this.GetManager(RenderManager).viewport);
 		
 		// this.inputManager.SetCursor(Cursor.Hidden);
 	}
@@ -51,7 +50,7 @@ export default class PlayerController extends Component {
 			};
 		}
 
-		this.camera.Update();
+		this.camera.Update(this.GetManager(TimeManager).deltaTime);
 
 		if (this.inputManager.GetKeyDown(Key.N)) {
 			let noise = Noise.Perlin(2, "test");

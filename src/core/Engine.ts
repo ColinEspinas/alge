@@ -44,12 +44,13 @@ export default class engine {
 		}, options);
 
 		this.managers = [];
+		
+		this.managers.push(new TimeManager(this));
 
 		if (options.renderer == 'pixi') {
 			this.managers.push(new RenderManager(this));
 			this.managers.push(new SceneManager(this));
 		}
-		this.managers.push(new TimeManager(this));
 
 		if (options.physics == 'matter') {
 			this.managers.push(new PhysicsManager(this));
