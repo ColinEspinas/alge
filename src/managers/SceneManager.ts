@@ -14,7 +14,7 @@ export default class SceneManager extends BaseSceneManager {
 				this.GetScene(name);
 			}
 			catch {
-				let scene = new Scene(name, this.engine);
+				let scene = new Scene(this.engine, name);
 				this.scenes.push(scene);
 				return scene;
 			}

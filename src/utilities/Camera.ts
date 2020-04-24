@@ -79,8 +79,8 @@ export default class Camera {
 		const tolerance = options.tolerance || 0.5;
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
-				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, 
-				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y
+				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, 
+				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y
 			);
 			this.viewport.moveCenter(point);
 		}
@@ -90,7 +90,7 @@ export default class Camera {
 		const tolerance = options.tolerance || 0.5;
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
-				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, 
+				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, 
 				this.viewport.center.y,
 			);
 			this.viewport.moveCenter(point);
@@ -102,7 +102,7 @@ export default class Camera {
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
 				this.viewport.center.x, 
-				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y
+				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y
 			);
 			this.viewport.moveCenter(point);
 		}

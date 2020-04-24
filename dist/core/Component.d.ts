@@ -11,5 +11,6 @@ export default abstract class Component {
     Create(): void;
     Init(): void;
     Update(): void;
+    FixedUpdate(): void;
     Unload(): void;
 }

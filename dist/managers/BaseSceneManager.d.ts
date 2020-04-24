@@ -8,6 +8,7 @@ export default class BaseSceneManager extends Manager {
     constructor(engine: Engine);
     Init(): void;
     Update(): void;
+    FixedUpdate(): void;
     CreateScene(name: string): BaseScene;
     GetScenes(): BaseScene[];
     GetScene(name: string): BaseScene;

@@ -20,4 +20,9 @@ export default abstract class Manager {
      * @param args
      */
     Update(...args: any[]): void;
+    /**
+     * Called on engine update at fixed timesteps
+     * @param args
+     */
+    FixedUpdate(...args: any[]): void;
 }

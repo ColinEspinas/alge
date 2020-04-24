@@ -9,6 +9,7 @@ export default class TimeManager extends Manager {
 	private _deltaTime : number;
 	private _lastDeltaTime : number;
 	private _fps : number;
+	private _step : number = 1 / 60;
 
 	public constructor(engine : Engine) {
 		super(engine);
@@ -21,11 +22,19 @@ export default class TimeManager extends Manager {
 	public get lastDeltaTime() : number { return this._lastDeltaTime; }
 	public get lastUpdate() : number { return this._lastUpdate; }
 	public get fps() : number { return this._fps; }
+	public get step() : number { return this._step; }
 
 	public Update() {
 		this._lastDeltaTime = this._deltaTime;
-		this._deltaTime = (performance.now() - this._lastUpdate)/1000;
-		this._lastUpdate = performance.now();
+		this._deltaTime += Math.min(1, (performance.now() - this._lastUpdate)/1000);
 		this._fps = 1/this._deltaTime;
+	}
+
+	public SetLastUpdate() {
+		this._lastUpdate = performance.now();
+	}
+
+	public FixDelta() {
+		this._deltaTime -= this._step;
 	}
 }

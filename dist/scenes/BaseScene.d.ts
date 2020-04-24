@@ -5,9 +5,9 @@ export default class BaseScene {
     protected _name: string;
     protected engine: Engine;
     protected loaded: boolean;
-    protected entities: Entity[];
-    protected loadedEntities: Entity[];
-    constructor(name: string, engine: Engine);
+    protected entities: any[];
+    protected loadedEntities: any[];
+    constructor(engine: Engine, name: string);
     get id(): number;
     get name(): string;
     Reload(): void;
@@ -17,6 +17,7 @@ export default class BaseScene {
     protected InitEntity(entity: Entity): void;
     protected UpdateEntity(entity: Entity): void;
     Update(): void;
-    AddEntity<EntityType extends Entity>(e: new (...args: any[]) => EntityType, name: string, properties?: Object): Entity;
-    GetEntity(name: string): Entity;
+    FixedUpdate(): void;
+    AddEntity<EntityType extends Entity>(e: new (...args: any[]) => EntityType, name: string, properties?: Object): EntityType;
+    GetEntity<EntityType extends Entity>(name: string): EntityType;
 }

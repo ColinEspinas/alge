@@ -26,5 +26,6 @@ export default abstract class Component {
 	public Create() {};
 	public Init() {};
 	public Update() {};
+	public FixedUpdate() {};
 	public Unload() {};
 }

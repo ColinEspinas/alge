@@ -19,18 +19,10 @@ export default class PhysicsManager extends Manager {
 		this._physicsEngine = Matter.Engine.create();
 	}
 
-	public Update() {
+	public FixedUpdate() {
 		if (this.sceneManager && this.timeManager) {
 			this._physicsEngine.world = this.sceneManager.GetLoadedScene().world;
-			const delta = this.timeManager.deltaTime * 1000;
-			const lastdelta = this.timeManager.lastDeltaTime * 1000;
-			Matter.Engine.update(
-				this._physicsEngine, 
-				// Not working even with the documentation pointing to that solution using default fixed instead
-				// delta, 
-				// delta / lastdelta,
-				1000/60
-			);
+			Matter.Engine.update(this._physicsEngine);
 		}
 	}
 }

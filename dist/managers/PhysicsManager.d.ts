@@ -10,5 +10,5 @@ export default class PhysicsManager extends Manager {
     protected sceneManager: SceneManager;
     get physicsEngine(): any;
     constructor(engine: Engine);
-    Update(): void;
+    FixedUpdate(): void;
 }

@@ -11,10 +11,10 @@ export default class BaseScene {
 
 	protected loaded : boolean = false;
 
-	protected entities : Entity[];
-	protected loadedEntities: Entity[];
+	protected entities : any[];
+	protected loadedEntities: any[];
 
-	constructor(name : string, engine : Engine) {
+	constructor(engine : Engine, name : string) {
 		this._id = shortid.generate();
 		this._name = name;
 		this.engine = engine;
@@ -78,7 +78,13 @@ export default class BaseScene {
 		this.loaded = true;
 	}
 
-	public AddEntity<EntityType extends Entity>(e : new (...args : any[]) => EntityType, name : string, properties ?: Object) : Entity {
+	public FixedUpdate() : void {
+		for (var i = 0, len = this.entities.length; i < len; i++) {
+			this.loadedEntities[i].FixedUpdate();
+		}
+	}
+
+	public AddEntity<EntityType extends Entity>(e : new (...args : any[]) => EntityType, name : string, properties ?: Object) : EntityType {
 		if (name && name !== "") {
 			this.entities.push(new e(this.engine, name, properties));
 			if (this.loaded) {
@@ -89,7 +95,7 @@ export default class BaseScene {
 		else throw Error("Entity name is null or empty");
 	}
 
-	public GetEntity(name : string) : Entity {
+	public GetEntity<EntityType extends Entity>(name : string) : EntityType {
 		for (var i = 0, len = this.entities.length; i < len; i++) {
 			if (this.entities[i].name == name) {
 				return this.entities[i];

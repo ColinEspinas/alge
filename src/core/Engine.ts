@@ -95,9 +95,16 @@ export default class engine {
 	}
 
 	public Update() : void {
+		while(this.GetManager(TimeManager).deltaTime > this.GetManager(TimeManager).step) {
+			this.GetManager(TimeManager).FixDelta();
+			for (var i = 0, len = this.managers.length; i < len; i++) {
+				this.managers[i].FixedUpdate();
+			}
+		}
 		for (var i = 0, len = this.managers.length; i < len; i++) {
 			this.managers[i].Update();
 		}
+		this.GetManager(TimeManager).SetLastUpdate();
 		requestAnimationFrame(this.Update.bind(this));
 	}
 

@@ -34,10 +34,16 @@ class Manager {
      */
     Update(...args) { }
     ;
+    /**
+     * Called on engine update at fixed timesteps
+     * @param args
+     */
+    FixedUpdate(...args) { }
+    ;
 }
 
 class BaseScene {
-    constructor(name, engine) {
+    constructor(engine, name) {
         this.loaded = false;
         this._id = shortid.generate();
         this._name = name;
@@ -92,6 +98,11 @@ class BaseScene {
         }
         this.loaded = true;
     }
+    FixedUpdate() {
+        for (var i = 0, len = this.entities.length; i < len; i++) {
+            this.loadedEntities[i].FixedUpdate();
+        }
+    }
     AddEntity(e, name, properties) {
         if (name && name !== "") {
             this.entities.push(new e(this.engine, name, properties));
@@ -124,13 +135,16 @@ class BaseSceneManager extends Manager {
     Update() {
         this.loadedScene.Update();
     }
+    FixedUpdate() {
+        this.loadedScene.FixedUpdate();
+    }
     CreateScene(name) {
         if (name && name !== "") {
             try {
                 this.GetScene(name);
             }
             catch (_a) {
-                let scene = new BaseScene(name, this.engine);
+                let scene = new BaseScene(this.engine, name);
                 this.scenes.push(scene);
                 return scene;
             }
@@ -275,7 +289,7 @@ class SceneManager extends BaseSceneManager {
                 this.GetScene(name);
             }
             catch (_a) {
-                let scene = new Scene(name, this.engine);
+                let scene = new Scene(this.engine, name);
                 this.scenes.push(scene);
                 return scene;
             }
@@ -304,6 +318,7 @@ class TimeManager extends Manager {
     constructor(engine) {
         super(engine);
         this._name = "TimeManager";
+        this._step = 1 / 60;
         this._lastUpdate = 0;
         this._deltaTime = 0;
         this._fps = 0;
@@ -312,11 +327,17 @@ class TimeManager extends Manager {
     get lastDeltaTime() { return this._lastDeltaTime; }
     get lastUpdate() { return this._lastUpdate; }
     get fps() { return this._fps; }
+    get step() { return this._step; }
     Update() {
         this._lastDeltaTime = this._deltaTime;
-        this._deltaTime = (performance.now() - this._lastUpdate) / 1000;
-        this._lastUpdate = performance.now();
+        this._deltaTime += Math.min(1, (performance.now() - this._lastUpdate) / 1000);
         this._fps = 1 / this._deltaTime;
+    }
+    SetLastUpdate() {
+        this._lastUpdate = performance.now();
+    }
+    FixDelta() {
+        this._deltaTime -= this._step;
     }
 }
 
@@ -697,16 +718,10 @@ class PhysicsManager extends Manager {
         this._physicsEngine = Matter.Engine.create();
     }
     get physicsEngine() { return this._physicsEngine; }
-    Update() {
+    FixedUpdate() {
         if (this.sceneManager && this.timeManager) {
             this._physicsEngine.world = this.sceneManager.GetLoadedScene().world;
-            const delta = this.timeManager.deltaTime * 1000;
-            const lastdelta = this.timeManager.lastDeltaTime * 1000;
-            Matter.Engine.update(this._physicsEngine, 
-            // Not working even with the documentation pointing to that solution using default fixed instead
-            // delta, 
-            // delta / lastdelta,
-            1000 / 60);
+            Matter.Engine.update(this._physicsEngine);
         }
     }
 }
@@ -762,9 +777,16 @@ class engine {
         return 0;
     }
     Update() {
+        while (this.GetManager(TimeManager).deltaTime > this.GetManager(TimeManager).step) {
+            this.GetManager(TimeManager).FixDelta();
+            for (var i = 0, len = this.managers.length; i < len; i++) {
+                this.managers[i].FixedUpdate();
+            }
+        }
         for (var i = 0, len = this.managers.length; i < len; i++) {
             this.managers[i].Update();
         }
+        this.GetManager(TimeManager).SetLastUpdate();
         requestAnimationFrame(this.Update.bind(this));
     }
     AddManager(c, ...args) {
@@ -831,6 +853,8 @@ class Entity {
     ;
     Update() { }
     ;
+    FixedUpdate() { }
+    ;
     Unload() { }
     ;
     InitComponents() {
@@ -841,6 +865,11 @@ class Entity {
     UpdateComponents() {
         for (var i = 0, len = this.components.length; i < len; i++) {
             this.components[i].Update();
+        }
+    }
+    FixedUpdateComponents() {
+        for (var i = 0, len = this.components.length; i < len; i++) {
+            this.components[i].FixedUpdate();
         }
     }
     UnloadComponents() {
@@ -908,6 +937,8 @@ class Component {
     Init() { }
     ;
     Update() { }
+    ;
+    FixedUpdate() { }
     ;
     Unload() { }
     ;
@@ -1157,21 +1188,21 @@ class Camera {
     MoveTo(position, options) {
         const tolerance = options.tolerance || 0.5;
         if (position.Distance(this.position) > tolerance) {
-            const point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+            const point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y);
             this.viewport.moveCenter(point);
         }
     }
     MoveToHorizontal(position, options) {
         const tolerance = options.tolerance || 0.5;
         if (position.Distance(this.position) > tolerance) {
-            const point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, this.viewport.center.y);
+            const point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, this.viewport.center.y);
             this.viewport.moveCenter(point);
         }
     }
     MoveToVertical(position, options) {
         const tolerance = options.tolerance || 0.5;
         if (position.Distance(this.position) > tolerance) {
-            const point = new PIXI.Point(this.viewport.center.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+            const point = new PIXI.Point(this.viewport.center.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y);
             this.viewport.moveCenter(point);
         }
     }

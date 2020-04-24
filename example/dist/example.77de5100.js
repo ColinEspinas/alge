@@ -59258,6 +59258,14 @@ var Manager = /*#__PURE__*/function () {
      */
     value: function Update() {}
   }, {
+    key: "FixedUpdate",
+
+    /**
+     * Called on engine update at fixed timesteps
+     * @param args
+     */
+    value: function FixedUpdate() {}
+  }, {
     key: "name",
     get: function get() {
       return this._name;
@@ -59273,7 +59281,7 @@ var Manager = /*#__PURE__*/function () {
 }();
 
 var BaseScene = /*#__PURE__*/function () {
-  function BaseScene(name, engine) {
+  function BaseScene(engine, name) {
     _classCallCheck(this, BaseScene);
 
     this.loaded = false;
@@ -59341,6 +59349,13 @@ var BaseScene = /*#__PURE__*/function () {
       this.loaded = true;
     }
   }, {
+    key: "FixedUpdate",
+    value: function FixedUpdate() {
+      for (var i = 0, len = this.entities.length; i < len; i++) {
+        this.loadedEntities[i].FixedUpdate();
+      }
+    }
+  }, {
     key: "AddEntity",
     value: function AddEntity(e, name, properties) {
       if (name && name !== "") {
@@ -59404,13 +59419,18 @@ var BaseSceneManager = /*#__PURE__*/function (_Manager) {
       this.loadedScene.Update();
     }
   }, {
+    key: "FixedUpdate",
+    value: function FixedUpdate() {
+      this.loadedScene.FixedUpdate();
+    }
+  }, {
     key: "CreateScene",
     value: function CreateScene(name) {
       if (name && name !== "") {
         try {
           this.GetScene(name);
         } catch (_a) {
-          var scene = new BaseScene(name, this.engine);
+          var scene = new BaseScene(this.engine, name);
           this.scenes.push(scene);
           return scene;
         }
@@ -59629,7 +59649,7 @@ var SceneManager = /*#__PURE__*/function (_BaseSceneManager) {
         try {
           this.GetScene(name);
         } catch (_a) {
-          var scene = new Scene(name, this.engine);
+          var scene = new Scene(this.engine, name);
           this.scenes.push(scene);
           return scene;
         }
@@ -59675,6 +59695,7 @@ var TimeManager = /*#__PURE__*/function (_Manager3) {
 
     _this6 = _super5.call(this, engine);
     _this6._name = "TimeManager";
+    _this6._step = 1 / 60;
     _this6._lastUpdate = 0;
     _this6._deltaTime = 0;
     _this6._fps = 0;
@@ -59685,9 +59706,18 @@ var TimeManager = /*#__PURE__*/function (_Manager3) {
     key: "Update",
     value: function Update() {
       this._lastDeltaTime = this._deltaTime;
-      this._deltaTime = (performance.now() - this._lastUpdate) / 1000;
-      this._lastUpdate = performance.now();
+      this._deltaTime += Math.min(1, (performance.now() - this._lastUpdate) / 1000);
       this._fps = 1 / this._deltaTime;
+    }
+  }, {
+    key: "SetLastUpdate",
+    value: function SetLastUpdate() {
+      this._lastUpdate = performance.now();
+    }
+  }, {
+    key: "FixDelta",
+    value: function FixDelta() {
+      this._deltaTime -= this._step;
     }
   }, {
     key: "deltaTime",
@@ -59708,6 +59738,11 @@ var TimeManager = /*#__PURE__*/function (_Manager3) {
     key: "fps",
     get: function get() {
       return this._fps;
+    }
+  }, {
+    key: "step",
+    get: function get() {
+      return this._step;
     }
   }]);
 
@@ -60219,16 +60254,11 @@ var PhysicsManager = /*#__PURE__*/function (_Manager5) {
   }
 
   _createClass(PhysicsManager, [{
-    key: "Update",
-    value: function Update() {
+    key: "FixedUpdate",
+    value: function FixedUpdate() {
       if (this.sceneManager && this.timeManager) {
         this._physicsEngine.world = this.sceneManager.GetLoadedScene().world;
-        var delta = this.timeManager.deltaTime * 1000;
-        var lastdelta = this.timeManager.lastDeltaTime * 1000;
-        Matter.Engine.update(this._physicsEngine, // Not working even with the documentation pointing to that solution using default fixed instead
-        // delta, 
-        // delta / lastdelta,
-        1000 / 60);
+        Matter.Engine.update(this._physicsEngine);
       }
     }
   }, {
@@ -60302,10 +60332,19 @@ var engine = /*#__PURE__*/function () {
   }, {
     key: "Update",
     value: function Update() {
+      while (this.GetManager(TimeManager).deltaTime > this.GetManager(TimeManager).step) {
+        this.GetManager(TimeManager).FixDelta();
+
+        for (var i = 0, len = this.managers.length; i < len; i++) {
+          this.managers[i].FixedUpdate();
+        }
+      }
+
       for (var i = 0, len = this.managers.length; i < len; i++) {
         this.managers[i].Update();
       }
 
+      this.GetManager(TimeManager).SetLastUpdate();
       requestAnimationFrame(this.Update.bind(this));
     }
   }, {
@@ -60429,6 +60468,9 @@ var Entity = /*#__PURE__*/function () {
     key: "Update",
     value: function Update() {}
   }, {
+    key: "FixedUpdate",
+    value: function FixedUpdate() {}
+  }, {
     key: "Unload",
     value: function Unload() {}
   }, {
@@ -60443,6 +60485,13 @@ var Entity = /*#__PURE__*/function () {
     value: function UpdateComponents() {
       for (var i = 0, len = this.components.length; i < len; i++) {
         this.components[i].Update();
+      }
+    }
+  }, {
+    key: "FixedUpdateComponents",
+    value: function FixedUpdateComponents() {
+      for (var i = 0, len = this.components.length; i < len; i++) {
+        this.components[i].FixedUpdate();
       }
     }
   }, {
@@ -60554,6 +60603,9 @@ var Component = /*#__PURE__*/function () {
   }, {
     key: "Update",
     value: function Update() {}
+  }, {
+    key: "FixedUpdate",
+    value: function FixedUpdate() {}
   }, {
     key: "Unload",
     value: function Unload() {}
@@ -60917,7 +60969,7 @@ var Camera = /*#__PURE__*/function () {
       var tolerance = options.tolerance || 0.5;
 
       if (position.Distance(this.position) > tolerance) {
-        var point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+        var point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y);
         this.viewport.moveCenter(point);
       }
     }
@@ -60927,7 +60979,7 @@ var Camera = /*#__PURE__*/function () {
       var tolerance = options.tolerance || 0.5;
 
       if (position.Distance(this.position) > tolerance) {
-        var point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration) || position.x, this.viewport.center.y);
+        var point = new PIXI.Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, this.viewport.center.y);
         this.viewport.moveCenter(point);
       }
     }
@@ -60937,7 +60989,7 @@ var Camera = /*#__PURE__*/function () {
       var tolerance = options.tolerance || 0.5;
 
       if (position.Distance(this.position) > tolerance) {
-        var point = new PIXI.Point(this.viewport.center.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration) || position.y);
+        var point = new PIXI.Point(this.viewport.center.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y);
         this.viewport.moveCenter(point);
       }
     }
@@ -61868,7 +61920,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "43217" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "32825" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

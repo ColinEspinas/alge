@@ -35,6 +35,7 @@ export default class Entity {
 	public Create() {};
 	public Init() {};
 	public Update() {};
+	public FixedUpdate() {};
 	public Unload() {};
 
 	public InitComponents() {
@@ -46,6 +47,12 @@ export default class Entity {
 	public UpdateComponents() {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			this.components[i].Update();
+		}
+	}
+
+	public FixedUpdateComponents() {
+		for (var i = 0, len = this.components.length; i < len; i++) {
+			this.components[i].FixedUpdate();
 		}
 	}
 
@@ -63,7 +70,7 @@ export default class Entity {
 		return this.components[this.components.length - 1];
 	}
 
-	public AddSharedComponent<ComponentType extends Component>(c : ComponentType) : Component {
+	public AddSharedComponent<ComponentType extends Component>(c : ComponentType) : ComponentType {
 		this.components.push(c);
 		return this.components[this.components.length - 1];
 	}

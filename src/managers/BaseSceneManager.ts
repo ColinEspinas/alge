@@ -22,13 +22,17 @@ export default class BaseSceneManager extends Manager {
 		this.loadedScene.Update();
 	}
 
+	public FixedUpdate() {
+		this.loadedScene.FixedUpdate();
+	}
+
 	public CreateScene(name : string) : BaseScene {
 		if (name && name !== "") {
 			try {
 				this.GetScene(name);
 			}
 			catch {
-				let scene = new BaseScene(name, this.engine);
+				let scene = new BaseScene(this.engine, name);
 				this.scenes.push(scene);
 				return scene;
 			}
