@@ -3,17 +3,23 @@ import Box from "../entities/Box";
 
 export default class PlayerController extends Component {
 	
-	protected inputManager : InputManager = this.parent.engine.GetManager(InputManager);
-	protected sceneManager : SceneManager = this.parent.engine.GetManager(SceneManager);
+	protected inputManager : InputManager;
+	protected sceneManager : SceneManager;
 	protected rb : RigidBody;
 	protected camera : Camera;
 	protected lastbox : Box;
 	test = 0;
 
+	public Create() {
+		this.inputManager = this.parent.engine.GetManager("Input");
+		this.sceneManager = this.parent.engine.GetManager("Scene");
+	}
+
 	public Init() {
 
-		this.camera = new Camera(this.GetManager(RenderManager).viewport);
+		this.camera = new Camera(this.engine.GetManager("Render").viewport);
 		
+		// this.camera.Zoom(4);
 		// this.inputManager.SetCursor(Cursor.Hidden);
 	}
 	
@@ -31,31 +37,46 @@ export default class PlayerController extends Component {
 		if (this.inputManager.GetKeyDown(Key.DownArrow)) {
 			this.camera.Move(Vec.Down(), 10);
 		}
-		if (this.inputManager.GetKeyPressed(Key.S)) {
+		if (this.inputManager.GetKeyDown(Key.D)) {
 			this.camera.AddTrauma(0.3);
 		}
 
 		if (this.inputManager.GetMousePressed(Mouse.Left)) {
-			this.lastbox = this.sceneManager.GetLoadedScene().AddEntity(Box, "Box", {
+			let box = new Box("Box", {
 				position: this.camera.WorldToCamera(this.inputManager.GetMousePosition())
 			});
+			this.lastbox = this.sceneManager.GetLoadedScene().AddEntity(box);
 			this.camera.target = {
 				entity: this.lastbox, 
 				options: {
-					function: Ease.linear,
-					duration: 20,
+					duration: 0.05,
 				},
 				horizontal: true,
 				vertical: true,
 			};
 		}
 
-		this.camera.Update(this.GetManager(TimeManager).deltaTime);
+		// console.log("Cam = ", this.camera.position);
+		// console.log("Mouse = ", this.inputManager.GetMousePosition());
+		// console.log("Dist = " + this.inputManager.GetMousePosition().Distance(this.camera.position))
+		this.camera.Update(this.engine.GetManager("Time").deltaTime);
+
+		this.camera.Zoom(Math.max(0.01, this.inputManager.GetMouseWheel().y * 0.001 + 1));
 
 		if (this.inputManager.GetKeyDown(Key.N)) {
 			let noise = Noise.Perlin(2, "test");
 			console.log("test= " + this.test + " noise = " + noise.gen(this.test + 0.5, this.test + 0.5));
 			this.test++;
 		}
+
+		if (this.inputManager.GetKeyPressed(Key.S)) {
+			if (this.sceneManager.GetLoadedScene().name === "test") {
+				this.sceneManager.LoadSceneByName("test2");
+			} else {
+				this.sceneManager.LoadSceneByName("test");
+			}
+		}
+
+		// console.log(this.GetManager(TimeManager).deltaTime);
 	}
 }

@@ -23,6 +23,8 @@ export default class Player extends Entity {
 		// 	}
 		// });
 
-		this.AddComponent(PlayerController);
+		let playerctrl = new PlayerController(this, "PlayerController");
+
+		this.AddComponent(playerctrl);
 	}
 }

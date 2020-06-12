@@ -10,7 +10,7 @@ export default class Ground extends Entity {
 
 		this.transform.position.Add(new Vec(700, 500));
 
-		let tilemap = this.AddComponent(Tilemap, {
+		let tilemap = new Tilemap(this, "Tilemap", {
 			tileset: new Tileset(image, 19, 13, 32, 32),
 			width: 6,
 			height: 2,
@@ -19,11 +19,13 @@ export default class Ground extends Entity {
 				58, 59, 59, 59, 59, 60,
 			]
 		});
+		this.AddComponent(tilemap);
 
-		this.rb = this.AddComponent(RigidBody, { 
+		this.rb = new RigidBody(this, "RigidBody", { 
 			options: {
 				isStatic: true 
 			},
 		});
+		this.AddComponent(this.rb);
 	}
 }

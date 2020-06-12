@@ -27,7 +27,7 @@ export default class engine {
     get scaleMode(): string;
     Run(): number;
     Update(): void;
-    protected AddManager<ManagerType extends Manager>(c: new (...args: any[]) => ManagerType, ...args: any[]): Manager;
-    GetManager<ManagerType extends Manager>(m: new (...args: any[]) => ManagerType): ManagerType;
-    GetManagers<ManagerType extends Manager>(m: new (...args: any[]) => ManagerType): ManagerType[];
+    protected AddManager<ManagerType extends Manager>(m: ManagerType): ManagerType;
+    GetManager(name: string): any;
+    GetManagers(name: string): any[];
 }

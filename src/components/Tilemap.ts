@@ -38,12 +38,12 @@ export default class Tilemap extends Component {
 	}
 
 	public Init() {
-		this.GetManager(SceneManager).GetLoadedScene().stage.addChild(this.sprite);
+		this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.sprite);
 	}
 
 	public Update() {
 		// Render tiles to texture:
-		this.GetManager(RenderManager).renderer.render(this.tilesContainer, this.texture);
+		this.engine.GetManager("Render").renderer.render(this.tilesContainer, this.texture);
 	}
 
 	public UpdateTilemap() : void {

@@ -14,6 +14,7 @@ export default class Camera {
     set target(target: ITarget);
     get target(): ITarget;
     get position(): Vec;
+    set position(position: Vec);
     WorldToCamera(position: Vec): Vec;
     CameraToWorld(position: Vec): Vec;
     Zoom(amount: number, position?: Vec): void;
@@ -26,7 +27,6 @@ export default class Camera {
     Update(deltaTime: number): void;
 }
 export interface IMoveOptions {
-    function: Function;
     time?: number;
     tolerance?: number;
     duration: number;

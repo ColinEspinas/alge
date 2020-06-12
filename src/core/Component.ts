@@ -3,25 +3,21 @@ import Engine from "./Engine";
 
 export default abstract class Component {
 
-	protected parent : Entity;
+	protected _parent : Entity;
 	protected _name : string;
 	protected _properties : Object;
-
-	// Shortcut for this.parent.engine.GetManager
-	public GetManager : typeof Engine.prototype.GetManager;
 	
 	public constructor(parent : Entity, name : string, properties ?: Object) {
-		this.parent = parent;
+		this._parent = parent;
 		this._name = name;
 		this._properties = properties || {};
-
-		this.GetManager = this.parent.engine.GetManager.bind(this.parent.engine);
-
-		this.Create();
 	}
 
 	public get name() { return this._name; }
 	public get properties() { return this._properties; }
+	public get engine() { return this.parent.engine; }
+	public get parent() { return this._parent; }
+	public set parent(entity : Entity) { this._parent = entity; }
 
 	public Create() {};
 	public Init() {};

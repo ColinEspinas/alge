@@ -2,10 +2,9 @@ import Manager from '../core/Manager';
 import BaseScene from "../scenes/BaseScene";
 import Engine from '../core/Engine';
 export default class BaseSceneManager extends Manager {
-    protected _name: string;
     protected scenes: BaseScene[];
     protected loadedScene: BaseScene;
-    constructor(engine: Engine);
+    constructor(engine: Engine, name: string);
     Init(): void;
     Update(): void;
     FixedUpdate(): void;

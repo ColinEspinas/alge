@@ -1,7 +1,6 @@
 import Vec from "../utilities/Vec";
 import Manager from "../core/Manager";
 export default class InputManager extends Manager {
-    protected _name: string;
     private pressed;
     private down;
     private released;

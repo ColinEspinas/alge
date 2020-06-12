@@ -4,7 +4,7 @@
 export default class Ease {
 
 	public static lerp(b, c, t) {
-		return b*(1-t)+c*t;
+		return b * (1 - t) + c * t;
 	}
 
 	public static linear(t, b, _c, d) {

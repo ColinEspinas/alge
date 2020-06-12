@@ -1,15 +1,17 @@
 import shortid from 'shortid';
-import { Container, utils, Renderer, settings, SCALE_MODES, Texture, Sprite as Sprite$1, RenderTexture, BaseRenderTexture, Point, BaseTexture, Rectangle } from 'pixi.js';
-import { Viewport } from 'pixi-viewport';
+import { Container, utils, Renderer, settings, SCALE_MODES, Texture, Sprite as Sprite$1, RenderTexture, BaseRenderTexture, Graphics, Point, BaseTexture, Rectangle } from 'pixi.js';
 import { World, Engine, Bodies, Events, Body, Vector } from 'matter-js';
+import { Viewport } from 'pixi-viewport';
 import Tumult from 'tumult';
 
 class Manager {
-    constructor(engine) {
+    constructor(engine, name) {
         this._engine = engine;
+        this._name = name;
     }
     get name() { return this._name; }
     get engine() { return this._engine; }
+    set engine(engine) { this._engine = engine; }
     /**
      * Called at the end of the engine constructor
      * @param options Engine construct options
@@ -37,11 +39,11 @@ class Manager {
 }
 
 class BaseScene {
-    constructor(engine, name) {
+    constructor(manager, name) {
         this.loaded = false;
         this._id = shortid.generate();
         this._name = name;
-        this.engine = engine;
+        this._manager = manager;
         this.entities = [];
         this.loadedEntities = [];
     }
@@ -50,6 +52,9 @@ class BaseScene {
     }
     get name() {
         return this._name;
+    }
+    get engine() {
+        return this._manager.engine;
     }
     Reload() {
         this.Unload();
@@ -65,16 +70,18 @@ class BaseScene {
         entity.UnloadComponents();
     }
     Unload() {
-        this.loadedEntities = [];
         this.loaded = false;
-        for (var i = 0, len = this.entities.length; i < len; i++) {
-            const entity = this.entities[i];
+        for (var i = 0, len = this.loadedEntities.length; i < len; i++) {
+            const entity = this.loadedEntities[i];
             this.UnloadEntity(entity);
         }
+        this.loadedEntities = [];
     }
     InitEntity(entity) {
-        entity.Init();
-        entity.InitComponents();
+        if (entity) {
+            entity.Init();
+            entity.InitComponents();
+        }
     }
     UpdateEntity(entity) {
         if (this.loaded == false) {
@@ -86,27 +93,25 @@ class BaseScene {
         }
     }
     Update() {
-        for (var i = 0, len = this.entities.length; i < len; i++) {
+        for (var i = 0, len = this.loadedEntities.length; i < len; i++) {
             const entity = this.loadedEntities[i];
             this.UpdateEntity(entity);
         }
         this.loaded = true;
     }
     FixedUpdate() {
-        for (var i = 0, len = this.entities.length; i < len; i++) {
+        for (var i = 0, len = this.loadedEntities.length; i < len; i++) {
             this.loadedEntities[i].FixedUpdate();
         }
     }
-    AddEntity(e, name, properties) {
-        if (name && name !== "") {
-            this.entities.push(new e(this.engine, name, properties));
-            if (this.loaded) {
-                this.InitEntity(this.entities[this.entities.length - 1]);
-            }
-            return this.entities[this.entities.length - 1];
+    AddEntity(e) {
+        e.scene = this;
+        e.Create();
+        this.entities.push(e);
+        if (this.loaded) {
+            this.InitEntity(this.entities[this.entities.length - 1]);
         }
-        else
-            throw Error("Entity name is null or empty");
+        return this.entities[this.entities.length - 1];
     }
     GetEntity(name) {
         for (var i = 0, len = this.entities.length; i < len; i++) {
@@ -118,9 +123,8 @@ class BaseScene {
 }
 
 class BaseSceneManager extends Manager {
-    constructor(engine) {
-        super(engine);
-        this._name = "BaseSceneManager";
+    constructor(engine, name) {
+        super(engine, name);
         this.scenes = [];
     }
     Init() {
@@ -138,7 +142,7 @@ class BaseSceneManager extends Manager {
                 this.GetScene(name);
             }
             catch (_a) {
-                let scene = new BaseScene(this.engine, name);
+                let scene = new BaseScene(this, name);
                 this.scenes.push(scene);
                 return scene;
             }
@@ -181,18 +185,72 @@ class BaseSceneManager extends Manager {
                 this.loadedScene.Unload();
             this.loadedScene = scene;
             scene.Load();
+            console.log(scene);
         }
         catch (error) {
             console.error(error);
-            throw Error("Cannot load scene with name " + name);
         }
+    }
+}
+
+class Scene extends BaseScene {
+    constructor() {
+        super(...arguments);
+        this._stage = new Container();
+        this._world = World.create({});
+    }
+    get stage() {
+        return this._stage;
+    }
+    get world() {
+        return this._world;
+    }
+    Load() {
+        super.Load();
+        this.engine.GetManager("Render").LoadSceneToViewport(this);
+    }
+    Unload() {
+        super.Unload();
+        this._stage.removeChildren();
+        World.clear(this._world, false);
+    }
+}
+
+class SceneManager extends BaseSceneManager {
+    CreateScene(name) {
+        if (name && name !== "") {
+            try {
+                this.GetScene(name);
+            }
+            catch (_a) {
+                let scene = new Scene(this, name);
+                this.scenes.push(scene);
+                return scene;
+            }
+            throw Error("Scene with name " + name + " already exist");
+        }
+        else
+            throw Error("Cannot create scene with name " + name);
+    }
+    GetScenes() {
+        return this.scenes;
+    }
+    GetScene(name) {
+        for (var i = 0, len = this.scenes.length; i < len; i++) {
+            if (this.scenes[i].name === name) {
+                return this.scenes[i];
+            }
+        }
+        throw Error("Cannot get scene with name " + name);
+    }
+    GetLoadedScene() {
+        return this.loadedScene;
     }
 }
 
 class RenderManager extends Manager {
     constructor() {
         super(...arguments);
-        this._name = "RenderManager";
         this.mainContainer = new Container();
     }
     Init() {
@@ -249,238 +307,186 @@ class RenderManager extends Manager {
     get viewport() { return this._viewport; }
 }
 
-class Scene extends BaseScene {
-    constructor() {
-        super(...arguments);
-        this._stage = new Container();
-        this._world = World.create({});
-    }
-    get stage() {
-        return this._stage;
-    }
-    get world() {
-        return this._world;
-    }
-    Load() {
-        super.Load();
-        this.engine.GetManager(RenderManager).LoadSceneToViewport(this);
-    }
-    Unload() {
-        super.Unload();
-        this._stage.removeChildren();
-        World.clear(this._world, false);
-    }
-}
-
-class SceneManager extends BaseSceneManager {
-    constructor() {
-        super(...arguments);
-        this._name = "SceneManager";
-    }
-    CreateScene(name) {
-        if (name && name !== "") {
-            try {
-                this.GetScene(name);
-            }
-            catch (_a) {
-                let scene = new Scene(this.engine, name);
-                this.scenes.push(scene);
-                return scene;
-            }
-            throw Error("Scene with name " + name + " already exist");
-        }
-        else
-            throw Error("Cannot create scene with name " + name);
-    }
-    GetScenes() {
-        return this.scenes;
-    }
-    GetScene(name) {
-        for (var i = 0, len = this.scenes.length; i < len; i++) {
-            if (this.scenes[i].name === name) {
-                return this.scenes[i];
-            }
-        }
-        throw Error("Cannot get scene with name " + name);
-    }
-    GetLoadedScene() {
-        return this.loadedScene;
-    }
-}
-
 class TimeManager extends Manager {
-    constructor(engine) {
-        super(engine);
-        this._name = "TimeManager";
+    constructor(engine, name) {
+        super(engine, name);
         this._step = 1 / 60;
+        this._accumulator = 0;
         this._lastUpdate = 0;
         this._deltaTime = 0;
         this._fps = 0;
+        this.frames = 0;
     }
     get deltaTime() { return this._deltaTime; }
     get lastDeltaTime() { return this._lastDeltaTime; }
     get lastUpdate() { return this._lastUpdate; }
     get fps() { return this._fps; }
     get step() { return this._step; }
+    get accumulator() { return this._accumulator; }
     Update() {
         this._lastDeltaTime = this._deltaTime;
-        this._deltaTime += Math.min(1, (performance.now() - this._lastUpdate) / 1000);
+        this._deltaTime = Math.min(1, (performance.now() - this._lastUpdate) / 1000);
+        this._accumulator += this.deltaTime;
         this._fps = 1 / this._deltaTime;
+        ++this.frames;
     }
+    //Frames Per Second = Num Frame / Elasped Time in Secondsclass CFPS_Counter {private:	DWORD StartTime;	//The Start Time	DWORD CurrTime;		//Current Time	DWORD NumFrame;		//Number of Frames since start	float Fps;			//Current Frames Per Second	float Spf;			//Current Seconds Per Frame	char FPSstring[128];//Dont Overflow<img src="smile.gif" width=15 height=15 align=middle>	unsigned long delay;		public:	int 	StartFPS();			//Starts the FPS Counter	int 	UpdateFPS();	//Updates the Fps Variable	float	ReturnFPS(){return Fps;}	//Returns the Fps variable	int 	DrawFPS();	//Returns the Speed Per Frame from the Num per second	float	NumPerSecond(float in){return in*Spf;}			CFPS_Counter(){}	~CFPS_Counter(){}};//Draws the FPSint CFPS_Counter::DrawFPS(){	if(sprintf(FPSstring,"%f",ReturnFPS())<=0)return FALSE;	Console.Font.glPrint(0,0,FPSstring,1);	return TRUE;}int CFPS_Counter::StartFPS(){	NumFrame=0;	delay=0;	StartTime = GetTickCount();	return TRUE;} int CFPS_Counter::UpdateFPS(){	float tempFPS;	NumFrame++;	CurrTime = GetTickCount();	tempFPS = 1000.0f*((float)NumFrame/((float)CurrTime-(float)StartTime));	Spf = 1/tempFPS;	if(NumFrame>200)StartFPS();		delay++;	if(delay>15)	{		Fps=tempFPS;		delay=0;	}			return TRUE;}    
     SetLastUpdate() {
         this._lastUpdate = performance.now();
     }
     FixDelta() {
-        this._deltaTime -= this._step;
+        this._accumulator -= this._step;
     }
 }
 
-class Vec {
-    constructor(x, y, z) {
-        this.x = x;
-        this.y = y;
-        if (z)
-            this.z = z;
-    }
-    Equals(v, tolerance) {
-        if (tolerance == undefined) {
-            tolerance = 0.0000001;
+let Vec = /** @class */ (() => {
+    class Vec {
+        constructor(x, y, z) {
+            this.x = x;
+            this.y = y;
+            if (z)
+                this.z = z;
         }
-        return (Math.abs(v.x - this.x) <= tolerance) && (Math.abs(v.y - this.y) <= tolerance) && (Math.abs(v.z - this.z) <= tolerance);
-    }
-    ;
-    Add(v) {
-        this.x += v.x;
-        this.y += v.y;
-        if (this.z) {
-            this.z += v.z;
+        Equals(v, tolerance) {
+            if (tolerance == undefined) {
+                tolerance = 0.0000001;
+            }
+            return (Math.abs(v.x - this.x) <= tolerance) && (Math.abs(v.y - this.y) <= tolerance) && (Math.abs(v.z - this.z) <= tolerance);
         }
-        return this;
-    }
-    ;
-    Sub(v) {
-        this.x -= v.x;
-        this.y -= v.y;
-        if (this.z) {
-            this.z -= v.z;
+        ;
+        Add(v) {
+            this.x += v.x;
+            this.y += v.y;
+            if (this.z) {
+                this.z += v.z;
+            }
+            return this;
         }
-        return this;
-    }
-    ;
-    Scale(f) {
-        this.x *= f;
-        this.y *= f;
-        if (this.z) {
-            this.z *= f;
+        ;
+        Sub(v) {
+            this.x -= v.x;
+            this.y -= v.y;
+            if (this.z) {
+                this.z -= v.z;
+            }
+            return this;
         }
-        return this;
-    }
-    ;
-    Distance(v) {
-        var dx = v.x - this.x;
-        var dy = v.y - this.y;
-        var dz = v.z - this.z;
-        if (dz) {
-            return Math.sqrt(dx * dx + dy * dy + dz * dz);
+        ;
+        Scale(f) {
+            this.x *= f;
+            this.y *= f;
+            if (this.z) {
+                this.z *= f;
+            }
+            return this;
         }
-        return Math.sqrt(dx * dx + dy * dy);
-    }
-    ;
-    SquareDistance(v) {
-        var dx = v.x - this.x;
-        var dy = v.y - this.y;
-        var dz = v.z - this.z;
-        if (dz) {
-            return dx * dx + dy * dy + dz * dz;
+        ;
+        Distance(v) {
+            var dx = v.x - this.x;
+            var dy = v.y - this.y;
+            var dz = v.z - this.z;
+            if (dz) {
+                return Math.sqrt(dx * dx + dy * dy + dz * dz);
+            }
+            return Math.sqrt(dx * dx + dy * dy);
         }
-        return dx * dx + dy * dy;
-    }
-    ;
-    SimpleDistance(v) {
-        var dx = Math.abs(v.x - this.x);
-        var dy = Math.abs(v.y - this.y);
-        var dz = Math.abs(v.z - this.z);
-        if (dz) {
-            return Math.min(dx, dy, dz);
+        ;
+        SquareDistance(v) {
+            var dx = v.x - this.x;
+            var dy = v.y - this.y;
+            var dz = v.z - this.z;
+            if (dz) {
+                return dx * dx + dy * dy + dz * dz;
+            }
+            return dx * dx + dy * dy;
         }
-        return Math.min(dx, dy);
-    }
-    ;
-    Dot(v) {
-        if (this.z) {
-            return this.x * v.x + this.y * v.y + this.z * v.z;
+        ;
+        SimpleDistance(v) {
+            var dx = Math.abs(v.x - this.x);
+            var dy = Math.abs(v.y - this.y);
+            var dz = Math.abs(v.z - this.z);
+            if (dz) {
+                return Math.min(dx, dy, dz);
+            }
+            return Math.min(dx, dy);
         }
-        return this.x * v.x + this.y * v.y;
-    }
-    ;
-    Cross(v) {
-        var x = this.x;
-        var y = this.y;
-        var z = this.z;
-        var vx = v.x;
-        var vy = v.y;
-        var vz = v.z;
-        this.x = y * vz - z * vy;
-        this.y = z * vx - x * vz;
-        this.z = x * vy - y * vx;
-        return this;
-    }
-    ;
-    Length() {
-        if (this.z) {
-            return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+        ;
+        Dot(v) {
+            if (this.z) {
+                return this.x * v.x + this.y * v.y + this.z * v.z;
+            }
+            return this.x * v.x + this.y * v.y;
         }
-        return Math.sqrt(this.x * this.x + this.y * this.y);
-    }
-    ;
-    Normalize() {
-        var len = this.Length();
-        if (len > 0) {
-            this.Scale(1 / len);
+        ;
+        Cross(v) {
+            var x = this.x;
+            var y = this.y;
+            var z = this.z;
+            var vx = v.x;
+            var vy = v.y;
+            var vz = v.z;
+            this.x = y * vz - z * vy;
+            this.y = z * vx - x * vz;
+            this.z = x * vy - y * vx;
+            return this;
         }
-        return this;
-    }
-    ;
-    Limit(s) {
-        var len = this.Length();
-        if (len > s && len > 0) {
-            this.Scale(s / len);
+        ;
+        Length() {
+            if (this.z) {
+                return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+            }
+            return Math.sqrt(this.x * this.x + this.y * this.y);
         }
-        return this;
+        ;
+        Normalize() {
+            var len = this.Length();
+            if (len > 0) {
+                this.Scale(1 / len);
+            }
+            return this;
+        }
+        ;
+        Limit(s) {
+            var len = this.Length();
+            if (len > s && len > 0) {
+                this.Scale(s / len);
+            }
+            return this;
+        }
+        ;
+        Lerp(v, t) {
+            this.x = this.x + (v.x - this.x) * t;
+            this.y = this.y + (v.y - this.y) * t;
+            this.z = this.z + (v.z - this.z) * t;
+            return this;
+        }
+        ToString() {
+            return "{" + Math.floor(this.x * 1000) / 1000 + ", " + Math.floor(this.y * 1000) / 1000 + ", " + Math.floor(this.z * 1000) / 1000 + "}";
+        }
+        ;
+        static Zero() { return new Vec(0, 0, 0); }
+        static One() { return new Vec(1, 1, 1); }
+        static Up() { return new Vec(0, -1, 0); }
+        static Down() { return new Vec(0, 1, 0); }
+        static Left() { return new Vec(-1, 0, 0); }
+        static Right() { return new Vec(1, 0, 0); }
+        static Front() { return new Vec(0, 0, 1); }
+        static Back() { return new Vec(0, 0, -1); }
+        static From(v) {
+            if (v.z)
+                return new Vec(v.x, v.y, v.z);
+            return new Vec(v.x, v.y);
+        }
     }
-    ;
-    Lerp(v, t) {
-        this.x = this.x + (v.x - this.x) * t;
-        this.y = this.y + (v.y - this.y) * t;
-        this.z = this.z + (v.z - this.z) * t;
-        return this;
-    }
-    ToString() {
-        return "{" + Math.floor(this.x * 1000) / 1000 + ", " + Math.floor(this.y * 1000) / 1000 + ", " + Math.floor(this.z * 1000) / 1000 + "}";
-    }
-    ;
-    static Zero() { return new Vec(0, 0, 0); }
-    static One() { return new Vec(1, 1, 1); }
-    static Up() { return new Vec(0, -1, 0); }
-    static Down() { return new Vec(0, 1, 0); }
-    static Left() { return new Vec(-1, 0, 0); }
-    static Right() { return new Vec(1, 0, 0); }
-    static Front() { return new Vec(0, 0, 1); }
-    static Back() { return new Vec(0, 0, -1); }
-    static From(v) {
-        if (v.z)
-            return new Vec(v.x, v.y, v.z);
-        return new Vec(v.x, v.y);
-    }
-}
-Vec.FromArray = function (a) {
-    return new Vec(a[0], a[1], a[2]);
-};
+    Vec.FromArray = function (a) {
+        return new Vec(a[0], a[1], a[2]);
+    };
+    return Vec;
+})();
 
 class InputManager extends Manager {
     constructor() {
         super(...arguments);
-        this._name = "InputManager";
         this.pressed = {};
         this.down = {};
         this.released = {};
@@ -492,6 +498,7 @@ class InputManager extends Manager {
         this.mouseWheel = new Vec(0, 0, 0);
     }
     Init() {
+        window.oncontextmenu = () => { return false; };
         // Get container to fire events from:
         this.containerElement = document.querySelector(this.engine.container);
         // Setup keyboard events:
@@ -707,16 +714,14 @@ var Key;
 })(Key || (Key = {}));
 
 class PhysicsManager extends Manager {
-    constructor(engine) {
-        super(engine);
-        this._name = "PhysicsManager";
-        this.timeManager = this.engine.GetManager(TimeManager);
-        this.sceneManager = this.engine.GetManager(SceneManager);
+    constructor(engine, name) {
+        super(engine, name);
+        this.sceneManager = this.engine.GetManager("Scene");
         this._physicsEngine = Engine.create();
     }
     get physicsEngine() { return this._physicsEngine; }
     FixedUpdate() {
-        if (this.sceneManager && this.timeManager) {
+        if (this.sceneManager) {
             this._physicsEngine.world = this.sceneManager.GetLoadedScene().world;
             Engine.update(this._physicsEngine);
         }
@@ -737,15 +742,15 @@ class engine {
             physics: 'matter',
         }, options);
         this.managers = [];
-        this.managers.push(new TimeManager(this));
-        if (options.renderer == 'pixi') {
-            this.managers.push(new RenderManager(this));
-            this.managers.push(new SceneManager(this));
+        this.managers.push(new TimeManager(this, "Time"));
+        if (options.renderer === 'pixi') {
+            this.managers.push(new RenderManager(this, "Render"));
+            this.managers.push(new SceneManager(this, "Scene"));
         }
-        if (options.physics == 'matter') {
-            this.managers.push(new PhysicsManager(this));
+        if (options.physics === 'matter') {
+            this.managers.push(new PhysicsManager(this, "Physics"));
         }
-        this.managers.push(new InputManager(this));
+        this.managers.push(new InputManager(this, "Input"));
         for (var i = 0, len = options.managers.length; i < len; i++) {
             this.AddManager(options.managers[i]);
         }
@@ -758,6 +763,7 @@ class engine {
         for (var i = 0, len = this.managers.length; i < len; i++) {
             this.managers[i].PreInit(options);
         }
+        console.log(this.managers);
     }
     get width() { return this._width; }
     get height() { return this._height; }
@@ -774,8 +780,8 @@ class engine {
         return 0;
     }
     Update() {
-        while (this.GetManager(TimeManager).deltaTime > this.GetManager(TimeManager).step) {
-            this.GetManager(TimeManager).FixDelta();
+        while (this.GetManager("Time").accumulator > this.GetManager("Time").step) {
+            this.GetManager("Time").FixDelta();
             for (var i = 0, len = this.managers.length; i < len; i++) {
                 this.managers[i].FixedUpdate();
             }
@@ -783,28 +789,25 @@ class engine {
         for (var i = 0, len = this.managers.length; i < len; i++) {
             this.managers[i].Update();
         }
-        this.GetManager(TimeManager).SetLastUpdate();
+        this.GetManager("Time").SetLastUpdate();
         requestAnimationFrame(this.Update.bind(this));
     }
-    AddManager(c, ...args) {
-        if (name && name !== "") {
-            this.managers.push(new c(this, ...args));
-            return this.managers[this.managers.length - 1];
-        }
-        else
-            throw Error("Manager name is null or empty");
+    AddManager(m) {
+        m.engine = this;
+        this.managers.push(m);
+        return this.managers[this.managers.length - 1];
     }
-    GetManager(m) {
+    GetManager(name) {
         for (var i = 0, len = this.managers.length; i < len; i++) {
-            if (this.managers[i].name === m.name) {
+            if (this.managers[i].name === name) {
                 return this.managers[i];
             }
         }
     }
-    GetManagers(m) {
+    GetManagers(name) {
         let managers = [];
         for (var i = 0, len = this.managers.length; i < len; i++) {
-            if (this.managers[i].name === m.name) {
+            if (this.managers[i].name === name) {
                 managers.push(this.managers[i]);
             }
         }
@@ -830,20 +833,21 @@ class Transform {
 }
 
 class Entity {
-    constructor(engine, name, properties) {
+    constructor(name, properties) {
         this._id = shortid.generate();
         this._name = name;
         this._properties = properties || {};
-        this._engine = engine;
         this.transform = new Transform();
         this.components = [];
-        this.Create();
+        // this.Create();
     }
     get id() { return this._id; }
     set name(name) { this.name = name; }
     get name() { return this._name; }
-    get engine() { return this._engine; }
+    get engine() { return this._scene.engine; }
     get properties() { return this._properties; }
+    get scene() { return this._scene; }
+    set scene(scene) { this._scene = scene; }
     Create() { }
     ;
     Init() { }
@@ -874,42 +878,42 @@ class Entity {
             this.components[i].Unload();
         }
     }
-    AddComponent(c, properties) {
-        let name;
-        if (properties && properties["name"])
-            name = properties["name"];
-        else
-            name = c.name;
-        this.components.push(new c(this, name, properties));
-        return this.components[this.components.length - 1];
-    }
-    AddSharedComponent(c) {
+    // public AddComponent<ComponentType extends Component>(c : new (...args : any[]) => ComponentType, properties ?: Object) : ComponentType {
+    // 	let name : string;
+    // 	if (properties && properties["name"]) name = properties["name"];
+    // 	else name = c.name;
+    // 	this.components.push(new c(this, name, properties));
+    // 	return this.components[this.components.length - 1];
+    // }
+    AddComponent(c) {
+        c.parent = this;
+        c.Create();
         this.components.push(c);
         return this.components[this.components.length - 1];
     }
-    GetComponentFromName(name) {
+    GetComponent(name) {
         for (var i = 0, len = this.components.length; i < len; i++) {
             if (this.components[i].name == name) {
                 return this.components[i];
             }
         }
     }
-    GetComponent(c) {
-        for (var i = 0, len = this.components.length; i < len; i++) {
-            if (this.components[i].name === c.name) {
-                return this.components[i];
-            }
-        }
-    }
-    GetComponents(c) {
-        let components = [];
-        for (var i = 0, len = this.components.length; i < len; i++) {
-            if (this.components[i].name === c.name) {
-                components.push(this.components[i]);
-            }
-        }
-        return components;
-    }
+    // public GetComponent<ComponentType extends Component>(c : new (...args : any[]) => ComponentType) : ComponentType {
+    // 	for (var i = 0, len = this.components.length; i < len; i++) {
+    // 		if (this.components[i].name === c.name) {
+    // 			return this.components[i];
+    // 		}
+    // 	}
+    // }
+    // public GetComponents<ComponentType extends Component>(c : new (...args : any[]) => ComponentType) : ComponentType[] {
+    // 	let components : Component[] = [];
+    // 	for (var i = 0, len = this.components.length; i < len; i++) {
+    // 		if (this.components[i].name === c.name) {
+    // 			components.push(this.components[i]);
+    // 		}
+    // 	}
+    // 	return components as ComponentType[];
+    // }
     RemoveComponent(name) {
         for (var i = 0, len = this.components.length; i < len; i++) {
             if (this.components[i].name === name) {
@@ -921,14 +925,15 @@ class Entity {
 
 class Component {
     constructor(parent, name, properties) {
-        this.parent = parent;
+        this._parent = parent;
         this._name = name;
         this._properties = properties || {};
-        this.GetManager = this.parent.engine.GetManager.bind(this.parent.engine);
-        this.Create();
     }
     get name() { return this._name; }
     get properties() { return this._properties; }
+    get engine() { return this.parent.engine; }
+    get parent() { return this._parent; }
+    set parent(entity) { this._parent = entity; }
     Create() { }
     ;
     Init() { }
@@ -966,7 +971,7 @@ class Sprite extends Component {
         this.sprite.anchor.x = this.anchor.x;
         this.sprite.anchor.y = this.anchor.y;
         this.sprite.texture = this.texture;
-        this.GetManager(SceneManager).GetLoadedScene().stage.addChild(this.sprite);
+        this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.sprite);
     }
     Update() {
         // Set sprite position:
@@ -1016,7 +1021,7 @@ class RigidBody extends Component {
         this._body = Bodies.rectangle(position.x, position.y, scale.x, scale.y, bodyOptions);
         this._body.component = this;
         //==== Collision Events : ====//
-        Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionStart', event => {
+        Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionStart', event => {
             var pairs = event.pairs;
             for (var i = 0, len = pairs.length; i < len; ++i) {
                 const pair = pairs[i];
@@ -1028,7 +1033,7 @@ class RigidBody extends Component {
                 }
             }
         });
-        Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionEnd', event => {
+        Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionEnd', event => {
             var pairs = event.pairs;
             for (var i = 0, len = pairs.length; i < len; ++i) {
                 const pair = pairs[i];
@@ -1040,7 +1045,7 @@ class RigidBody extends Component {
                 }
             }
         });
-        Events.on(this.GetManager(PhysicsManager).physicsEngine, 'collisionActive', event => {
+        Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionActive', event => {
             var pairs = event.pairs;
             for (var i = 0, len = pairs.length; i < len; ++i) {
                 const pair = pairs[i];
@@ -1056,12 +1061,12 @@ class RigidBody extends Component {
     Init() {
         Body.setPosition(this._body, Vector.create(this.parent.transform.position.x, this.parent.transform.position.y));
         Body.setAngle(this._body, Angle.DegToRad(this.parent.transform.rotation));
-        World.add(this.GetManager(SceneManager).GetLoadedScene().world, this._body);
+        World.add(this.engine.GetManager("Scene").GetLoadedScene().world, this._body);
     }
     Update() {
         this.parent.transform.position.x = this.body.position.x;
         this.parent.transform.position.y = this.body.position.y;
-        this.parent.transform.rotation = Angle.RadToDeg(this.body.angle);
+        this.parent.transform.rotation = Math.floor(Angle.RadToDeg(this.body.angle));
     }
     ApplyForce(position, force) {
         Body.applyForce(this._body, Vector.create(position.x, position.y), Vector.create(force.x, force.y));
@@ -1096,11 +1101,11 @@ class Tilemap extends Component {
         this.UpdateTilemap();
     }
     Init() {
-        this.GetManager(SceneManager).GetLoadedScene().stage.addChild(this.sprite);
+        this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.sprite);
     }
     Update() {
         // Render tiles to texture:
-        this.GetManager(RenderManager).renderer.render(this.tilesContainer, this.texture);
+        this.engine.GetManager("Render").renderer.render(this.tilesContainer, this.texture);
     }
     UpdateTilemap() {
         this.tilesContainer = new Container();
@@ -1136,112 +1141,37 @@ class Tilemap extends Component {
     }
 }
 
-class Camera {
-    constructor(viewport) {
-        this.trauma = 0;
-        this.traumaPower = 2;
-        this.traumaDecay = 0.8;
-        this.maxShakeOffset = new Vec(100, 75);
-        this.maxShakeRoll = 10;
-        this.viewport = viewport;
-        // this.CenterPivot();
+class DebugCollider extends Component {
+    // private stretchMode : SpriteMode;
+    Create() {
+        this.position = this.properties["position"] || this.parent.transform.position;
+        this.scale = this.properties["scale"] || this.parent.transform.scale;
+        this.rb = this.properties["body"];
+        this.graphics = new Graphics();
+        // this.stretchMode = this.properties["stretchMode"];
     }
-    set target(target) { this._target = target; }
-    get target() { return this._target; }
-    get position() { return new Vec(this.viewport.center.x, this.viewport.center.y); }
-    WorldToCamera(position) {
-        const point = this.viewport.toLocal(new Point(position.x, position.y));
-        return new Vec(point.x, point.y);
+    Init() {
+        this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.graphics);
     }
-    CameraToWorld(position) {
-        const point = this.viewport.toGlobal(new Point(position.x, position.y));
-        return new Vec(point.x, point.y);
+    Update() {
+        this.Draw();
     }
-    Zoom(amount, position) {
-        if (position) {
-            this.viewport.moveCenter(new Point(position.x, position.y));
-            this.viewport.zoom(amount, false);
+    Draw() {
+        this.graphics.clear();
+        this.position = this.properties["position"] || this.parent.transform.position;
+        this.scale = this.properties["scale"] || this.parent.transform.scale;
+        let x1 = this.position.x - this.scale.x / 2;
+        let y1 = this.position.y - this.scale.y / 2;
+        let x2 = this.position.x + this.scale.x / 2;
+        let y2 = this.position.y + this.scale.y / 2;
+        // this.graphics.position.x = x1;
+        // this.graphics.position.y = y1;
+        // this.graphics.x = this.rb.body.vertices[0].x;
+        // this.graphics.y = this.rb.body.vertices[0].y;
+        for (let i = 0, len = this.rb.body.vertices.length; i < len; ++i) {
+            this.graphics.lineTo(this.rb.body.vertices[i].x, this.rb.body.vertices[i].y).lineStyle(0.5, 0xFF0000);
         }
-        else
-            this.viewport.zoom(amount, true);
-    }
-    // public CenterPivot() {
-    // 	this.viewport.pivot = this.viewport.center;
-    // 	this.viewport.x = -this.viewport.pivot.x;
-    // 	this.viewport.y = -this.viewport.pivot.y;
-    // 	const debug = new PIXI.Graphics();
-    // 	// Set the fill color
-    // 	debug.beginFill(0xe74c3c); // Red
-    // 	// Draw a circle
-    // 	debug.drawCircle(this.viewport.pivot.x, this.viewport.pivot.y, 10); // drawCircle(x, y, radius)
-    // 	// Applies fill to lines and shapes since the last call to beginFill.
-    // 	debug.endFill();
-    // 	this.viewport.addChild(debug);
-    // }
-    Move(direction, speed) {
-        speed = speed || 1;
-        this.viewport.x -= direction.x * speed * this.deltaTime * 100;
-        this.viewport.y -= direction.y * speed * this.deltaTime * 100;
-    }
-    MoveTo(position, options) {
-        const tolerance = options.tolerance || 0.5;
-        if (position.Distance(this.position) > tolerance) {
-            const point = new Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y);
-            this.viewport.moveCenter(point);
-        }
-    }
-    MoveToHorizontal(position, options) {
-        const tolerance = options.tolerance || 0.5;
-        if (position.Distance(this.position) > tolerance) {
-            const point = new Point(options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, this.viewport.center.y);
-            this.viewport.moveCenter(point);
-        }
-    }
-    MoveToVertical(position, options) {
-        const tolerance = options.tolerance || 0.5;
-        if (position.Distance(this.position) > tolerance) {
-            const point = new Point(this.viewport.center.x, options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y);
-            this.viewport.moveCenter(point);
-        }
-    }
-    AddTrauma(amount) {
-        this.trauma = Math.min(this.trauma + amount, 1);
-    }
-    Shake() {
-        const amount = Math.pow(this.trauma, this.traumaPower);
-        // Waiting for viewport centered pivot solution:
-        // this.viewport.angle = this.maxShakeRoll * amount * Math.random();
-        const shakeOffset = new Vec(this.maxShakeOffset.x * amount * ((Math.random() * 2) - 1), this.maxShakeOffset.y * amount * ((Math.random() * 2) - 1));
-        this.viewport.moveCenter(this.viewport.center.x + shakeOffset.x, this.viewport.center.y + shakeOffset.y);
-    }
-    Update(deltaTime) {
-        this.deltaTime = deltaTime;
-        if (this._target && this._target.position && this._target.position instanceof Vec) {
-            if (this.target.horizontal && this.target.vertical) {
-                this.MoveTo(this.target.position, this.target.options);
-            }
-            else if (this.target.horizontal) {
-                this.MoveToHorizontal(this.target.position, this.target.options);
-            }
-            else if (this.target.vertical) {
-                this.MoveToVertical(this.target.position, this.target.options);
-            }
-        }
-        if (this._target && this._target.entity && this._target.entity instanceof Entity) {
-            if (this.target.horizontal && this.target.vertical) {
-                this.MoveTo(this.target.entity.transform.position, this.target.options);
-            }
-            else if (this.target.horizontal) {
-                this.MoveToHorizontal(this.target.entity.transform.position, this.target.options);
-            }
-            else if (this.target.vertical) {
-                this.MoveToVertical(this.target.entity.transform.position, this.target.options);
-            }
-        }
-        if (this.trauma > 0) {
-            this.trauma = Math.max(this.trauma - this.traumaDecay * this.deltaTime, 0);
-            this.Shake();
-        }
+        this.graphics.lineTo(this.rb.body.vertices[0].x, this.rb.body.vertices[0].y);
     }
 }
 
@@ -1513,6 +1443,116 @@ class Ease {
     }
 }
 
+class Camera {
+    constructor(viewport) {
+        this.trauma = 0;
+        this.traumaPower = 2;
+        this.traumaDecay = 0.8;
+        this.maxShakeOffset = new Vec(100, 75);
+        this.maxShakeRoll = 10;
+        this.viewport = viewport;
+        // this.CenterPivot();
+    }
+    set target(target) { this._target = target; }
+    get target() { return this._target; }
+    get position() { return new Vec(this.viewport.center.x, this.viewport.center.y); }
+    set position(position) { this.viewport.center = new Point(position.x, position.y); }
+    WorldToCamera(position) {
+        const point = this.viewport.toLocal(new Point(position.x, position.y));
+        return new Vec(point.x, point.y);
+    }
+    CameraToWorld(position) {
+        const point = this.viewport.toGlobal(new Point(position.x, position.y));
+        return new Vec(point.x, point.y);
+    }
+    Zoom(amount, position) {
+        if (position) {
+            this.viewport.moveCenter(new Point(position.x, position.y));
+            this.viewport.setZoom(amount, false);
+        }
+        else
+            this.viewport.setZoom(amount, true);
+    }
+    // public CenterPivot() {
+    // 	this.viewport.pivot = this.viewport.center;
+    // 	this.viewport.x = -this.viewport.pivot.x;
+    // 	this.viewport.y = -this.viewport.pivot.y;
+    // 	const debug = new PIXI.Graphics();
+    // 	// Set the fill color
+    // 	debug.beginFill(0xe74c3c); // Red
+    // 	// Draw a circle
+    // 	debug.drawCircle(this.viewport.pivot.x, this.viewport.pivot.y, 10); // drawCircle(x, y, radius)
+    // 	// Applies fill to lines and shapes since the last call to beginFill.
+    // 	debug.endFill();
+    // 	this.viewport.addChild(debug);
+    // }
+    Move(direction, speed) {
+        speed = speed || 1;
+        this.viewport.x -= direction.x * speed * this.deltaTime * 100;
+        this.viewport.y -= direction.y * speed * this.deltaTime * 100;
+    }
+    MoveTo(position, options) {
+        const tolerance = options.tolerance || 0.5;
+        if (position.Distance(this.position) > tolerance) {
+            const point = new Point(Math.floor(Ease.lerp(this.viewport.center.x, position.x, options.duration * (this.deltaTime * 100))), Math.floor(Ease.lerp(this.viewport.center.y, position.y, options.duration * (this.deltaTime * 100))));
+            this.viewport.moveCenter(point);
+        }
+    }
+    MoveToHorizontal(position, options) {
+        const tolerance = options.tolerance || 0.5;
+        if (position.Distance(this.position) > tolerance) {
+            const point = new Point(Math.floor(Ease.lerp(this.viewport.center.x, position.x, options.duration * (this.deltaTime * 100))), this.viewport.center.y);
+            this.viewport.moveCenter(point);
+        }
+    }
+    MoveToVertical(position, options) {
+        const tolerance = options.tolerance || 0.5;
+        if (position.Distance(this.position) > tolerance) {
+            const point = new Point(this.viewport.center.x, Math.floor(Ease.lerp(this.viewport.center.y, position.y, options.duration * (this.deltaTime * 100))));
+            this.viewport.moveCenter(point);
+        }
+    }
+    AddTrauma(amount) {
+        this.trauma = Math.min(this.trauma + amount, 1);
+    }
+    Shake() {
+        const amount = Math.pow(this.trauma, this.traumaPower);
+        // Waiting for viewport centered pivot solution:
+        // this.viewport.angle = this.maxShakeRoll * amount * Math.random();
+        const shakeOffset = new Vec(this.maxShakeOffset.x * amount * ((Math.random() * 2) - 1), this.maxShakeOffset.y * amount * ((Math.random() * 2) - 1));
+        this.viewport.moveCenter(this.viewport.center.x + shakeOffset.x, this.viewport.center.y + shakeOffset.y);
+    }
+    Update(deltaTime) {
+        this.deltaTime = deltaTime;
+        if (this._target && this._target.position && this._target.position instanceof Vec) {
+            if (this.target.horizontal && this.target.vertical) {
+                this.MoveTo(this.target.position, this.target.options);
+            }
+            else if (this.target.horizontal) {
+                this.MoveToHorizontal(this.target.position, this.target.options);
+            }
+            else if (this.target.vertical) {
+                this.MoveToVertical(this.target.position, this.target.options);
+            }
+        }
+        if (this._target && this._target.entity && this._target.entity instanceof Entity) {
+            if (this.target.horizontal && this.target.vertical) {
+                this.MoveTo(this.target.entity.transform.position, this.target.options);
+            }
+            else if (this.target.horizontal) {
+                this.MoveToHorizontal(this.target.entity.transform.position, this.target.options);
+            }
+            else if (this.target.vertical) {
+                this.MoveToVertical(this.target.entity.transform.position, this.target.options);
+            }
+        }
+        if (this.trauma > 0) {
+            this.trauma = Math.max(this.trauma - this.traumaDecay * this.deltaTime, 0);
+            this.Shake();
+        }
+    }
+}
+
 class Noise {
     static Simplex(dimension, seed) {
         if (dimension === 1) {
@@ -1581,4 +1621,4 @@ class Tileset {
     }
 }
 
-export { Angle, BaseScene, BaseSceneManager, Camera, Component, Cursor, Ease, engine as Engine, Entity, InputManager, Key, Mouse, Noise, PhysicsManager, RenderManager, RigidBody, Scene, SceneManager, Sprite, SpriteMode, Tilemap, Tileset, TimeManager, Transform, Vec };
+export { Angle, BaseScene, BaseSceneManager, Camera, Component, Cursor, DebugCollider, Ease, engine as Engine, Entity, InputManager, Key, Mouse, Noise, PhysicsManager, RenderManager, RigidBody, Scene, SceneManager, Sprite, SpriteMode, Tilemap, Tileset, TimeManager, Transform, Vec };

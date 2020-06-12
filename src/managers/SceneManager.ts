@@ -3,8 +3,6 @@ import Scene from '../scenes/Scene';
 
 export default class SceneManager extends BaseSceneManager {
 
-	protected _name: string = "SceneManager";
-
 	protected scenes : Scene[];
 	protected loadedScene : Scene;
 
@@ -14,7 +12,7 @@ export default class SceneManager extends BaseSceneManager {
 				this.GetScene(name);
 			}
 			catch {
-				let scene = new Scene(this.engine, name);
+				let scene = new Scene(this, name);
 				this.scenes.push(scene);
 				return scene;
 			}

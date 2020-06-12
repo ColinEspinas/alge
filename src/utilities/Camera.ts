@@ -29,6 +29,7 @@ export default class Camera {
 	public get target() { return this._target; }
 
 	public get position() { return new Vec(this.viewport.center.x, this.viewport.center.y); }
+	public set position(position : Vec) { this.viewport.center = new PIXI.Point(position.x, position.y); }
 
 	public WorldToCamera(position : Vec) : Vec {
 		const point = this.viewport.toLocal(new PIXI.Point(position.x, position.y));
@@ -43,9 +44,9 @@ export default class Camera {
 	public Zoom(amount : number, position ?: Vec) : void {
 		if (position) {
 			this.viewport.moveCenter(new PIXI.Point(position.x, position.y));
-			this.viewport.zoom(amount, false);
+			this.viewport.setZoom(amount, false);
 		}
-		else this.viewport.zoom(amount, true);
+		else this.viewport.setZoom(amount, true);
 	}
 
 	// public CenterPivot() {
@@ -79,8 +80,8 @@ export default class Camera {
 		const tolerance = options.tolerance || 0.5;
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
-				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, 
-				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y
+				Math.floor(Ease.lerp(this.viewport.center.x, position.x, options.duration * (this.deltaTime * 100))), 
+				Math.floor(Ease.lerp(this.viewport.center.y, position.y, options.duration * (this.deltaTime * 100)))
 			);
 			this.viewport.moveCenter(point);
 		}
@@ -90,7 +91,7 @@ export default class Camera {
 		const tolerance = options.tolerance || 0.5;
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
-				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.x, position.x, options.duration * this.deltaTime * 100) || position.x, 
+				Math.floor(Ease.lerp(this.viewport.center.x, position.x, options.duration * (this.deltaTime * 100))), 
 				this.viewport.center.y,
 			);
 			this.viewport.moveCenter(point);
@@ -102,7 +103,7 @@ export default class Camera {
 		if (position.Distance(this.position) > tolerance) {
 			const point : PIXI.Point = new PIXI.Point(
 				this.viewport.center.x, 
-				options.function(options.time * this.deltaTime * 100 || 1, this.viewport.center.y, position.y, options.duration * this.deltaTime * 100) || position.y
+				Math.floor(Ease.lerp(this.viewport.center.y, position.y, options.duration * (this.deltaTime * 100)))
 			);
 			this.viewport.moveCenter(point);
 		}
@@ -156,7 +157,6 @@ export default class Camera {
 }
 
 export interface IMoveOptions {
-	function : Function;
 	time ?: number;
 	tolerance ?: number;
 	duration : number;

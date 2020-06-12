@@ -3,8 +3,6 @@ import Manager from "../core/Manager";
 
 export default class InputManager extends Manager{
 	
-	protected _name: string = "InputManager";
-
 	private pressed : { [key: number]: boolean; } = {};
 	private down : { [key: number]: boolean; } = {};
 	private released : { [key: number]: boolean; } = {};
@@ -21,6 +19,7 @@ export default class InputManager extends Manager{
 
 	public Init() : void {
 
+		window.oncontextmenu = () => { return false };
 
 		// Get container to fire events from:
 		this.containerElement = document.querySelector(this.engine.container);

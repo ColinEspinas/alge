@@ -1,15 +1,17 @@
 import Entity from '../core/Entity';
+import BaseSceneManager from '../managers/BaseSceneManager';
 import Engine from '../core/Engine';
 export default class BaseScene {
     protected _id: number;
     protected _name: string;
-    protected engine: Engine;
+    protected _manager: BaseSceneManager;
     protected loaded: boolean;
     protected entities: any[];
     protected loadedEntities: any[];
-    constructor(engine: Engine, name: string);
+    constructor(manager: BaseSceneManager, name: string);
     get id(): number;
     get name(): string;
+    get engine(): Engine;
     Reload(): void;
     Load(): void;
     protected UnloadEntity(entity: Entity): void;
@@ -18,6 +20,6 @@ export default class BaseScene {
     protected UpdateEntity(entity: Entity): void;
     Update(): void;
     FixedUpdate(): void;
-    AddEntity<EntityType extends Entity>(e: new (...args: any[]) => EntityType, name: string, properties?: Object): EntityType;
-    GetEntity<EntityType extends Entity>(name: string): EntityType;
+    AddEntity<EntityType extends Entity>(e: EntityType): EntityType;
+    GetEntity(name: string): any;
 }

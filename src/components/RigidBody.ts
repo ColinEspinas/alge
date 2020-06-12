@@ -25,7 +25,7 @@ export default class RigidBody extends Component {
 
 		//==== Collision Events : ====//
 
-		Matter.Events.on(this.GetManager(PhysicManager).physicsEngine, 'collisionStart', event => {
+		Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionStart', event => {
 			var pairs = event.pairs;
 			for (var i = 0, len = pairs.length; i < len; ++i) {
 				const pair = pairs[i];
@@ -38,7 +38,7 @@ export default class RigidBody extends Component {
 			}
 		});
 		
-		Matter.Events.on(this.GetManager(PhysicManager).physicsEngine, 'collisionEnd', event => {
+		Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionEnd', event => {
 			var pairs = event.pairs;
 			for (var i = 0, len = pairs.length; i < len; ++i) {
 				const pair = pairs[i];
@@ -51,7 +51,7 @@ export default class RigidBody extends Component {
 			}
 		});
 		
-		Matter.Events.on(this.GetManager(PhysicManager).physicsEngine, 'collisionActive', event => {
+		Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionActive', event => {
 			var pairs = event.pairs;
 			for (var i = 0, len = pairs.length; i < len; ++i) {
 				const pair = pairs[i];
@@ -69,13 +69,13 @@ export default class RigidBody extends Component {
 		Matter.Body.setPosition(this._body, Matter.Vector.create(this.parent.transform.position.x, this.parent.transform.position.y));
 		Matter.Body.setAngle(this._body, Angle.DegToRad(this.parent.transform.rotation));
 
-		Matter.World.add(this.GetManager(SceneManager).GetLoadedScene().world, this._body);
+		Matter.World.add(this.engine.GetManager("Scene").GetLoadedScene().world, this._body);
 	}
 
 	public Update() {
 		this.parent.transform.position.x = this.body.position.x;
 		this.parent.transform.position.y = this.body.position.y;
-		this.parent.transform.rotation = Angle.RadToDeg(this.body.angle);
+		this.parent.transform.rotation = Math.floor(Angle.RadToDeg(this.body.angle));
 	}
 
 	public ApplyForce(position : Vec, force : Vec) : void {

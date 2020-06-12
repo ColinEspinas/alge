@@ -8,8 +8,19 @@ import Ground from "./entities/Ground";
 
 const game = new Engine({fullscreen: true});
 
-let mainScene : Scene = game.GetManager(SceneManager).CreateScene("test");
-let player1 = mainScene.AddEntity(Player, "PlayerEntity");
-let ground = mainScene.AddEntity(Ground, "GroundEntity");
+console.log(game.GetManager("Scene"));
+
+let mainScene : Scene = game.GetManager("Scene").CreateScene("test");
+let testScene : Scene = game.GetManager("Scene").CreateScene("test2");
+
+let player1 = new Player("PlayerEntity");
+mainScene.AddEntity(player1);
+let ground = new Ground("GroundEntity");
+mainScene.AddEntity(ground);
+
+let player2 = new Player("PlayerEntity");
+testScene.AddEntity(player2);
+let ground2 = new Ground("GroundEntity");
+testScene.AddEntity(ground2);
 
 game.Run();

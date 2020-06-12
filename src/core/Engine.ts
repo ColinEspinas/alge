@@ -27,7 +27,7 @@ export default class engine {
 
 	private _container : string;
 
-	private managers : Manager[];
+	private managers : any[];
 
 	constructor(options : Partial<Options> = {}) {
 
@@ -45,18 +45,18 @@ export default class engine {
 
 		this.managers = [];
 		
-		this.managers.push(new TimeManager(this));
+		this.managers.push(new TimeManager(this, "Time"));
 
-		if (options.renderer == 'pixi') {
-			this.managers.push(new RenderManager(this));
-			this.managers.push(new SceneManager(this));
+		if (options.renderer === 'pixi') {
+			this.managers.push(new RenderManager(this, "Render"));
+			this.managers.push(new SceneManager(this, "Scene"));
 		}
 
-		if (options.physics == 'matter') {
-			this.managers.push(new PhysicsManager(this));
+		if (options.physics === 'matter') {
+			this.managers.push(new PhysicsManager(this, "Physics"));
 		}
 
-		this.managers.push(new InputManager(this));
+		this.managers.push(new InputManager(this, "Input"));
 
 		for (var i = 0, len = options.managers.length; i < len; i++) {
 			this.AddManager(options.managers[i]);
@@ -73,6 +73,8 @@ export default class engine {
 		for (var i = 0, len = this.managers.length; i < len; i++) {
 			this.managers[i].PreInit(options);
 		}
+
+		console.log(this.managers);
 	}
 
 	public get width() { return this._width; }
@@ -95,8 +97,8 @@ export default class engine {
 	}
 
 	public Update() : void {
-		while(this.GetManager(TimeManager).deltaTime > this.GetManager(TimeManager).step) {
-			this.GetManager(TimeManager).FixDelta();
+		while(this.GetManager("Time").accumulator > this.GetManager("Time").step) {
+			this.GetManager("Time").FixDelta();
 			for (var i = 0, len = this.managers.length; i < len; i++) {
 				this.managers[i].FixedUpdate();
 			}
@@ -104,33 +106,31 @@ export default class engine {
 		for (var i = 0, len = this.managers.length; i < len; i++) {
 			this.managers[i].Update();
 		}
-		this.GetManager(TimeManager).SetLastUpdate();
+		this.GetManager("Time").SetLastUpdate();
 		requestAnimationFrame(this.Update.bind(this));
 	}
 
-	protected AddManager<ManagerType extends Manager>(c : new (...args : any[]) => ManagerType, ...args : any[]) : Manager {
-		if (name && name !== "") {
-			this.managers.push(new c(this, ...args));
-			return this.managers[this.managers.length - 1];
-		}
-		else throw Error("Manager name is null or empty");
+	protected AddManager<ManagerType extends Manager>(m : ManagerType) : ManagerType {
+		m.engine = this;
+		this.managers.push(m);
+		return this.managers[this.managers.length - 1];
 	}
 
-	public GetManager<ManagerType extends Manager>(m : new (...args : any[]) => ManagerType) : ManagerType {
+	public GetManager(name : string) {
 		for (var i = 0, len = this.managers.length; i < len; i++) {
-			if (this.managers[i].name === m.name) {
-				return this.managers[i] as ManagerType;
+			if (this.managers[i].name === name) {
+				return this.managers[i];
 			}
 		}
 	}
 
-	public GetManagers<ManagerType extends Manager>(m : new (...args : any[]) => ManagerType) : ManagerType[] {
-		let managers : Manager[] = [];
+	public GetManagers(name : string) {
+		let managers = [];
 		for (var i = 0, len = this.managers.length; i < len; i++) {
-			if (this.managers[i].name === m.name) {
+			if (this.managers[i].name === name) {
 				managers.push(this.managers[i]);
 			}
 		}
-		return managers as ManagerType[];
+		return managers;
 	}
 }

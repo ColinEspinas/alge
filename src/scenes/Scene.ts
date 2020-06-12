@@ -18,7 +18,7 @@ export default class Scene extends BaseScene {
 
 	public Load() {
 		super.Load();
-		this.engine.GetManager(RenderManager).LoadSceneToViewport(this);
+		this.engine.GetManager("Render").LoadSceneToViewport(this);
 	}
 
 	public Unload() {

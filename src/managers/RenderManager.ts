@@ -5,7 +5,6 @@ import Scene from '../scenes/Scene';
 
 export default class RenderManager extends Manager{
 	
-	protected _name: string = "RenderManager";
 	protected _renderer : PIXI.Renderer;
 	protected _viewport : Viewport;
 	protected mainContainer : PIXI.Container = new PIXI.Container();

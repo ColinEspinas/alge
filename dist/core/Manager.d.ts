@@ -1,10 +1,11 @@
 import Engine, { Options } from './Engine';
 export default abstract class Manager {
-    protected abstract _name: string;
+    protected _name: string;
     protected _engine: Engine;
     get name(): string;
     get engine(): Engine;
-    constructor(engine: Engine);
+    set engine(engine: Engine);
+    constructor(engine: Engine, name: string);
     /**
      * Called at the end of the engine constructor
      * @param options Engine construct options

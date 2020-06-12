@@ -17,6 +17,8 @@ import PhysicsManager from './managers/PhysicsManager';
 import Sprite from './components/Sprite';
 import RigidBody from './components/RigidBody';
 import Tilemap from './components/Tilemap';
+// Debug Components:
+import DebugCollider from './components/Debug/DebugCollider';
 
 // Base Scenes:
 import BaseScene from './scenes/BaseScene';
@@ -52,6 +54,8 @@ export {
 	Sprite,
 	RigidBody,
 	Tilemap,
+	// Debug Components:
+	DebugCollider,
 
 	// Base Scenes:
 	BaseScene,

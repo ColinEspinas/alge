@@ -4,13 +4,11 @@ import Engine, { Options } from '../core/Engine';
 
 export default class BaseSceneManager extends Manager {
 
-	protected _name: string = "BaseSceneManager";
-
 	protected scenes : BaseScene[];
 	protected loadedScene : BaseScene;
 
-	constructor(engine : Engine) {
-		super(engine);
+	constructor(engine : Engine, name : string) {
+		super(engine, name);
 		this.scenes = [];
 	}
 
@@ -32,7 +30,7 @@ export default class BaseSceneManager extends Manager {
 				this.GetScene(name);
 			}
 			catch {
-				let scene = new BaseScene(this.engine, name);
+				let scene = new BaseScene(this, name);
 				this.scenes.push(scene);
 				return scene;
 			}
@@ -79,10 +77,10 @@ export default class BaseSceneManager extends Manager {
 				this.loadedScene.Unload();
 			this.loadedScene = scene;
 			scene.Load();
+			console.log(scene);
 		}
 		catch(error) { 
 			console.error(error);
-			throw Error("Cannot load scene with name " + name)
 		};
 	}
 }

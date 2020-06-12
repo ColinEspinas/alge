@@ -2,6 +2,7 @@ import typescript from 'rollup-plugin-typescript2';
 import execute from 'rollup-plugin-execute';
 import pkg from './package.json';
 import path from 'path';
+import { terser } from 'rollup-plugin-terser';
 
 export default {
     input: 'src/index.ts', // our source file
@@ -27,6 +28,7 @@ export default {
         typescript({
             typescript: require('typescript'),
         }),
+        // terser(),
         execute(`mv ${path.join(process.cwd(), 'dist', 'index.d.ts')} ${path.join(process.cwd(), 'dist', 'alge.d.ts')}`)
         // copy({
         //     targets: [{ src: 'dist/index.d.ts', dest: 'dist/', rename: 'alge.d.ts' }]

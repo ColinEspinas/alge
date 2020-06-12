@@ -1,21 +1,24 @@
 import Transform from './Transform';
 import Component from './Component';
+import BaseScene from '../scenes/BaseScene';
 import Engine from './Engine';
 export default class Entity {
     protected _id: number;
     protected _name: string;
     protected _properties: Object;
-    protected _engine: Engine;
+    protected _scene: BaseScene;
     shape: any;
     transform: Transform;
     texture: any;
     protected components: any[];
-    constructor(engine: Engine, name: string, properties?: Object);
+    constructor(name: string, properties?: Object);
     get id(): number;
     set name(name: string);
     get name(): string;
     get engine(): Engine;
     get properties(): Object;
+    get scene(): BaseScene;
+    set scene(scene: BaseScene);
     Create(): void;
     Init(): void;
     Update(): void;
@@ -25,10 +28,7 @@ export default class Entity {
     UpdateComponents(): void;
     FixedUpdateComponents(): void;
     UnloadComponents(): void;
-    AddComponent<ComponentType extends Component>(c: new (...args: any[]) => ComponentType, properties?: Object): ComponentType;
-    AddSharedComponent<ComponentType extends Component>(c: ComponentType): ComponentType;
-    GetComponentFromName(name: string): any;
-    GetComponent<ComponentType extends Component>(c: new (...args: any[]) => ComponentType): ComponentType;
-    GetComponents<ComponentType extends Component>(c: new (...args: any[]) => ComponentType): ComponentType[];
+    AddComponent<ComponentType extends Component>(c: ComponentType): ComponentType;
+    GetComponent(name: string): any;
     RemoveComponent(name: string): void;
 }
