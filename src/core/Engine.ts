@@ -15,6 +15,7 @@ export type Options  = {
 	renderer ?: string;
 	scaleMode ?: string;
 	physics ?: string;
+	gameScale ?: number;
 }
 
 export default class engine {
@@ -24,6 +25,7 @@ export default class engine {
 	private _fullscreen : boolean;
 	private _resolution : number;
 	private _scaleMode : string;
+	private _gameScale : number;
 
 	private _container : string;
 
@@ -41,6 +43,7 @@ export default class engine {
 			renderer: 'pixi',
 			scaleMode : 'nearest',
 			physics: 'matter',
+			gameScale: 1,
 		}, options);
 
 		this.managers = [];
@@ -69,12 +72,11 @@ export default class engine {
 		this._container = options.container;
 
 		this._scaleMode = options.scaleMode;
+		this._gameScale = options.gameScale;
 
 		for (var i = 0, len = this.managers.length; i < len; i++) {
 			this.managers[i].PreInit(options);
 		}
-
-		console.log(this.managers);
 	}
 
 	public get width() { return this._width; }
@@ -83,6 +85,7 @@ export default class engine {
 	public get fullscreen() { return this._fullscreen; }
 	public get container() { return this._container; }
 	public get scaleMode() { return this._scaleMode; }
+	public get gameScale() { return this._gameScale; }
 
 	public Run() : number {
 

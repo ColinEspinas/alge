@@ -17,7 +17,7 @@ export default class PlayerController extends Component {
 
 	public Init() {
 
-		this.camera = new Camera(this.engine.GetManager("Render").viewport);
+		this.camera = this.parent.scene.GetEntity("MainCamera");
 		
 		// this.camera.Zoom(4);
 		// this.inputManager.SetCursor(Cursor.Hidden);
@@ -38,18 +38,19 @@ export default class PlayerController extends Component {
 			this.camera.Move(Vec.Down(), 10);
 		}
 		if (this.inputManager.GetKeyDown(Key.D)) {
-			this.camera.AddTrauma(0.3);
+			this.camera.AddTrauma(0.1);
 		}
 
 		if (this.inputManager.GetMousePressed(Mouse.Left)) {
 			let box = new Box("Box", {
-				position: this.camera.WorldToCamera(this.inputManager.GetMousePosition())
+				position: this.camera.CameraToWorld(this.inputManager.GetMousePosition())
 			});
 			this.lastbox = this.sceneManager.GetLoadedScene().AddEntity(box);
 			this.camera.target = {
 				entity: this.lastbox, 
 				options: {
 					duration: 0.05,
+					centered: true,
 				},
 				horizontal: true,
 				vertical: true,
@@ -59,9 +60,9 @@ export default class PlayerController extends Component {
 		// console.log("Cam = ", this.camera.position);
 		// console.log("Mouse = ", this.inputManager.GetMousePosition());
 		// console.log("Dist = " + this.inputManager.GetMousePosition().Distance(this.camera.position))
-		this.camera.Update(this.engine.GetManager("Time").deltaTime);
+		// this.camera.Update(this.engine.GetManager("Time").deltaTime);
 
-		this.camera.Zoom(Math.max(0.01, this.inputManager.GetMouseWheel().y * 0.001 + 1));
+		// this.camera.Zoom(Math.max(0.01, this.inputManager.GetMouseWheel().y * 0.001 + 1));
 
 		if (this.inputManager.GetKeyDown(Key.N)) {
 			let noise = Noise.Perlin(2, "test");
@@ -69,7 +70,7 @@ export default class PlayerController extends Component {
 			this.test++;
 		}
 
-		if (this.inputManager.GetKeyPressed(Key.S)) {
+		if (this.inputManager.GetKeyPressed(Key.V)) {
 			if (this.sceneManager.GetLoadedScene().name === "test") {
 				this.sceneManager.LoadSceneByName("test2");
 			} else {

@@ -1,6 +1,7 @@
 import Manager from '../core/Manager';
 import * as PIXI from 'pixi.js';
-import { Viewport } from 'pixi-viewport';
+// import { Viewport } from 'pixi-viewport';
+import Viewport from '../utilities/Viewport';
 import Scene from '../scenes/Scene';
 
 export default class RenderManager extends Manager{
@@ -25,13 +26,13 @@ export default class RenderManager extends Manager{
 			});
 			// Instantiate Viewport:
 			this._viewport = new Viewport({
-				screenWidth: container.clientWidth,
-				screenHeight: container.clientHeight,
+				width: container.clientWidth,
+				height: container.clientHeight,
 			});
 			// Add listener to window resize to keep the rendered view the same size as the container.
 			window.addEventListener('resize', () => {
 				this._renderer.resize(container.clientWidth, container.clientHeight);
-				this._viewport.resize(container.clientWidth, container.clientHeight);
+				this._viewport.Resize(container.clientWidth, container.clientHeight);
 			});
 		}
 		else {	
@@ -44,8 +45,8 @@ export default class RenderManager extends Manager{
 			});
 			// Instantiate Viewport:
 			this._viewport = new Viewport({
-				screenWidth: this.engine.width,
-				screenHeight: this.engine.height,
+				width: this.engine.width,
+				height: this.engine.height,
 			});
 		}
 
@@ -59,12 +60,13 @@ export default class RenderManager extends Manager{
 	}
 
 	public Update() {
+		this._viewport.Debug();
 		this.renderer.render(this.mainContainer);
 	}
 
 	public LoadSceneToViewport(scene : Scene) {
 		this._viewport.removeChildren();
-		this._viewport.addChild(scene.stage);
+		this._viewport.SetStage(scene.stage, false);
 	}
 
 	public get renderer() : PIXI.Renderer { return this._renderer; }

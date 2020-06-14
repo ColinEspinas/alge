@@ -11,6 +11,8 @@ export default class Tilemap extends Component {
 	private texture : PIXI.RenderTexture;
 	private sprite : PIXI.Sprite;
 
+	private layer : string;
+
 	private map : any[];
 	private width : number;
 	private height : number;
@@ -30,7 +32,9 @@ export default class Tilemap extends Component {
 
 		this.position = this.properties["position"] || this.parent.transform.position;
 		this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
-		this.scale = this.properties["scale"] || new Vec(this.width * this.tileset.tileWidth, this.height * this.tileset.tileHeight);
+		this.scale = this.properties["scale"] || new Vec(this.width * this.tileset.tileWidth * this.parent.engine.gameScale, this.height * this.tileset.tileHeight * this.parent.engine.gameScale);
+
+		this.layer = this.properties["layer"] || "Default";
 
 		this.sprite = new PIXI.Sprite();
 
@@ -38,7 +42,8 @@ export default class Tilemap extends Component {
 	}
 
 	public Init() {
-		this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.sprite);
+		this.engine.GetManager("Scene").GetLoadedScene().GetLayer("Default").container.addChild(this.sprite);
+		this.UpdateTilemap();
 	}
 
 	public Update() {

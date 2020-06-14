@@ -1,10 +1,11 @@
-import { Entity, Sprite, Vec, SceneManager, DebugCollider ,Tileset, RigidBody } from '../../dist/alge';
+import { Entity, Sprite, Vec, SceneManager, DebugCollider ,Tileset, RigidBody, Text } from '../../dist/alge';
 import image from '../assets/Box.png';
 
 export default class Box extends Entity {
 
 	Create() {
 		this.transform.scale = new Vec(21, 16);
+		this.transform.scale.Scale(this.engine.gameScale);
 		this.transform.position = this.properties["position"] || new Vec(100, 100);
 
 		let tileset = new Tileset(image, 1, 1, 21, 16);

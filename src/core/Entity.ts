@@ -1,6 +1,5 @@
 import Transform from './Transform';
 import Component from './Component';
-import BaseScene from '../scenes/BaseScene';
 import Engine from './Engine';
 import shortid from 'shortid';
 
@@ -10,7 +9,7 @@ export default class Entity {
 	protected _name : string;
 	protected _properties : Object;
 
-	protected _scene : BaseScene;
+	protected _scene;
 
 	public shape : any;
 	public transform : Transform;
@@ -29,11 +28,11 @@ export default class Entity {
 	public get id() : number { return this._id; }
 	public set name(name : string) { this.name = name; }
 	public get name() { return this._name; }
-	public get engine() { return this._scene.engine; }
+	public get engine() : Engine { return this._scene.engine; }
 	public get properties() { return this._properties; }
 	public get scene() { return this._scene; }
 
-	public set scene(scene : BaseScene) { this._scene = scene; }
+	public set scene(scene) { this._scene = scene; }
 
 	public Create() {};
 	public Init() {};

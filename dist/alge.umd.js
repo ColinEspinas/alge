@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('shortid'), require('pixi.js'), require('matter-js'), require('pixi-viewport'), require('tumult')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'shortid', 'pixi.js', 'matter-js', 'pixi-viewport', 'tumult'], factory) :
-	(global = global || self, factory(global.alge = {}, global.shortid, global.PIXI, global.Matter, global.pixiViewport, global.Tumult));
-}(this, (function (exports, shortid, PIXI, Matter, pixiViewport, Tumult) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('shortid'), require('pixi.js'), require('matter-js'), require('tumult')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'shortid', 'pixi.js', 'matter-js', 'tumult'], factory) :
+	(global = global || self, factory(global.alge = {}, global.shortid, global.PIXI, global.Matter, global.Tumult));
+}(this, (function (exports, shortid, PIXI, Matter, Tumult) { 'use strict';
 
 	shortid = shortid && Object.prototype.hasOwnProperty.call(shortid, 'default') ? shortid['default'] : shortid;
 	Tumult = Tumult && Object.prototype.hasOwnProperty.call(Tumult, 'default') ? Tumult['default'] : Tumult;
@@ -188,7 +188,6 @@
 	                this.loadedScene.Unload();
 	            this.loadedScene = scene;
 	            scene.Load();
-	            console.log(scene);
 	        }
 	        catch (error) {
 	            console.error(error);
@@ -200,21 +199,76 @@
 	    constructor() {
 	        super(...arguments);
 	        this._stage = new PIXI.Container();
+	        this._layers = [];
 	        this._world = Matter.World.create({});
 	    }
-	    get stage() {
-	        return this._stage;
+	    get stage() { return this._stage; }
+	    get world() { return this._world; }
+	    get layers() { return this._layers; }
+	    InitDefaultLayer() {
+	        this.AddLayer("Default");
+	        this.AddLayer("Debug", { fixed: true, rotation: 0 });
 	    }
-	    get world() {
-	        return this._world;
+	    AddLayer(name, options) {
+	        options = options || {};
+	        this._layers.push({
+	            name: name,
+	            container: new PIXI.Container(),
+	            fixed: options.fixed || false,
+	            speed: (options.speed === 0) ? 0 : options.speed || 1,
+	            // zoom: (options.zoom === 0) ? 0 : options.zoom || 1,
+	            // zoomCoef: (options.zoomCoef === 0) ? 0 : options.zoomCoef || 1,
+	            rotation: (options.rotation === 0) ? 0 : options.rotation || 1,
+	        });
+	        this._stage.addChild(this._layers[this.layers.length - 1].container);
+	        return this._layers[this._layers.length - 1];
+	    }
+	    GetLayer(name) {
+	        for (let i = 0, len = this._layers.length; i < len; ++i) {
+	            if (this._layers[i].name === name) {
+	                return this._layers[i];
+	            }
+	        }
+	        return null;
+	    }
+	    GetLayerIndex(name) {
+	        for (let i = 0, len = this._layers.length; i < len; ++i) {
+	            if (this._layers[i].name === name) {
+	                return i;
+	            }
+	        }
+	        return null;
+	    }
+	    RemoveLayer(name) {
+	        for (var i = 0, len = this._layers.length; i < len; i++) {
+	            if (this._layers[i].name === name) {
+	                this._layers.splice(i, 1);
+	            }
+	        }
+	    }
+	    SwapLayer(nameFirstLayer, nameSecondLayer) {
+	        const firstLayerIndex = this.GetLayerIndex(nameFirstLayer);
+	        const secondLayerIndex = this.GetLayerIndex(nameSecondLayer);
+	        const tempLayer = this._layers[firstLayerIndex];
+	        this._layers[firstLayerIndex] = this._layers[secondLayerIndex];
+	        this._layers[secondLayerIndex] = tempLayer;
+	        this._stage.swapChildren(this._layers[firstLayerIndex].container, this._layers[secondLayerIndex].container);
+	    }
+	    RenameLayer(currentName, name) {
+	        this.GetLayer(currentName).name = name;
 	    }
 	    Load() {
 	        super.Load();
+	        if (this._layers.length <= 0) {
+	            this.InitDefaultLayer();
+	        }
 	        this.engine.GetManager("Render").LoadSceneToViewport(this);
 	    }
 	    Unload() {
 	        super.Unload();
-	        this._stage.removeChildren();
+	        for (let i = 0, len = this._layers.length; i < len; ++i) {
+	            this._layers[i].container.removeChildren();
+	        }
 	        Matter.World.clear(this._world, false);
 	    }
 	}
@@ -248,97 +302,6 @@
 	    }
 	    GetLoadedScene() {
 	        return this.loadedScene;
-	    }
-	}
-
-	class RenderManager extends Manager {
-	    constructor() {
-	        super(...arguments);
-	        this.mainContainer = new PIXI.Container();
-	    }
-	    Init() {
-	        PIXI.utils.skipHello();
-	        const container = document.querySelector(this.engine.container);
-	        if (this.engine.fullscreen) {
-	            // Instantiate Renderer:
-	            this._renderer = new PIXI.Renderer({
-	                width: container.clientWidth,
-	                height: container.clientHeight,
-	                resolution: this.engine.resolution,
-	                transparent: true,
-	            });
-	            // Instantiate Viewport:
-	            this._viewport = new pixiViewport.Viewport({
-	                screenWidth: container.clientWidth,
-	                screenHeight: container.clientHeight,
-	            });
-	            // Add listener to window resize to keep the rendered view the same size as the container.
-	            window.addEventListener('resize', () => {
-	                this._renderer.resize(container.clientWidth, container.clientHeight);
-	                this._viewport.resize(container.clientWidth, container.clientHeight);
-	            });
-	        }
-	        else {
-	            // Instantiate Renderer:
-	            this._renderer = new PIXI.Renderer({
-	                width: this.engine.width,
-	                height: this.engine.height,
-	                resolution: this.engine.resolution,
-	                transparent: true,
-	            });
-	            // Instantiate Viewport:
-	            this._viewport = new pixiViewport.Viewport({
-	                screenWidth: this.engine.width,
-	                screenHeight: this.engine.height,
-	            });
-	        }
-	        this.mainContainer.addChild(this._viewport);
-	        container.appendChild(this.renderer.view);
-	        if (this.engine.scaleMode === "linear")
-	            PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR;
-	        else
-	            PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-	    }
-	    Update() {
-	        this.renderer.render(this.mainContainer);
-	    }
-	    LoadSceneToViewport(scene) {
-	        this._viewport.removeChildren();
-	        this._viewport.addChild(scene.stage);
-	    }
-	    get renderer() { return this._renderer; }
-	    get viewport() { return this._viewport; }
-	}
-
-	class TimeManager extends Manager {
-	    constructor(engine, name) {
-	        super(engine, name);
-	        this._step = 1 / 60;
-	        this._accumulator = 0;
-	        this._lastUpdate = 0;
-	        this._deltaTime = 0;
-	        this._fps = 0;
-	        this.frames = 0;
-	    }
-	    get deltaTime() { return this._deltaTime; }
-	    get lastDeltaTime() { return this._lastDeltaTime; }
-	    get lastUpdate() { return this._lastUpdate; }
-	    get fps() { return this._fps; }
-	    get step() { return this._step; }
-	    get accumulator() { return this._accumulator; }
-	    Update() {
-	        this._lastDeltaTime = this._deltaTime;
-	        this._deltaTime = Math.min(1, (performance.now() - this._lastUpdate) / 1000);
-	        this._accumulator += this.deltaTime;
-	        this._fps = 1 / this._deltaTime;
-	        ++this.frames;
-	    }
-	    //Frames Per Second = Num Frame / Elasped Time in Secondsclass CFPS_Counter {private:	DWORD StartTime;	//The Start Time	DWORD CurrTime;		//Current Time	DWORD NumFrame;		//Number of Frames since start	float Fps;			//Current Frames Per Second	float Spf;			//Current Seconds Per Frame	char FPSstring[128];//Dont Overflow<img src="smile.gif" width=15 height=15 align=middle>	unsigned long delay;		public:	int 	StartFPS();			//Starts the FPS Counter	int 	UpdateFPS();	//Updates the Fps Variable	float	ReturnFPS(){return Fps;}	//Returns the Fps variable	int 	DrawFPS();	//Returns the Speed Per Frame from the Num per second	float	NumPerSecond(float in){return in*Spf;}			CFPS_Counter(){}	~CFPS_Counter(){}};//Draws the FPSint CFPS_Counter::DrawFPS(){	if(sprintf(FPSstring,"%f",ReturnFPS())<=0)return FALSE;	Console.Font.glPrint(0,0,FPSstring,1);	return TRUE;}int CFPS_Counter::StartFPS(){	NumFrame=0;	delay=0;	StartTime = GetTickCount();	return TRUE;} int CFPS_Counter::UpdateFPS(){	float tempFPS;	NumFrame++;	CurrTime = GetTickCount();	tempFPS = 1000.0f*((float)NumFrame/((float)CurrTime-(float)StartTime));	Spf = 1/tempFPS;	if(NumFrame>200)StartFPS();		delay++;	if(delay>15)	{		Fps=tempFPS;		delay=0;	}			return TRUE;}    
-	    SetLastUpdate() {
-	        this._lastUpdate = performance.now();
-	    }
-	    FixDelta() {
-	        this._accumulator -= this._step;
 	    }
 	}
 
@@ -486,6 +449,138 @@
 	    };
 	    return Vec;
 	})();
+
+	class Viewport extends PIXI.Container {
+	    constructor(options) {
+	        super();
+	        this.viewWidth = options.width;
+	        this.viewHeight = options.height;
+	        this.debugGraphics = new PIXI.Graphics;
+	    }
+	    get width() { return this.viewWidth; }
+	    get height() { return this.viewHeight; }
+	    get center() { return new Vec(this.position.x + this.width / 2, this.position.y + this.height / 2); }
+	    Resize(width, height) {
+	        this.viewWidth = width;
+	        this.viewHeight = height;
+	    }
+	    Debug() {
+	        this.debugGraphics.clear();
+	        let coords = [
+	            this.position.x,
+	            this.position.y,
+	            this.position.x + this.viewWidth,
+	            this.position.y + this.viewHeight,
+	        ];
+	        this.debugGraphics.position = this.position;
+	        this.debugGraphics.lineStyle(10, 0xFF0000)
+	            .lineTo(coords[2], coords[1])
+	            .lineTo(coords[2], coords[3])
+	            .lineTo(coords[0], coords[3])
+	            .lineTo(coords[0], coords[1]);
+	    }
+	    SetStage(stage, debug) {
+	        this.removeChildren();
+	        this.addChild(stage);
+	        this._stage = stage;
+	        if (debug) {
+	            this.addChild(this.debugGraphics);
+	        }
+	    }
+	    get stage() { return this._stage; }
+	}
+
+	class RenderManager extends Manager {
+	    constructor() {
+	        super(...arguments);
+	        this.mainContainer = new PIXI.Container();
+	    }
+	    Init() {
+	        PIXI.utils.skipHello();
+	        const container = document.querySelector(this.engine.container);
+	        if (this.engine.fullscreen) {
+	            // Instantiate Renderer:
+	            this._renderer = new PIXI.Renderer({
+	                width: container.clientWidth,
+	                height: container.clientHeight,
+	                resolution: this.engine.resolution,
+	                transparent: true,
+	            });
+	            // Instantiate Viewport:
+	            this._viewport = new Viewport({
+	                width: container.clientWidth,
+	                height: container.clientHeight,
+	            });
+	            // Add listener to window resize to keep the rendered view the same size as the container.
+	            window.addEventListener('resize', () => {
+	                this._renderer.resize(container.clientWidth, container.clientHeight);
+	                this._viewport.Resize(container.clientWidth, container.clientHeight);
+	            });
+	        }
+	        else {
+	            // Instantiate Renderer:
+	            this._renderer = new PIXI.Renderer({
+	                width: this.engine.width,
+	                height: this.engine.height,
+	                resolution: this.engine.resolution,
+	                transparent: true,
+	            });
+	            // Instantiate Viewport:
+	            this._viewport = new Viewport({
+	                width: this.engine.width,
+	                height: this.engine.height,
+	            });
+	        }
+	        this.mainContainer.addChild(this._viewport);
+	        container.appendChild(this.renderer.view);
+	        if (this.engine.scaleMode === "linear")
+	            PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.LINEAR;
+	        else
+	            PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+	    }
+	    Update() {
+	        this._viewport.Debug();
+	        this.renderer.render(this.mainContainer);
+	    }
+	    LoadSceneToViewport(scene) {
+	        this._viewport.removeChildren();
+	        this._viewport.SetStage(scene.stage, false);
+	    }
+	    get renderer() { return this._renderer; }
+	    get viewport() { return this._viewport; }
+	}
+
+	class TimeManager extends Manager {
+	    constructor(engine, name) {
+	        super(engine, name);
+	        this._step = 1 / 60;
+	        this._accumulator = 0;
+	        this._lastUpdate = 0;
+	        this._deltaTime = 0;
+	        this._fps = 0;
+	        this.frames = 0;
+	    }
+	    get deltaTime() { return this._deltaTime; }
+	    get lastDeltaTime() { return this._lastDeltaTime; }
+	    get lastUpdate() { return this._lastUpdate; }
+	    get fps() { return this._fps; }
+	    get step() { return this._step; }
+	    get accumulator() { return this._accumulator; }
+	    Update() {
+	        this._lastDeltaTime = this._deltaTime;
+	        this._deltaTime = Math.min(1, (performance.now() - this._lastUpdate) / 1000);
+	        this._accumulator += this.deltaTime;
+	        this._fps = 1 / this._deltaTime;
+	        ++this.frames;
+	    }
+	    //Frames Per Second = Num Frame / Elasped Time in Secondsclass CFPS_Counter {private:	DWORD StartTime;	//The Start Time	DWORD CurrTime;		//Current Time	DWORD NumFrame;		//Number of Frames since start	float Fps;			//Current Frames Per Second	float Spf;			//Current Seconds Per Frame	char FPSstring[128];//Dont Overflow<img src="smile.gif" width=15 height=15 align=middle>	unsigned long delay;		public:	int 	StartFPS();			//Starts the FPS Counter	int 	UpdateFPS();	//Updates the Fps Variable	float	ReturnFPS(){return Fps;}	//Returns the Fps variable	int 	DrawFPS();	//Returns the Speed Per Frame from the Num per second	float	NumPerSecond(float in){return in*Spf;}			CFPS_Counter(){}	~CFPS_Counter(){}};//Draws the FPSint CFPS_Counter::DrawFPS(){	if(sprintf(FPSstring,"%f",ReturnFPS())<=0)return FALSE;	Console.Font.glPrint(0,0,FPSstring,1);	return TRUE;}int CFPS_Counter::StartFPS(){	NumFrame=0;	delay=0;	StartTime = GetTickCount();	return TRUE;} int CFPS_Counter::UpdateFPS(){	float tempFPS;	NumFrame++;	CurrTime = GetTickCount();	tempFPS = 1000.0f*((float)NumFrame/((float)CurrTime-(float)StartTime));	Spf = 1/tempFPS;	if(NumFrame>200)StartFPS();		delay++;	if(delay>15)	{		Fps=tempFPS;		delay=0;	}			return TRUE;}    
+	    SetLastUpdate() {
+	        this._lastUpdate = performance.now();
+	    }
+	    FixDelta() {
+	        this._accumulator -= this._step;
+	    }
+	}
 
 	class InputManager extends Manager {
 	    constructor() {
@@ -740,6 +835,7 @@
 	            renderer: 'pixi',
 	            scaleMode: 'nearest',
 	            physics: 'matter',
+	            gameScale: 1,
 	        }, options);
 	        this.managers = [];
 	        this.managers.push(new TimeManager(this, "Time"));
@@ -760,10 +856,10 @@
 	        this._fullscreen = options.fullscreen;
 	        this._container = options.container;
 	        this._scaleMode = options.scaleMode;
+	        this._gameScale = options.gameScale;
 	        for (var i = 0, len = this.managers.length; i < len; i++) {
 	            this.managers[i].PreInit(options);
 	        }
-	        console.log(this.managers);
 	    }
 	    get width() { return this._width; }
 	    get height() { return this._height; }
@@ -771,6 +867,7 @@
 	    get fullscreen() { return this._fullscreen; }
 	    get container() { return this._container; }
 	    get scaleMode() { return this._scaleMode; }
+	    get gameScale() { return this._gameScale; }
 	    Run() {
 	        for (var i = 0, len = this.managers.length; i < len; i++) {
 	            this.managers[i].Init();
@@ -944,234 +1041,6 @@
 	    ;
 	    Unload() { }
 	    ;
-	}
-
-	class Sprite extends Component {
-	    // private stretchMode : SpriteMode;
-	    Create() {
-	        if (typeof this.properties["src"] === 'string') {
-	            this.src = this.properties["src"];
-	            this.texture = PIXI.Texture.from(this.src);
-	        }
-	        else if (this.properties["src"] instanceof PIXI.Texture) {
-	            this.texture = this.properties["src"];
-	        }
-	        this.position = this.properties["position"] || this.parent.transform.position;
-	        this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
-	        this.scale = this.properties["scale"] || this.parent.transform.scale;
-	        this.sprite = new PIXI.Sprite();
-	        // this.stretchMode = this.properties["stretchMode"];
-	    }
-	    Init() {
-	        this.sprite.position.x = this.position.x;
-	        this.sprite.position.y = this.position.y;
-	        this.sprite.width = this.scale.x;
-	        this.sprite.height = this.scale.y;
-	        this.sprite.angle = this.parent.transform.rotation;
-	        this.sprite.anchor.x = this.anchor.x;
-	        this.sprite.anchor.y = this.anchor.y;
-	        this.sprite.texture = this.texture;
-	        this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.sprite);
-	    }
-	    Update() {
-	        // Set sprite position:
-	        this.position = this.properties["position"] || this.parent.transform.position;
-	        this.sprite.position.x = this.position.x;
-	        this.sprite.position.y = this.position.y;
-	        // Set sprite scale:
-	        this.scale = this.properties["scale"] || this.parent.transform.scale;
-	        this.sprite.width = this.scale.x;
-	        this.sprite.height = this.scale.y;
-	        // Set sprite rotation (in degrees):
-	        this.sprite.angle = this.parent.transform.rotation;
-	        // Set anchor point:
-	        this.sprite.anchor.x = this.anchor.x;
-	        this.sprite.anchor.y = this.anchor.y;
-	        this.sprite.texture = this.texture;
-	    }
-	}
-	(function (SpriteMode) {
-	    SpriteMode[SpriteMode["BestFit"] = 0] = "BestFit";
-	    SpriteMode[SpriteMode["Cover"] = 1] = "Cover";
-	    SpriteMode[SpriteMode["Stretch"] = 2] = "Stretch";
-	    SpriteMode[SpriteMode["Unscaled"] = 3] = "Unscaled";
-	})(exports.SpriteMode || (exports.SpriteMode = {}));
-
-	class Angle {
-	    static DegToRad(degrees) {
-	        return degrees * Math.PI / 180;
-	    }
-	    static RadToDeg(radians) {
-	        return radians * 180 / Math.PI;
-	    }
-	}
-
-	class RigidBody extends Component {
-	    constructor() {
-	        super(...arguments);
-	        this.collisionCallbacks = {};
-	    }
-	    get body() { return this._body; }
-	    Create() {
-	        const position = this.properties["position"] || this.parent.transform.position;
-	        const scale = this.properties["scale"] || this.parent.transform.scale;
-	        const isStatic = this.properties["static"];
-	        const bodyOptions = this.properties["options"];
-	        this._body = Matter.Bodies.rectangle(position.x, position.y, scale.x, scale.y, bodyOptions);
-	        this._body.component = this;
-	        //==== Collision Events : ====//
-	        Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionStart', event => {
-	            var pairs = event.pairs;
-	            for (var i = 0, len = pairs.length; i < len; ++i) {
-	                const pair = pairs[i];
-	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionStart']) {
-	                    this.collisionCallbacks['collisionStart'](pair.bodyB);
-	                }
-	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionStart']) {
-	                    this.collisionCallbacks['collisionStart'](pair.bodyA);
-	                }
-	            }
-	        });
-	        Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionEnd', event => {
-	            var pairs = event.pairs;
-	            for (var i = 0, len = pairs.length; i < len; ++i) {
-	                const pair = pairs[i];
-	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionEnd']) {
-	                    this.collisionCallbacks['collisionEnd'](pair.bodyB);
-	                }
-	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionEnd']) {
-	                    this.collisionCallbacks['collisionEnd'](pair.bodyA);
-	                }
-	            }
-	        });
-	        Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionActive', event => {
-	            var pairs = event.pairs;
-	            for (var i = 0, len = pairs.length; i < len; ++i) {
-	                const pair = pairs[i];
-	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionActive']) {
-	                    this.collisionCallbacks['collisionActive'](pair.bodyB);
-	                }
-	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionActive']) {
-	                    this.collisionCallbacks['collisionActive'](pair.bodyA);
-	                }
-	            }
-	        });
-	    }
-	    Init() {
-	        Matter.Body.setPosition(this._body, Matter.Vector.create(this.parent.transform.position.x, this.parent.transform.position.y));
-	        Matter.Body.setAngle(this._body, Angle.DegToRad(this.parent.transform.rotation));
-	        Matter.World.add(this.engine.GetManager("Scene").GetLoadedScene().world, this._body);
-	    }
-	    Update() {
-	        this.parent.transform.position.x = this.body.position.x;
-	        this.parent.transform.position.y = this.body.position.y;
-	        this.parent.transform.rotation = Math.floor(Angle.RadToDeg(this.body.angle));
-	    }
-	    ApplyForce(position, force) {
-	        Matter.Body.applyForce(this._body, Matter.Vector.create(position.x, position.y), Matter.Vector.create(force.x, force.y));
-	    }
-	    set velocity(velocity) {
-	        Matter.Body.setVelocity(this._body, Matter.Vector.create(velocity.x, velocity.y));
-	    }
-	    get velocity() {
-	        return new Vec(this._body.velocity.x, this._body.velocity.y);
-	    }
-	    OnCollisionStart(callback) {
-	        this.collisionCallbacks['collisionStart'] = callback;
-	    }
-	    OnCollisionStay(callback) {
-	        this.collisionCallbacks['collisionActive'] = callback;
-	    }
-	    OnCollisionEnd(callback) {
-	        this.collisionCallbacks['collisionEnd'] = callback;
-	    }
-	}
-
-	class Tilemap extends Component {
-	    Create() {
-	        this.tileset = this.properties["tileset"];
-	        this.map = this.properties["map"];
-	        this.width = this.properties["width"];
-	        this.height = this.properties["height"];
-	        this.position = this.properties["position"] || this.parent.transform.position;
-	        this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
-	        this.scale = this.properties["scale"] || new Vec(this.width * this.tileset.tileWidth, this.height * this.tileset.tileHeight);
-	        this.sprite = new PIXI.Sprite();
-	        this.UpdateTilemap();
-	    }
-	    Init() {
-	        this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.sprite);
-	    }
-	    Update() {
-	        // Render tiles to texture:
-	        this.engine.GetManager("Render").renderer.render(this.tilesContainer, this.texture);
-	    }
-	    UpdateTilemap() {
-	        this.tilesContainer = new PIXI.Container();
-	        for (var i = 0, len = this.width * this.height; i < len; i++) {
-	            let tile = PIXI.Sprite.from(this.tileset.GetTile(this.map[i]));
-	            tile.position.x = (i % this.width) * this.tileset.tileWidth;
-	            tile.position.y = Math.floor(i / this.width) * this.tileset.tileHeight;
-	            this.tilesContainer.addChild(tile);
-	        }
-	        this.texture = new PIXI.RenderTexture(new PIXI.BaseRenderTexture({
-	            width: this.width * this.tileset.tileWidth,
-	            height: this.height * this.tileset.tileHeight,
-	            resolution: 1,
-	            scaleMode: (this.parent.engine.scaleMode == "linear") ? PIXI.SCALE_MODES.LINEAR : PIXI.SCALE_MODES.NEAREST,
-	        }));
-	        // Set sprite position:
-	        this.sprite.position.x = this.position.x;
-	        this.sprite.position.y = this.position.y;
-	        // Set sprite scale:
-	        this.sprite.width = this.scale.x;
-	        this.sprite.height = this.scale.y;
-	        this.parent.transform.scale = this.scale;
-	        // Set sprite rotation (in degrees):
-	        this.sprite.angle = this.parent.transform.rotation;
-	        // Set anchor point:
-	        this.sprite.anchor.x = this.anchor.x;
-	        this.sprite.anchor.y = this.anchor.y;
-	        this.sprite.texture = this.texture;
-	    }
-	    ReplaceTile(index, position) {
-	        this.map[position.x + this.width * position.y] = index;
-	        this.UpdateTilemap();
-	    }
-	}
-
-	class DebugCollider extends Component {
-	    // private stretchMode : SpriteMode;
-	    Create() {
-	        this.position = this.properties["position"] || this.parent.transform.position;
-	        this.scale = this.properties["scale"] || this.parent.transform.scale;
-	        this.rb = this.properties["body"];
-	        this.graphics = new PIXI.Graphics();
-	        // this.stretchMode = this.properties["stretchMode"];
-	    }
-	    Init() {
-	        this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.graphics);
-	    }
-	    Update() {
-	        this.Draw();
-	    }
-	    Draw() {
-	        this.graphics.clear();
-	        this.position = this.properties["position"] || this.parent.transform.position;
-	        this.scale = this.properties["scale"] || this.parent.transform.scale;
-	        let x1 = this.position.x - this.scale.x / 2;
-	        let y1 = this.position.y - this.scale.y / 2;
-	        let x2 = this.position.x + this.scale.x / 2;
-	        let y2 = this.position.y + this.scale.y / 2;
-	        // this.graphics.position.x = x1;
-	        // this.graphics.position.y = y1;
-	        // this.graphics.x = this.rb.body.vertices[0].x;
-	        // this.graphics.y = this.rb.body.vertices[0].y;
-	        for (let i = 0, len = this.rb.body.vertices.length; i < len; ++i) {
-	            this.graphics.lineTo(this.rb.body.vertices[i].x, this.rb.body.vertices[i].y).lineStyle(0.5, 0xFF0000);
-	        }
-	        this.graphics.lineTo(this.rb.body.vertices[0].x, this.rb.body.vertices[0].y);
-	    }
 	}
 
 	// Implementations of Robert Penner's tweening functions.
@@ -1442,7 +1311,432 @@
 	    }
 	}
 
-	class Camera {
+	class Camera extends Entity {
+	    constructor() {
+	        super(...arguments);
+	        this.trauma = 0;
+	        this.traumaPower = 2;
+	        this.traumaDecay = 0.8;
+	        this.maxShakeOffset = new Vec(100, 75);
+	        this.maxShakeRoll = 10;
+	    }
+	    get bounds() { return this._bounds; }
+	    // public get zoom() : number { return this._zoom; }
+	    get center() { return this._center; }
+	    get viewport() { return this._viewport; }
+	    set target(target) { this._target = target; }
+	    get target() { return this._target; }
+	    get scene() { return this._scene; }
+	    set scene(scene) { this._scene = scene; }
+	    Init() {
+	        this._viewport = this.engine.GetManager("Render").viewport;
+	        this.time = this.engine.GetManager("Time");
+	    }
+	    Update() {
+	        this._center = new Vec(this.transform.position.x, this.transform.position.y).Add(new Vec(this._viewport.width / 2, this._viewport.height / 2));
+	        if (this.trauma > 0) {
+	            this.trauma = Math.max(this.trauma - this.traumaDecay * this.time.deltaTime, 0);
+	            this.Shake();
+	        }
+	        if (this._target && this._target.position && this._target.position instanceof Vec) {
+	            if (this.target.horizontal && this.target.vertical) {
+	                this.MoveTo(this.target.position, this.target.options);
+	            }
+	            else if (this.target.horizontal) {
+	                this.MoveToHorizontal(this.target.position, this.target.options);
+	            }
+	            else if (this.target.vertical) {
+	                this.MoveToVertical(this.target.position, this.target.options);
+	            }
+	        }
+	        if (this._target && this._target.entity && this._target.entity instanceof Entity) {
+	            if (this.target.horizontal && this.target.vertical) {
+	                this.MoveTo(this.target.entity.transform.position, this.target.options);
+	            }
+	            else if (this.target.horizontal) {
+	                this.MoveToHorizontal(this.target.entity.transform.position, this.target.options);
+	            }
+	            else if (this.target.vertical) {
+	                this.MoveToVertical(this.target.entity.transform.position, this.target.options);
+	            }
+	        }
+	        for (let i = 0, len = this.scene.layers.length; i < len; ++i) {
+	            let pivot = this.center;
+	            this.scene.layers[i].container.pivot.x = pivot.x;
+	            this.scene.layers[i].container.pivot.y = pivot.y;
+	            this.scene.layers[i].container.position.x = pivot.x;
+	            this.scene.layers[i].container.position.y = pivot.y;
+	            if (!this.scene.layers[i].fixed) {
+	                this.scene.layers[i].container.position.x = pivot.x - this.transform.position.x * this.scene.layers[i].speed;
+	                this.scene.layers[i].container.position.y = pivot.y - this.transform.position.y * this.scene.layers[i].speed;
+	            }
+	        }
+	        this._bounds = [
+	            this.transform.position,
+	            new Vec(this.transform.position.x + this._viewport.width, this.transform.position.y),
+	            new Vec(this.transform.position.x + this._viewport.width, this.transform.position.y + this._viewport.height),
+	            new Vec(this.transform.position.x, this.transform.position.y + this._viewport.height),
+	        ];
+	    }
+	    WorldToCamera(position) {
+	        return new Vec(position.x - this.transform.position.x, position.y - this.transform.position.y);
+	    }
+	    CameraToWorld(position) {
+	        return new Vec(position.x + this.transform.position.x, position.y + this.transform.position.y);
+	    }
+	    Move(direction, speed) {
+	        speed = speed || 1;
+	        this.transform.position.x += direction.x * speed * this.time.deltaTime * 100;
+	        this.transform.position.y += direction.y * speed * this.time.deltaTime * 100;
+	    }
+	    MoveTo(position, options) {
+	        const tolerance = options.tolerance || 0.5;
+	        const pos = (options.centered) ? this._center : this.transform.position;
+	        const centerX = (options.centered) ? this._viewport.width / 2 : 0;
+	        const centerY = (options.centered) ? this._viewport.height / 2 : 0;
+	        if (position.Distance(pos) > tolerance) {
+	            this.transform.position.x = Math.floor(Ease.lerp(this.transform.position.x, position.x - centerX, Math.min(1, options.duration * (this.time.deltaTime * 100))));
+	            this.transform.position.y = Math.floor(Ease.lerp(this.transform.position.y, position.y - centerY, Math.min(1, options.duration * (this.time.deltaTime * 100))));
+	        }
+	    }
+	    MoveToHorizontal(position, options) {
+	        const tolerance = options.tolerance || 0.5;
+	        const pos = (options.centered) ? this._center : this.transform.position;
+	        const centerX = (options.centered) ? this._viewport.width / 2 : 0;
+	        if (position.Distance(pos) > tolerance) {
+	            this.transform.position.x = Math.floor(Ease.lerp(this.transform.position.x, position.x - centerX, Math.min(1, options.duration * (this.time.deltaTime * 100))));
+	        }
+	    }
+	    MoveToVertical(position, options) {
+	        const tolerance = options.tolerance || 0.5;
+	        const pos = (options.centered) ? this._center : this.transform.position;
+	        const centerY = (options.centered) ? this._viewport.height / 2 : 0;
+	        if (position.Distance(pos) > tolerance) {
+	            this.transform.position.y = Math.floor(Ease.lerp(this.transform.position.y, position.y - centerY, Math.min(1, options.duration * (this.time.deltaTime * 100))));
+	        }
+	    }
+	    AddTrauma(amount) {
+	        this.trauma = Math.min(this.trauma + amount, 1);
+	    }
+	    Shake() {
+	        const amount = Math.pow(this.trauma, this.traumaPower);
+	        this.Rotate(this.maxShakeRoll * amount * Math.random());
+	        const shakeOffset = new Vec(this.maxShakeOffset.x * amount * ((Math.random() * 2) - 1), this.maxShakeOffset.y * amount * ((Math.random() * 2) - 1));
+	        this.MoveTo(new Vec(this._center.x + shakeOffset.x, this._center.y + shakeOffset.y), {
+	            duration: 1,
+	            centered: true
+	        });
+	    }
+	    // public Zoom(amount : number) {
+	    // 	this._zoom = amount;
+	    // 	for (let i = 0, len = this.scene.layers.length; i < len; ++i) {
+	    // 		this.scene.layers[i].zoom = this._zoom * this.scene.layers[i].zoomCoef;
+	    // 		for (let j = 0, count = this.scene.layers[i].container.children.length; j < count; ++j) {
+	    // 			this.scene.layers[i].container.children[j].scale = new PIXI.Point(
+	    // 				this._zoom * this.scene.layers[i].zoomCoef,
+	    // 				this._zoom * this.scene.layers[i].zoomCoef
+	    // 			);
+	    // 		}
+	    // 	}
+	    // }
+	    Rotate(angle) {
+	        for (let i = 0, len = this.scene.layers.length; i < len; ++i) {
+	            this.scene.layers[i].container.angle = angle * this.scene.layers[i].rotation;
+	        }
+	    }
+	    IsOnCamera(position) {
+	        return (position.x > this.bounds[0].x && position.x < this.bounds[2].x) && (position.y > this.bounds[0].y && position.y < this.bounds[2].y);
+	    }
+	}
+
+	class Sprite extends Component {
+	    // private stretchMode : SpriteMode;
+	    Create() {
+	        if (typeof this.properties["src"] === 'string') {
+	            this.src = this.properties["src"];
+	            this.texture = PIXI.Texture.from(this.src);
+	        }
+	        else if (this.properties["src"] instanceof PIXI.Texture) {
+	            this.texture = this.properties["src"];
+	        }
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
+	        this.scale = this.properties["scale"] || this.parent.transform.scale;
+	        this.layer = this.properties["layer"] || "Default";
+	        this.sprite = new PIXI.Sprite();
+	        // this.stretchMode = this.properties["stretchMode"];
+	    }
+	    Init() {
+	        this.sprite.position.x = this.position.x;
+	        this.sprite.position.y = this.position.y;
+	        this.sprite.width = this.scale.x;
+	        this.sprite.height = this.scale.y;
+	        this.sprite.angle = this.parent.transform.rotation;
+	        this.sprite.anchor.x = this.anchor.x;
+	        this.sprite.anchor.y = this.anchor.y;
+	        this.sprite.texture = this.texture;
+	        this.engine.GetManager("Scene").GetLoadedScene().GetLayer(this.layer).container.addChild(this.sprite);
+	    }
+	    Update() {
+	        // Set sprite position:
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.sprite.position.x = this.position.x;
+	        this.sprite.position.y = this.position.y;
+	        // Set sprite scale:
+	        this.scale = this.properties["scale"] || this.parent.transform.scale;
+	        this.sprite.width = this.scale.x;
+	        this.sprite.height = this.scale.y;
+	        // Set sprite rotation (in degrees):
+	        this.sprite.angle = this.parent.transform.rotation;
+	        // Set anchor point:
+	        this.sprite.anchor.x = this.anchor.x;
+	        this.sprite.anchor.y = this.anchor.y;
+	        this.sprite.texture = this.texture;
+	    }
+	}
+	(function (SpriteMode) {
+	    SpriteMode[SpriteMode["BestFit"] = 0] = "BestFit";
+	    SpriteMode[SpriteMode["Cover"] = 1] = "Cover";
+	    SpriteMode[SpriteMode["Stretch"] = 2] = "Stretch";
+	    SpriteMode[SpriteMode["Unscaled"] = 3] = "Unscaled";
+	})(exports.SpriteMode || (exports.SpriteMode = {}));
+
+	class Text extends Component {
+	    Create() {
+	        this.content = this.properties["content"];
+	        this.style = this.properties["style"];
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.anchor = this.properties["anchor"] || new Vec(0, 0);
+	        this.scale = this.properties["scale"];
+	        this.layer = this.properties["layer"] || "Default";
+	        this.text = new PIXI.Text(this.content, this.style);
+	    }
+	    Init() {
+	        this.text.position.x = this.position.x;
+	        this.text.position.y = this.position.y;
+	        if (this.scale) {
+	            this.text.width = this.scale.x;
+	            this.text.height = this.scale.y;
+	        }
+	        this.text.angle = this.parent.transform.rotation;
+	        this.text.anchor.x = this.anchor.x;
+	        this.text.anchor.y = this.anchor.y;
+	        this.text.text = this.content;
+	        this.text.style = this.style;
+	        this.engine.GetManager("Scene").GetLoadedScene().GetLayer(this.layer).container.addChild(this.text);
+	    }
+	    Update() {
+	        // Set text position:
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.text.position.x = this.position.x;
+	        this.text.position.y = this.position.y;
+	        // Set text scale:
+	        this.scale = this.properties["scale"];
+	        if (this.scale) {
+	            this.text.width = this.scale.x;
+	            this.text.height = this.scale.y;
+	        }
+	        // Set text rotation (in degrees):
+	        this.text.angle = this.parent.transform.rotation;
+	        // Set anchor point:
+	        this.text.anchor.x = this.anchor.x;
+	        this.text.anchor.y = this.anchor.y;
+	        // Set text content:
+	        this.text.text = this.content;
+	        // Set text style:
+	        this.text.style = this.style;
+	    }
+	    SetText(content) {
+	        this.content = content.toString();
+	    }
+	    SetStyle(style) {
+	        this.style = style;
+	    }
+	    SetPosition(pos) {
+	        this.properties["position"] = pos;
+	    }
+	}
+
+	class Angle {
+	    static DegToRad(degrees) {
+	        return degrees * Math.PI / 180;
+	    }
+	    static RadToDeg(radians) {
+	        return radians * 180 / Math.PI;
+	    }
+	}
+
+	class RigidBody extends Component {
+	    constructor() {
+	        super(...arguments);
+	        this.collisionCallbacks = {};
+	    }
+	    get body() { return this._body; }
+	    Create() {
+	        const position = this.properties["position"] || this.parent.transform.position;
+	        const scale = this.properties["scale"] || this.parent.transform.scale;
+	        const isStatic = this.properties["static"];
+	        const bodyOptions = this.properties["options"];
+	        this._body = Matter.Bodies.rectangle(position.x, position.y, scale.x, scale.y, bodyOptions);
+	        this._body.component = this;
+	        //==== Collision Events : ====//
+	        Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionStart', event => {
+	            var pairs = event.pairs;
+	            for (var i = 0, len = pairs.length; i < len; ++i) {
+	                const pair = pairs[i];
+	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionStart']) {
+	                    this.collisionCallbacks['collisionStart'](pair.bodyB);
+	                }
+	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionStart']) {
+	                    this.collisionCallbacks['collisionStart'](pair.bodyA);
+	                }
+	            }
+	        });
+	        Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionEnd', event => {
+	            var pairs = event.pairs;
+	            for (var i = 0, len = pairs.length; i < len; ++i) {
+	                const pair = pairs[i];
+	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionEnd']) {
+	                    this.collisionCallbacks['collisionEnd'](pair.bodyB);
+	                }
+	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionEnd']) {
+	                    this.collisionCallbacks['collisionEnd'](pair.bodyA);
+	                }
+	            }
+	        });
+	        Matter.Events.on(this.engine.GetManager("Physics").physicsEngine, 'collisionActive', event => {
+	            var pairs = event.pairs;
+	            for (var i = 0, len = pairs.length; i < len; ++i) {
+	                const pair = pairs[i];
+	                if (pair.bodyA === this._body && this.collisionCallbacks['collisionActive']) {
+	                    this.collisionCallbacks['collisionActive'](pair.bodyB);
+	                }
+	                else if (pair.bodyB === this._body && this.collisionCallbacks['collisionActive']) {
+	                    this.collisionCallbacks['collisionActive'](pair.bodyA);
+	                }
+	            }
+	        });
+	    }
+	    Init() {
+	        Matter.Body.setPosition(this._body, Matter.Vector.create(this.parent.transform.position.x, this.parent.transform.position.y));
+	        Matter.Body.setAngle(this._body, Angle.DegToRad(this.parent.transform.rotation));
+	        Matter.World.add(this.engine.GetManager("Scene").GetLoadedScene().world, this._body);
+	    }
+	    Update() {
+	        this.parent.transform.position.x = this.body.position.x;
+	        this.parent.transform.position.y = this.body.position.y;
+	        // Matter.Body.scale(this.body, this.parent.transform.scale.x, this.parent.transform.scale.x);
+	        this.parent.transform.rotation = Math.floor(Angle.RadToDeg(this.body.angle));
+	    }
+	    ApplyForce(position, force) {
+	        Matter.Body.applyForce(this._body, Matter.Vector.create(position.x, position.y), Matter.Vector.create(force.x, force.y));
+	    }
+	    set velocity(velocity) {
+	        Matter.Body.setVelocity(this._body, Matter.Vector.create(velocity.x, velocity.y));
+	    }
+	    get velocity() {
+	        return new Vec(this._body.velocity.x, this._body.velocity.y);
+	    }
+	    OnCollisionStart(callback) {
+	        this.collisionCallbacks['collisionStart'] = callback;
+	    }
+	    OnCollisionStay(callback) {
+	        this.collisionCallbacks['collisionActive'] = callback;
+	    }
+	    OnCollisionEnd(callback) {
+	        this.collisionCallbacks['collisionEnd'] = callback;
+	    }
+	}
+
+	class Tilemap extends Component {
+	    Create() {
+	        this.tileset = this.properties["tileset"];
+	        this.map = this.properties["map"];
+	        this.width = this.properties["width"];
+	        this.height = this.properties["height"];
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
+	        this.scale = this.properties["scale"] || new Vec(this.width * this.tileset.tileWidth * this.parent.engine.gameScale, this.height * this.tileset.tileHeight * this.parent.engine.gameScale);
+	        this.layer = this.properties["layer"] || "Default";
+	        this.sprite = new PIXI.Sprite();
+	        this.UpdateTilemap();
+	    }
+	    Init() {
+	        this.engine.GetManager("Scene").GetLoadedScene().GetLayer("Default").container.addChild(this.sprite);
+	        this.UpdateTilemap();
+	    }
+	    Update() {
+	        // Render tiles to texture:
+	        this.engine.GetManager("Render").renderer.render(this.tilesContainer, this.texture);
+	    }
+	    UpdateTilemap() {
+	        this.tilesContainer = new PIXI.Container();
+	        for (var i = 0, len = this.width * this.height; i < len; i++) {
+	            let tile = PIXI.Sprite.from(this.tileset.GetTile(this.map[i]));
+	            tile.position.x = (i % this.width) * this.tileset.tileWidth;
+	            tile.position.y = Math.floor(i / this.width) * this.tileset.tileHeight;
+	            this.tilesContainer.addChild(tile);
+	        }
+	        this.texture = new PIXI.RenderTexture(new PIXI.BaseRenderTexture({
+	            width: this.width * this.tileset.tileWidth,
+	            height: this.height * this.tileset.tileHeight,
+	            resolution: 1,
+	            scaleMode: (this.parent.engine.scaleMode == "linear") ? PIXI.SCALE_MODES.LINEAR : PIXI.SCALE_MODES.NEAREST,
+	        }));
+	        // Set sprite position:
+	        this.sprite.position.x = this.position.x;
+	        this.sprite.position.y = this.position.y;
+	        // Set sprite scale:
+	        this.sprite.width = this.scale.x;
+	        this.sprite.height = this.scale.y;
+	        this.parent.transform.scale = this.scale;
+	        // Set sprite rotation (in degrees):
+	        this.sprite.angle = this.parent.transform.rotation;
+	        // Set anchor point:
+	        this.sprite.anchor.x = this.anchor.x;
+	        this.sprite.anchor.y = this.anchor.y;
+	        this.sprite.texture = this.texture;
+	    }
+	    ReplaceTile(index, position) {
+	        this.map[position.x + this.width * position.y] = index;
+	        this.UpdateTilemap();
+	    }
+	}
+
+	class DebugCollider extends Component {
+	    // private stretchMode : SpriteMode;
+	    Create() {
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.scale = this.properties["scale"] || this.parent.transform.scale;
+	        this.color = this.properties["color"] || 0xFF0000;
+	        this.thickness = this.properties["thickness"] || 1;
+	        this.rb = this.properties["body"];
+	        this.layer = this.properties["layer"] || "Default";
+	        this.graphics = new PIXI.Graphics();
+	        // this.stretchMode = this.properties["stretchMode"];
+	    }
+	    Init() {
+	        this.engine.GetManager("Scene").GetLoadedScene().GetLayer(this.layer).container.addChild(this.graphics);
+	    }
+	    Update() {
+	        this.Draw();
+	    }
+	    Draw() {
+	        this.graphics.clear();
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.scale = this.properties["scale"] || this.parent.transform.scale;
+	        let x1 = this.position.x - this.scale.x / 2;
+	        let y1 = this.position.y - this.scale.y / 2;
+	        let x2 = this.position.x + this.scale.x / 2;
+	        let y2 = this.position.y + this.scale.y / 2;
+	        for (let i = 0, len = this.rb.body.vertices.length; i < len; ++i) {
+	            this.graphics.lineTo(this.rb.body.vertices[i].x, this.rb.body.vertices[i].y).lineStyle(this.thickness, this.color);
+	        }
+	        this.graphics.lineTo(this.rb.body.vertices[0].x, this.rb.body.vertices[0].y);
+	    }
+	}
+
+	class Camera$1 {
 	    constructor(viewport) {
 	        this.trauma = 0;
 	        this.traumaPower = 2;
@@ -1465,12 +1759,11 @@
 	        return new Vec(point.x, point.y);
 	    }
 	    Zoom(amount, position) {
-	        if (position) {
-	            this.viewport.moveCenter(new PIXI.Point(position.x, position.y));
-	            this.viewport.setZoom(amount, false);
-	        }
-	        else
-	            this.viewport.setZoom(amount, true);
+	        // if (position) {
+	        // 	this.viewport.moveCenter(new PIXI.Point(position.x, position.y));
+	        // 	this.viewport.setZoom(amount, false);
+	        // }
+	        // else this.viewport.setZoom(amount, true);
 	    }
 	    // public CenterPivot() {
 	    // 	this.viewport.pivot = this.viewport.center;
@@ -1624,6 +1917,7 @@
 	exports.BaseScene = BaseScene;
 	exports.BaseSceneManager = BaseSceneManager;
 	exports.Camera = Camera;
+	exports.CameraUtil = Camera$1;
 	exports.Component = Component;
 	exports.DebugCollider = DebugCollider;
 	exports.Ease = Ease;
@@ -1637,11 +1931,13 @@
 	exports.Scene = Scene;
 	exports.SceneManager = SceneManager;
 	exports.Sprite = Sprite;
+	exports.Text = Text;
 	exports.Tilemap = Tilemap;
 	exports.Tileset = Tileset;
 	exports.TimeManager = TimeManager;
 	exports.Transform = Transform;
 	exports.Vec = Vec;
+	exports.Viewport = Viewport;
 
 	Object.defineProperty(exports, '__esModule', { value: true });
 

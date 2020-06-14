@@ -42,11 +42,11 @@ export default class Camera {
 	}
 
 	public Zoom(amount : number, position ?: Vec) : void {
-		if (position) {
-			this.viewport.moveCenter(new PIXI.Point(position.x, position.y));
-			this.viewport.setZoom(amount, false);
-		}
-		else this.viewport.setZoom(amount, true);
+		// if (position) {
+		// 	this.viewport.moveCenter(new PIXI.Point(position.x, position.y));
+		// 	this.viewport.setZoom(amount, false);
+		// }
+		// else this.viewport.setZoom(amount, true);
 	}
 
 	// public CenterPivot() {

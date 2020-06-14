@@ -1,12 +1,11 @@
 import Transform from './Transform';
 import Component from './Component';
-import BaseScene from '../scenes/BaseScene';
 import Engine from './Engine';
 export default class Entity {
     protected _id: number;
     protected _name: string;
     protected _properties: Object;
-    protected _scene: BaseScene;
+    protected _scene: any;
     shape: any;
     transform: Transform;
     texture: any;
@@ -17,8 +16,8 @@ export default class Entity {
     get name(): string;
     get engine(): Engine;
     get properties(): Object;
-    get scene(): BaseScene;
-    set scene(scene: BaseScene);
+    get scene(): any;
+    set scene(scene: any);
     Create(): void;
     Init(): void;
     Update(): void;

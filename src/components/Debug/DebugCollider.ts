@@ -10,8 +10,10 @@ export default class DebugCollider extends Component {
 
 	private position : Vec;
 	private scale : Vec;
+	private layer : string;
 
-	private color;
+	private color : number;
+	private thickness : number;
 
 	private rb;
 
@@ -22,7 +24,12 @@ export default class DebugCollider extends Component {
 		this.position = this.properties["position"] || this.parent.transform.position;
 		this.scale = this.properties["scale"] || this.parent.transform.scale;
 
+		this.color = this.properties["color"] || 0xFF0000;
+		this.thickness = this.properties["thickness"] || 1;
+
 		this.rb = this.properties["body"];
+
+		this.layer = this.properties["layer"] || "Default"; 
 
 		this.graphics = new PIXI.Graphics();
 
@@ -30,7 +37,7 @@ export default class DebugCollider extends Component {
 	}
 
 	public Init() {
-		this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.graphics);
+		this.engine.GetManager("Scene").GetLoadedScene().GetLayer(this.layer).container.addChild(this.graphics);
 	}
 
 	public Update() {
@@ -47,15 +54,9 @@ export default class DebugCollider extends Component {
 
 		let x2 = this.position.x + this.scale.x / 2;
 		let y2 = this.position.y + this.scale.y / 2;
-		
-		// this.graphics.position.x = x1;
-		// this.graphics.position.y = y1;
-
-		// this.graphics.x = this.rb.body.vertices[0].x;
-		// this.graphics.y = this.rb.body.vertices[0].y;
 
 		for(let i = 0, len = this.rb.body.vertices.length; i < len; ++i) {
-			this.graphics.lineTo(this.rb.body.vertices[i].x, this.rb.body.vertices[i].y).lineStyle(0.5, 0xFF0000);
+			this.graphics.lineTo(this.rb.body.vertices[i].x, this.rb.body.vertices[i].y).lineStyle(this.thickness, this.color);
 		}
 
 		this.graphics.lineTo(this.rb.body.vertices[0].x, this.rb.body.vertices[0].y)

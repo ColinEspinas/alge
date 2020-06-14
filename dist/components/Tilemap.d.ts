@@ -4,6 +4,7 @@ export default class Tilemap extends Component {
     private tileset;
     private texture;
     private sprite;
+    private layer;
     private map;
     private width;
     private height;

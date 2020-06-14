@@ -75,6 +75,7 @@ export default class RigidBody extends Component {
 	public Update() {
 		this.parent.transform.position.x = this.body.position.x;
 		this.parent.transform.position.y = this.body.position.y;
+		// Matter.Body.scale(this.body, this.parent.transform.scale.x, this.parent.transform.scale.x);
 		this.parent.transform.rotation = Math.floor(Angle.RadToDeg(this.body.angle));
 	}
 

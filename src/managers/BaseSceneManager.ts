@@ -77,7 +77,6 @@ export default class BaseSceneManager extends Manager {
 				this.loadedScene.Unload();
 			this.loadedScene = scene;
 			scene.Load();
-			console.log(scene);
 		}
 		catch(error) { 
 			console.error(error);

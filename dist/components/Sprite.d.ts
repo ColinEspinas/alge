@@ -3,6 +3,7 @@ export default class Sprite extends Component {
     private src;
     private texture;
     private sprite;
+    private layer;
     private position;
     private scale;
     private anchor;

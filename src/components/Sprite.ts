@@ -9,6 +9,7 @@ export default class Sprite extends Component {
 
 	private texture : PIXI.Texture;
 	private sprite : PIXI.Sprite;
+	private layer : string;
 
 	private position : Vec;
 	private scale : Vec;
@@ -29,6 +30,8 @@ export default class Sprite extends Component {
 		this.position = this.properties["position"] || this.parent.transform.position;
 		this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
 		this.scale = this.properties["scale"] || this.parent.transform.scale;
+		
+		this.layer = this.properties["layer"] || "Default";
 
 		this.sprite = new PIXI.Sprite();
 
@@ -49,12 +52,13 @@ export default class Sprite extends Component {
 
 		this.sprite.texture = this.texture;
 
-		this.engine.GetManager("Scene").GetLoadedScene().stage.addChild(this.sprite);
+		this.engine.GetManager("Scene").GetLoadedScene().GetLayer(this.layer).container.addChild(this.sprite);
 	}
 
 	public Update() {
 
 		// Set sprite position:
+		
 		this.position = this.properties["position"] || this.parent.transform.position;
 		this.sprite.position.x = this.position.x;
 		this.sprite.position.y = this.position.y;

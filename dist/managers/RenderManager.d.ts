@@ -1,6 +1,6 @@
 import Manager from '../core/Manager';
 import * as PIXI from 'pixi.js';
-import { Viewport } from 'pixi-viewport';
+import Viewport from '../utilities/Viewport';
 import Scene from '../scenes/Scene';
 export default class RenderManager extends Manager {
     protected _renderer: PIXI.Renderer;
