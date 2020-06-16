@@ -2,6 +2,7 @@ import BaseScene from './BaseScene';
 import RenderManager from '../managers/RenderManager';
 import * as PIXI from 'pixi.js';
 import * as Matter from 'matter-js';
+import Vec from '../utilities/Vec';
 
 export default class Scene extends BaseScene {
 
@@ -25,7 +26,7 @@ export default class Scene extends BaseScene {
 			name: name,
 			container: new PIXI.Container(),
 			fixed: options.fixed || false,
-			speed: (options.speed === 0) ? 0 : options.speed || 1,
+			speed: options.speed || Vec.One(),
 			// zoom: (options.zoom === 0) ? 0 : options.zoom || 1,
 			// zoomCoef: (options.zoomCoef === 0) ? 0 : options.zoomCoef || 1,
 			rotation: (options.rotation === 0) ? 0 : options.rotation || 1,
@@ -94,7 +95,7 @@ export interface ILayer {
 	name : string;
 	container : PIXI.Container;
 	fixed : boolean;
-	speed : number;
+	speed : Vec;
 	// zoom : number;
 	// zoomCoef ?: number;
 	rotation : number;
@@ -102,7 +103,7 @@ export interface ILayer {
 
 export interface ILayerOptions {
 	fixed ?: boolean;
-	speed ?: number;
+	speed ?: Vec;
 	// zoom ?: number;
 	// zoomCoef ?: number;
 	rotation ?: number;

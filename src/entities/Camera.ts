@@ -86,8 +86,8 @@ export default class Camera extends Entity {
 			this.scene.layers[i].container.position.y = pivot.y;
 
 			if (!this.scene.layers[i].fixed) {
-				this.scene.layers[i].container.position.x = pivot.x - this.transform.position.x * this.scene.layers[i].speed;
-				this.scene.layers[i].container.position.y = pivot.y - this.transform.position.y * this.scene.layers[i].speed;
+				this.scene.layers[i].container.position.x = pivot.x - this.transform.position.x * this.scene.layers[i].speed.x;
+				this.scene.layers[i].container.position.y = pivot.y - this.transform.position.y * this.scene.layers[i].speed.y;
 			}
 		}
 

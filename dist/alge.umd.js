@@ -195,116 +195,6 @@
 	    }
 	}
 
-	class Scene extends BaseScene {
-	    constructor() {
-	        super(...arguments);
-	        this._stage = new PIXI.Container();
-	        this._layers = [];
-	        this._world = Matter.World.create({});
-	    }
-	    get stage() { return this._stage; }
-	    get world() { return this._world; }
-	    get layers() { return this._layers; }
-	    InitDefaultLayer() {
-	        this.AddLayer("Default");
-	        this.AddLayer("Debug", { fixed: true, rotation: 0 });
-	    }
-	    AddLayer(name, options) {
-	        options = options || {};
-	        this._layers.push({
-	            name: name,
-	            container: new PIXI.Container(),
-	            fixed: options.fixed || false,
-	            speed: (options.speed === 0) ? 0 : options.speed || 1,
-	            // zoom: (options.zoom === 0) ? 0 : options.zoom || 1,
-	            // zoomCoef: (options.zoomCoef === 0) ? 0 : options.zoomCoef || 1,
-	            rotation: (options.rotation === 0) ? 0 : options.rotation || 1,
-	        });
-	        this._stage.addChild(this._layers[this.layers.length - 1].container);
-	        return this._layers[this._layers.length - 1];
-	    }
-	    GetLayer(name) {
-	        for (let i = 0, len = this._layers.length; i < len; ++i) {
-	            if (this._layers[i].name === name) {
-	                return this._layers[i];
-	            }
-	        }
-	        return null;
-	    }
-	    GetLayerIndex(name) {
-	        for (let i = 0, len = this._layers.length; i < len; ++i) {
-	            if (this._layers[i].name === name) {
-	                return i;
-	            }
-	        }
-	        return null;
-	    }
-	    RemoveLayer(name) {
-	        for (var i = 0, len = this._layers.length; i < len; i++) {
-	            if (this._layers[i].name === name) {
-	                this._layers.splice(i, 1);
-	            }
-	        }
-	    }
-	    SwapLayer(nameFirstLayer, nameSecondLayer) {
-	        const firstLayerIndex = this.GetLayerIndex(nameFirstLayer);
-	        const secondLayerIndex = this.GetLayerIndex(nameSecondLayer);
-	        const tempLayer = this._layers[firstLayerIndex];
-	        this._layers[firstLayerIndex] = this._layers[secondLayerIndex];
-	        this._layers[secondLayerIndex] = tempLayer;
-	        this._stage.swapChildren(this._layers[firstLayerIndex].container, this._layers[secondLayerIndex].container);
-	    }
-	    RenameLayer(currentName, name) {
-	        this.GetLayer(currentName).name = name;
-	    }
-	    Load() {
-	        super.Load();
-	        if (this._layers.length <= 0) {
-	            this.InitDefaultLayer();
-	        }
-	        this.engine.GetManager("Render").LoadSceneToViewport(this);
-	    }
-	    Unload() {
-	        super.Unload();
-	        for (let i = 0, len = this._layers.length; i < len; ++i) {
-	            this._layers[i].container.removeChildren();
-	        }
-	        Matter.World.clear(this._world, false);
-	    }
-	}
-
-	class SceneManager extends BaseSceneManager {
-	    CreateScene(name) {
-	        if (name && name !== "") {
-	            try {
-	                this.GetScene(name);
-	            }
-	            catch (_a) {
-	                let scene = new Scene(this, name);
-	                this.scenes.push(scene);
-	                return scene;
-	            }
-	            throw Error("Scene with name " + name + " already exist");
-	        }
-	        else
-	            throw Error("Cannot create scene with name " + name);
-	    }
-	    GetScenes() {
-	        return this.scenes;
-	    }
-	    GetScene(name) {
-	        for (var i = 0, len = this.scenes.length; i < len; i++) {
-	            if (this.scenes[i].name === name) {
-	                return this.scenes[i];
-	            }
-	        }
-	        throw Error("Cannot get scene with name " + name);
-	    }
-	    GetLoadedScene() {
-	        return this.loadedScene;
-	    }
-	}
-
 	let Vec = /** @class */ (() => {
 	    class Vec {
 	        constructor(x, y, z) {
@@ -449,6 +339,116 @@
 	    };
 	    return Vec;
 	})();
+
+	class Scene extends BaseScene {
+	    constructor() {
+	        super(...arguments);
+	        this._stage = new PIXI.Container();
+	        this._layers = [];
+	        this._world = Matter.World.create({});
+	    }
+	    get stage() { return this._stage; }
+	    get world() { return this._world; }
+	    get layers() { return this._layers; }
+	    InitDefaultLayer() {
+	        this.AddLayer("Default");
+	        this.AddLayer("Debug", { fixed: true, rotation: 0 });
+	    }
+	    AddLayer(name, options) {
+	        options = options || {};
+	        this._layers.push({
+	            name: name,
+	            container: new PIXI.Container(),
+	            fixed: options.fixed || false,
+	            speed: options.speed || Vec.One(),
+	            // zoom: (options.zoom === 0) ? 0 : options.zoom || 1,
+	            // zoomCoef: (options.zoomCoef === 0) ? 0 : options.zoomCoef || 1,
+	            rotation: (options.rotation === 0) ? 0 : options.rotation || 1,
+	        });
+	        this._stage.addChild(this._layers[this.layers.length - 1].container);
+	        return this._layers[this._layers.length - 1];
+	    }
+	    GetLayer(name) {
+	        for (let i = 0, len = this._layers.length; i < len; ++i) {
+	            if (this._layers[i].name === name) {
+	                return this._layers[i];
+	            }
+	        }
+	        return null;
+	    }
+	    GetLayerIndex(name) {
+	        for (let i = 0, len = this._layers.length; i < len; ++i) {
+	            if (this._layers[i].name === name) {
+	                return i;
+	            }
+	        }
+	        return null;
+	    }
+	    RemoveLayer(name) {
+	        for (var i = 0, len = this._layers.length; i < len; i++) {
+	            if (this._layers[i].name === name) {
+	                this._layers.splice(i, 1);
+	            }
+	        }
+	    }
+	    SwapLayer(nameFirstLayer, nameSecondLayer) {
+	        const firstLayerIndex = this.GetLayerIndex(nameFirstLayer);
+	        const secondLayerIndex = this.GetLayerIndex(nameSecondLayer);
+	        const tempLayer = this._layers[firstLayerIndex];
+	        this._layers[firstLayerIndex] = this._layers[secondLayerIndex];
+	        this._layers[secondLayerIndex] = tempLayer;
+	        this._stage.swapChildren(this._layers[firstLayerIndex].container, this._layers[secondLayerIndex].container);
+	    }
+	    RenameLayer(currentName, name) {
+	        this.GetLayer(currentName).name = name;
+	    }
+	    Load() {
+	        super.Load();
+	        if (this._layers.length <= 0) {
+	            this.InitDefaultLayer();
+	        }
+	        this.engine.GetManager("Render").LoadSceneToViewport(this);
+	    }
+	    Unload() {
+	        super.Unload();
+	        for (let i = 0, len = this._layers.length; i < len; ++i) {
+	            this._layers[i].container.removeChildren();
+	        }
+	        Matter.World.clear(this._world, false);
+	    }
+	}
+
+	class SceneManager extends BaseSceneManager {
+	    CreateScene(name) {
+	        if (name && name !== "") {
+	            try {
+	                this.GetScene(name);
+	            }
+	            catch (_a) {
+	                let scene = new Scene(this, name);
+	                this.scenes.push(scene);
+	                return scene;
+	            }
+	            throw Error("Scene with name " + name + " already exist");
+	        }
+	        else
+	            throw Error("Cannot create scene with name " + name);
+	    }
+	    GetScenes() {
+	        return this.scenes;
+	    }
+	    GetScene(name) {
+	        for (var i = 0, len = this.scenes.length; i < len; i++) {
+	            if (this.scenes[i].name === name) {
+	                return this.scenes[i];
+	            }
+	        }
+	        throw Error("Cannot get scene with name " + name);
+	    }
+	    GetLoadedScene() {
+	        return this.loadedScene;
+	    }
+	}
 
 	class Viewport extends PIXI.Container {
 	    constructor(options) {
@@ -1367,8 +1367,8 @@
 	            this.scene.layers[i].container.position.x = pivot.x;
 	            this.scene.layers[i].container.position.y = pivot.y;
 	            if (!this.scene.layers[i].fixed) {
-	                this.scene.layers[i].container.position.x = pivot.x - this.transform.position.x * this.scene.layers[i].speed;
-	                this.scene.layers[i].container.position.y = pivot.y - this.transform.position.y * this.scene.layers[i].speed;
+	                this.scene.layers[i].container.position.x = pivot.x - this.transform.position.x * this.scene.layers[i].speed.x;
+	                this.scene.layers[i].container.position.y = pivot.y - this.transform.position.y * this.scene.layers[i].speed.y;
 	            }
 	        }
 	        this._bounds = [
@@ -1736,115 +1736,6 @@
 	    }
 	}
 
-	class Camera$1 {
-	    constructor(viewport) {
-	        this.trauma = 0;
-	        this.traumaPower = 2;
-	        this.traumaDecay = 0.8;
-	        this.maxShakeOffset = new Vec(100, 75);
-	        this.maxShakeRoll = 10;
-	        this.viewport = viewport;
-	        // this.CenterPivot();
-	    }
-	    set target(target) { this._target = target; }
-	    get target() { return this._target; }
-	    get position() { return new Vec(this.viewport.center.x, this.viewport.center.y); }
-	    set position(position) { this.viewport.center = new PIXI.Point(position.x, position.y); }
-	    WorldToCamera(position) {
-	        const point = this.viewport.toLocal(new PIXI.Point(position.x, position.y));
-	        return new Vec(point.x, point.y);
-	    }
-	    CameraToWorld(position) {
-	        const point = this.viewport.toGlobal(new PIXI.Point(position.x, position.y));
-	        return new Vec(point.x, point.y);
-	    }
-	    Zoom(amount, position) {
-	        // if (position) {
-	        // 	this.viewport.moveCenter(new PIXI.Point(position.x, position.y));
-	        // 	this.viewport.setZoom(amount, false);
-	        // }
-	        // else this.viewport.setZoom(amount, true);
-	    }
-	    // public CenterPivot() {
-	    // 	this.viewport.pivot = this.viewport.center;
-	    // 	this.viewport.x = -this.viewport.pivot.x;
-	    // 	this.viewport.y = -this.viewport.pivot.y;
-	    // 	const debug = new PIXI.Graphics();
-	    // 	// Set the fill color
-	    // 	debug.beginFill(0xe74c3c); // Red
-	    // 	// Draw a circle
-	    // 	debug.drawCircle(this.viewport.pivot.x, this.viewport.pivot.y, 10); // drawCircle(x, y, radius)
-	    // 	// Applies fill to lines and shapes since the last call to beginFill.
-	    // 	debug.endFill();
-	    // 	this.viewport.addChild(debug);
-	    // }
-	    Move(direction, speed) {
-	        speed = speed || 1;
-	        this.viewport.x -= direction.x * speed * this.deltaTime * 100;
-	        this.viewport.y -= direction.y * speed * this.deltaTime * 100;
-	    }
-	    MoveTo(position, options) {
-	        const tolerance = options.tolerance || 0.5;
-	        if (position.Distance(this.position) > tolerance) {
-	            const point = new PIXI.Point(Math.floor(Ease.lerp(this.viewport.center.x, position.x, options.duration * (this.deltaTime * 100))), Math.floor(Ease.lerp(this.viewport.center.y, position.y, options.duration * (this.deltaTime * 100))));
-	            this.viewport.moveCenter(point);
-	        }
-	    }
-	    MoveToHorizontal(position, options) {
-	        const tolerance = options.tolerance || 0.5;
-	        if (position.Distance(this.position) > tolerance) {
-	            const point = new PIXI.Point(Math.floor(Ease.lerp(this.viewport.center.x, position.x, options.duration * (this.deltaTime * 100))), this.viewport.center.y);
-	            this.viewport.moveCenter(point);
-	        }
-	    }
-	    MoveToVertical(position, options) {
-	        const tolerance = options.tolerance || 0.5;
-	        if (position.Distance(this.position) > tolerance) {
-	            const point = new PIXI.Point(this.viewport.center.x, Math.floor(Ease.lerp(this.viewport.center.y, position.y, options.duration * (this.deltaTime * 100))));
-	            this.viewport.moveCenter(point);
-	        }
-	    }
-	    AddTrauma(amount) {
-	        this.trauma = Math.min(this.trauma + amount, 1);
-	    }
-	    Shake() {
-	        const amount = Math.pow(this.trauma, this.traumaPower);
-	        // Waiting for viewport centered pivot solution:
-	        // this.viewport.angle = this.maxShakeRoll * amount * Math.random();
-	        const shakeOffset = new Vec(this.maxShakeOffset.x * amount * ((Math.random() * 2) - 1), this.maxShakeOffset.y * amount * ((Math.random() * 2) - 1));
-	        this.viewport.moveCenter(this.viewport.center.x + shakeOffset.x, this.viewport.center.y + shakeOffset.y);
-	    }
-	    Update(deltaTime) {
-	        this.deltaTime = deltaTime;
-	        if (this._target && this._target.position && this._target.position instanceof Vec) {
-	            if (this.target.horizontal && this.target.vertical) {
-	                this.MoveTo(this.target.position, this.target.options);
-	            }
-	            else if (this.target.horizontal) {
-	                this.MoveToHorizontal(this.target.position, this.target.options);
-	            }
-	            else if (this.target.vertical) {
-	                this.MoveToVertical(this.target.position, this.target.options);
-	            }
-	        }
-	        if (this._target && this._target.entity && this._target.entity instanceof Entity) {
-	            if (this.target.horizontal && this.target.vertical) {
-	                this.MoveTo(this.target.entity.transform.position, this.target.options);
-	            }
-	            else if (this.target.horizontal) {
-	                this.MoveToHorizontal(this.target.entity.transform.position, this.target.options);
-	            }
-	            else if (this.target.vertical) {
-	                this.MoveToVertical(this.target.entity.transform.position, this.target.options);
-	            }
-	        }
-	        if (this.trauma > 0) {
-	            this.trauma = Math.max(this.trauma - this.traumaDecay * this.deltaTime, 0);
-	            this.Shake();
-	        }
-	    }
-	}
-
 	class Noise {
 	    static Simplex(dimension, seed) {
 	        if (dimension === 1) {
@@ -1917,7 +1808,6 @@
 	exports.BaseScene = BaseScene;
 	exports.BaseSceneManager = BaseSceneManager;
 	exports.Camera = Camera;
-	exports.CameraUtil = Camera$1;
 	exports.Component = Component;
 	exports.DebugCollider = DebugCollider;
 	exports.Ease = Ease;

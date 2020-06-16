@@ -9,14 +9,14 @@
   "types": "dist/alge.d.ts",
   "scripts": {
     "watch": "rollup -w -c",
-    "build": "rollup -c",
-    "example": "parcel ./example/index.html -d ./example/dist",
-    "example:build": "npm run build & npm run example"
+    "build": "npm run clean-dist & rollup -c",
+    "clean-dist": "rimraf ./dist"
   },
   "author": "Colin Espinas",
   "license": "ISC",
   "devDependencies": {
     "parcel-bundler": "^1.12.4",
+    "rimraf": "^3.0.2",
     "rollup": "^2.3.1",
     "rollup-plugin-copy": "^3.3.0",
     "rollup-plugin-execute": "^1.1.1",
@@ -27,10 +27,8 @@
   "dependencies": {
     "howler": "^2.1.3",
     "matter-js": "^0.14.2",
-    "pixi-viewport": "^4.10.0",
     "pixi.js": "^5.2.1",
     "shortid": "^2.2.15",
-    "tumult": "^3.0.14",
-    "two.js": "^0.7.0-beta.3"
+    "tumult": "^3.0.14"
   }
 }

@@ -1,6 +1,7 @@
 import BaseScene from './BaseScene';
 import * as PIXI from 'pixi.js';
 import * as Matter from 'matter-js';
+import Vec from '../utilities/Vec';
 export default class Scene extends BaseScene {
     protected _stage: PIXI.Container;
     protected _layers: ILayer[];
@@ -22,11 +23,11 @@ export interface ILayer {
     name: string;
     container: PIXI.Container;
     fixed: boolean;
-    speed: number;
+    speed: Vec;
     rotation: number;
 }
 export interface ILayerOptions {
     fixed?: boolean;
-    speed?: number;
+    speed?: Vec;
     rotation?: number;
 }

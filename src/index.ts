@@ -30,7 +30,6 @@ import Scene from './scenes/Scene';
 // Base Utilities:
 import Vec from './utilities/Vec';
 import Angle from './utilities/Angle';
-import CameraUtil from './utilities/Camera';
 import Ease from './utilities/Ease';
 import Noise from './utilities/Noise';
 import Tileset from './utilities/Tileset';
@@ -72,7 +71,6 @@ export {
 	// Base Utilities:
 	Vec,
 	Angle,
-	CameraUtil,
 	Ease,
 	Noise,
 	Tileset,
