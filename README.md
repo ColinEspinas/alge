@@ -28,60 +28,72 @@ import { Component, InputManager, Key, Cursor, TimeManager } from "alge";
 
 export default class PlayerController extends Component {
 	
-	protected inputManager : InputManager = this.parent.engine.GetManager(InputManager);
-	protected timeManager : TimeManager = this.parent.engine.GetManager(TimeManager);
+	protected input : InputManager = this.parent.engine.getManager("Input");
+	protected time : TimeManager = this.parent.engine.getManager("Time");;
 	public speed : number = 10;
 
-	public Init() {
-		this.inputManager.SetCursor(Cursor.Hidden);
+	public init() {
+		this.input.SetCursor(Cursor.Hidden);
 	}
 	
-	public Update() {
+	public update() {
 
-		if (this.inputManager.GetKeyDown(Key.UpArrow)) {
+		if (this.input.getKeyDown(Key.UpArrow)) {
 			this.parent.transform.position.y -= this.speed * this.time.deltaTime * 100;
 		}
-		if (this.inputManager.GetKeyDown(Key.DownArrow)) {
+		if (this.input.getKeyDown(Key.DownArrow)) {
 			this.parent.transform.position.y += this.speed * this.time.deltaTime * 100;
 		}
-		if (this.inputManager.GetKeyDown(Key.LeftArrow)) {
+		if (this.input.getKeyDown(Key.LeftArrow)) {
 			this.parent.transform.position.x -= this.speed * this.time.deltaTime * 100;
 		}
-		if (this.inputManager.GetKeyDown(Key.RightArrow)) {
+		if (this.input.getKeyDown(Key.RightArrow)) {
 			this.parent.transform.position.x += this.speed * this.time.deltaTime * 100;
 		}
 	}
 }
 ```
 
-Create a `Player` entity and add a `SpriteRenderer` component to display a sprite and the `PlayerController` component previously created:
+Create a `Player` entity and add a `Sprite` component to display a sprite and the `PlayerController` component previously created:
 ```typescript
 // entities/Player.ts
 import { Entity, Sprite, Engine} from "alge";
 import PlayerController from "../components/PlayerController";
 
 export default class Player extends Entity {
-	public Create() {
-		this.AddComponent(Sprite, { 
+
+	protected sprite : Sprite;
+	protected controller : PlayerController;
+
+	public create() {
+		this.sprite = new Sprite(this, "Sprite", { 
 			src: this.properties["sprite"],
 		});
-		this.AddComponent(PlayerController);
+		this.addComponent(this.sprite);
+
+		this.controller = new PlayerController(this, "Controller");
+		this.addComponent(this.controller);
 	}
 }
 ```
 
-Instanciate the alge's `Engine` class and create a `Scene` using the `SceneManager`. Then add your `Player` entity to the scene and run the engine:
+Instanciate the alge's `Engine` class and create a `PIXIScene` using the `PIXISceneManager`. Then add a `Camera` and your `Player` entity to the scene and run the engine:
 ```typescript
 // index.ts
-import { Engine, Scene, SceneManager } from 'alge';
+import { Engine, PIXIScene } from 'alge';
 import Player from "./entities/Player";
 
 const game = new Engine({fullscreen: true});
 
-let mainScene : Scene = game.GetManager(SceneManager).CreateScene("test");
-mainScene.AddEntity(Player, "PlayerEntity", { sprite:"path/to/sprite" });
+let mainScene : PIXIScene = game.getManager("Scene").createScene("MainScene");
 
-game.Run();
+let camera = new Camera("MainCamera");
+mainScene.addEntity(camera);
+
+let player = new Player("Player", { sprite:"path/to/sprite" });
+mainScene.addEntity(player);
+
+game.run();
 ```
 
 
