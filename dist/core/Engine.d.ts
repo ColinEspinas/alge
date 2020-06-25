@@ -10,6 +10,7 @@ export declare type Options = {
     scaleMode?: string;
     physics?: string;
     gameScale?: number;
+    framerate?: number;
 };
 export default class engine {
     private _width;
@@ -18,6 +19,7 @@ export default class engine {
     private _resolution;
     private _scaleMode;
     private _gameScale;
+    private _framerate;
     private _container;
     private managers;
     constructor(options?: Partial<Options>);
@@ -28,9 +30,10 @@ export default class engine {
     get container(): string;
     get scaleMode(): string;
     get gameScale(): number;
-    Run(): number;
-    Update(): void;
-    protected AddManager<ManagerType extends Manager>(m: ManagerType): ManagerType;
-    GetManager(name: string): any;
-    GetManagers(name: string): any[];
+    get framerate(): number;
+    run(): number;
+    update(): void;
+    protected addManager<ManagerType extends Manager>(m: ManagerType): ManagerType;
+    getManager(name: string): any;
+    getManagers(name: string): any[];
 }

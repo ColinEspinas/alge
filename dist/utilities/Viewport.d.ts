@@ -10,9 +10,9 @@ export default class Viewport extends PIXI.Container {
     get height(): number;
     get center(): Vec;
     constructor(options: IViewportOptions);
-    Resize(width: number, height: number): void;
-    Debug(): void;
-    SetStage(stage: PIXI.Container, debug: boolean): void;
+    resize(width: number, height: number): void;
+    debug(): void;
+    setStage(stage: PIXI.Container, debug: boolean): void;
     get stage(): PIXI.Container;
 }
 export interface IViewportOptions {

@@ -1,6 +1,6 @@
 import Component from "../core/Component";
 import * as PIXI from "pixi.js";
-import SceneManager from "../managers/SceneManager";
+import PIXISceneManager from "../managers/PIXISceneManager";
 import Vec from "../utilities/Vec";
 
 export default class Sprite extends Component {
@@ -11,13 +11,14 @@ export default class Sprite extends Component {
 	private sprite : PIXI.Sprite;
 	private layer : string;
 
-	private position : Vec;
+	public position : Vec;z
 	private scale : Vec;
 	private anchor : Vec;
+	private angle : number;
 
 	// private stretchMode : SpriteMode;
 
-	public Create() {
+	public create() {
 
 		if (typeof this.properties["src"] === 'string') {
 			this.src = this.properties["src"];
@@ -27,9 +28,12 @@ export default class Sprite extends Component {
 			this.texture = this.properties["src"];
 		}
 
+		this.texture.baseTexture.scaleMode = this.properties["scaleMode"] || PIXI.SCALE_MODES.NEAREST;
+
 		this.position = this.properties["position"] || this.parent.transform.position;
 		this.anchor = this.properties["anchor"] || new Vec(0.5, 0.5);
 		this.scale = this.properties["scale"] || this.parent.transform.scale;
+		this.angle = (this.properties["angle"] === 0) ? 0 : this.properties["angle"] || this.parent.transform.rotation;
 		
 		this.layer = this.properties["layer"] || "Default";
 
@@ -38,24 +42,24 @@ export default class Sprite extends Component {
 		// this.stretchMode = this.properties["stretchMode"];
 	}
 
-	public Init() {
+	public init() {
 		this.sprite.position.x = this.position.x;
 		this.sprite.position.y = this.position.y;
 
 		this.sprite.width = this.scale.x;
 		this.sprite.height = this.scale.y;
 
-		this.sprite.angle = this.parent.transform.rotation;
+		this.sprite.angle = this.angle;
 
 		this.sprite.anchor.x = this.anchor.x;
 		this.sprite.anchor.y = this.anchor.y;
 
 		this.sprite.texture = this.texture;
 
-		this.engine.GetManager("Scene").GetLoadedScene().GetLayer(this.layer).container.addChild(this.sprite);
+		this.engine.getManager("Scene").getLoadedScene().getLayer(this.layer).container.addChild(this.sprite);
 	}
 
-	public Update() {
+	public update() {
 
 		// Set sprite position:
 		
@@ -69,13 +73,18 @@ export default class Sprite extends Component {
 		this.sprite.height = this.scale.y;
 
 		// Set sprite rotation (in degrees):
-		this.sprite.angle = this.parent.transform.rotation;
+		this.angle = (this.properties["angle"] === 0) ? 0 : this.properties["angle"] || this.parent.transform.rotation;
+		this.sprite.angle = this.angle;
 
 		// Set anchor point:
 		this.sprite.anchor.x = this.anchor.x;
 		this.sprite.anchor.y = this.anchor.y;
 
 		this.sprite.texture = this.texture;
+	}
+
+	public unload() {
+		(this.engine.getManager("Scene").getLoadedScene().getLayer(this.layer).container as PIXI.Container).removeChild(this.sprite);
 	}
 }
 

@@ -10,9 +10,9 @@ export default abstract class Component {
     get engine(): Engine;
     get parent(): Entity;
     set parent(entity: Entity);
-    Create(): void;
-    Init(): void;
-    Update(): void;
-    FixedUpdate(): void;
-    Unload(): void;
+    create(): void;
+    init(): void;
+    update(): void;
+    fixedUpdate(): void;
+    unload(): void;
 }

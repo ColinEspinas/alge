@@ -1,15 +1,19 @@
 import Component from "../core/Component";
+import Vec from "../utilities/Vec";
 export default class Sprite extends Component {
     private src;
     private texture;
     private sprite;
     private layer;
-    private position;
+    position: Vec;
+    z: any;
     private scale;
     private anchor;
-    Create(): void;
-    Init(): void;
-    Update(): void;
+    private angle;
+    create(): void;
+    init(): void;
+    update(): void;
+    unload(): void;
 }
 export declare enum SpriteMode {
     BestFit = 0,

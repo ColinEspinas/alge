@@ -19,9 +19,9 @@ export default abstract class Component {
 	public get parent() { return this._parent; }
 	public set parent(entity : Entity) { this._parent = entity; }
 
-	public Create() {};
-	public Init() {};
-	public Update() {};
-	public FixedUpdate() {};
-	public Unload() {};
+	public create() {};
+	public init() {};
+	public update() {};
+	public fixedUpdate() {};
+	public unload() {};
 }

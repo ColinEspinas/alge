@@ -15,7 +15,7 @@ export default class Text extends Component {
 	private scale : Vec;
 	private anchor : Vec;
 
-	public Create() {
+	public create() {
 		this.content = this.properties["content"];
 		this.style = this.properties["style"];
 
@@ -28,7 +28,7 @@ export default class Text extends Component {
 		this.text = new PIXI.Text(this.content, this.style);
 	}
 
-	public Init() {
+	public init() {
 		this.text.position.x = this.position.x;
 		this.text.position.y = this.position.y;
 
@@ -45,10 +45,10 @@ export default class Text extends Component {
 		this.text.text = this.content;
 		this.text.style = this.style;
 
-		this.engine.GetManager("Scene").GetLoadedScene().GetLayer(this.layer).container.addChild(this.text);
+		this.engine.getManager("Scene").getLoadedScene().getLayer(this.layer).container.addChild(this.text);
 	}
 
-	public Update() {
+	public update() {
 
 		// Set text position:
 		this.position = this.properties["position"] || this.parent.transform.position;
@@ -76,15 +76,15 @@ export default class Text extends Component {
 		this.text.style = this.style;
 	}
 
-	public SetText(content : string | number) {
+	public setText(content : string | number) {
 		this.content = content.toString();
 	}
 
-	public SetStyle(style : PIXI.TextStyle) {
+	public setStyle(style : PIXI.TextStyle) {
 		this.style = style;
 	}
 	
-	public SetPosition(pos : Vec) {
+	public setPosition(pos : Vec) {
 		this.properties["position"] = pos;
 	}
 }

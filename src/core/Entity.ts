@@ -16,12 +16,15 @@ export default class Entity {
 	public texture : any;
 	protected components : any[];
 
+	protected _tags : string[];
+
 	constructor(name : string, properties ?: Object) {
 		this._id = shortid.generate();
 		this._name = name;
 		this._properties = properties || {};
 		this.transform = new Transform();
 		this.components = [];
+		this._tags = (properties) ? properties["tags"] : [] || [];
 		// this.Create();
 	}
 
@@ -34,33 +37,33 @@ export default class Entity {
 
 	public set scene(scene) { this._scene = scene; }
 
-	public Create() {};
-	public Init() {};
-	public Update() {};
-	public FixedUpdate() {};
-	public Unload() {};
+	public create() {};
+	public init() {};
+	public update() {};
+	public fixedUpdate() {};
+	public unload() {};
 
-	public InitComponents() {
+	public initComponents() {
 		for (var i = 0, len = this.components.length; i < len; i++) {
-			this.components[i].Init();
+			this.components[i].init();
 		}
 	}
 
-	public UpdateComponents() {
+	public updateComponents() {
 		for (var i = 0, len = this.components.length; i < len; i++) {
-			this.components[i].Update();
+			this.components[i].update();
 		}
 	}
 
-	public FixedUpdateComponents() {
+	public fixedUpdateComponents() {
 		for (var i = 0, len = this.components.length; i < len; i++) {
-			this.components[i].FixedUpdate();
+			this.components[i].fixedUpdate();
 		}
 	}
 
-	public UnloadComponents() {
+	public unloadComponents() {
 		for (var i = 0, len = this.components.length; i < len; i++) {
-			this.components[i].Unload();
+			this.components[i].unload();
 		}
 	}
 
@@ -72,14 +75,14 @@ export default class Entity {
 	// 	return this.components[this.components.length - 1];
 	// }
 
-	public AddComponent<ComponentType extends Component>(c : ComponentType) : ComponentType {
+	public addComponent<ComponentType extends Component>(c : ComponentType) : ComponentType {
 		c.parent = this;
-		c.Create();
+		c.create();
 		this.components.push(c);
 		return this.components[this.components.length - 1];
 	}
 
-	public GetComponent(name : string) {
+	public getComponent(name : string) {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			if (this.components[i].name == name) {
 				return this.components[i];
@@ -87,30 +90,27 @@ export default class Entity {
 		}
 	}
 
-	// public GetComponent<ComponentType extends Component>(c : new (...args : any[]) => ComponentType) : ComponentType {
-	// 	for (var i = 0, len = this.components.length; i < len; i++) {
-	// 		if (this.components[i].name === c.name) {
-	// 			return this.components[i];
-	// 		}
-	// 	}
-	// }
-
-
-	// public GetComponents<ComponentType extends Component>(c : new (...args : any[]) => ComponentType) : ComponentType[] {
-	// 	let components : Component[] = [];
-	// 	for (var i = 0, len = this.components.length; i < len; i++) {
-	// 		if (this.components[i].name === c.name) {
-	// 			components.push(this.components[i]);
-	// 		}
-	// 	}
-	// 	return components as ComponentType[];
-	// }
-
-	public RemoveComponent(name : string) : void {
+	public removeComponent(name : string) : void {
 		for (var i = 0, len = this.components.length; i < len; i++) {
 			if (this.components[i].name === name) {
 				this.components.splice(i, 1);
 			}
 		}
+	}
+
+	public hasTag(tag : string) {
+		return this._tags.includes(tag);
+	}
+
+	public getTagIndex(tag : string) {
+		return this._tags.indexOf(tag);
+	}
+
+	public addTag(tag : string) {
+		this._tags.push(tag);
+	}
+
+	public removeTag(tag : string) {
+		this._tags.splice(this.getTagIndex(tag), 1);
 	}
 }

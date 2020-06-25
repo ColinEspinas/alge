@@ -7,13 +7,13 @@ export default class RigidBody extends Component {
     protected collisionCallbacks: {
         [event: string]: Function;
     };
-    Create(): void;
-    Init(): void;
-    Update(): void;
-    ApplyForce(position: Vec, force: Vec): void;
+    create(): void;
+    init(): void;
+    update(): void;
+    applyForce(position: Vec, force: Vec): void;
     set velocity(velocity: Vec);
     get velocity(): Vec;
-    OnCollisionStart(callback: Function): void;
-    OnCollisionStay(callback: Function): void;
-    OnCollisionEnd(callback: Function): void;
+    onCollisionStart(callback: Function): void;
+    onCollisionStay(callback: Function): void;
+    onCollisionEnd(callback: Function): void;
 }

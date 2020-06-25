@@ -4,6 +4,7 @@ export default class Tilemap extends Component {
     private tileset;
     private texture;
     private sprite;
+    private body;
     private layer;
     private map;
     private width;
@@ -12,9 +13,9 @@ export default class Tilemap extends Component {
     private position;
     private scale;
     private anchor;
-    Create(): void;
-    Init(): void;
-    Update(): void;
-    UpdateTilemap(): void;
-    ReplaceTile(index: any, position: Vec): void;
+    create(): void;
+    init(): void;
+    update(): void;
+    updateTilemap(): void;
+    replaceTile(index: any, position: Vec): void;
 }

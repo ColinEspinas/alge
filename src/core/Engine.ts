@@ -1,9 +1,11 @@
 import Manager from './Manager';
-import SceneManager from '../managers/SceneManager';
-import RenderManager from '../managers/RenderManager';
+import PIXISceneManager from '../managers/PIXISceneManager';
+import PIXIRenderManager from '../managers/PIXIRenderManager';
 import TimeManager from '../managers/TimeManager';
 import InputManager from '../managers/InputManager';
-import PhysicsManager from '../managers/PhysicsManager';
+import PMPhysicsManager from '../managers/PMPhysicsManager';
+import PMSceneManager from '../managers/PMSceneManager';
+import AudioManager from '../managers/AudioManager';
 
 export type Options  = {
 	width ?: number;
@@ -16,6 +18,7 @@ export type Options  = {
 	scaleMode ?: string;
 	physics ?: string;
 	gameScale ?: number;
+	framerate ?: number;
 }
 
 export default class engine {
@@ -26,6 +29,7 @@ export default class engine {
 	private _resolution : number;
 	private _scaleMode : string;
 	private _gameScale : number;
+	private _framerate : number;
 
 	private _container : string;
 
@@ -42,8 +46,9 @@ export default class engine {
 			managers: [],
 			renderer: 'pixi',
 			scaleMode : 'nearest',
-			physics: 'matter',
+			physics: null,
 			gameScale: 1,
+			framerate: 60,
 		}, options);
 
 		this.managers = [];
@@ -51,18 +56,22 @@ export default class engine {
 		this.managers.push(new TimeManager(this, "Time"));
 
 		if (options.renderer === 'pixi') {
-			this.managers.push(new RenderManager(this, "Render"));
-			this.managers.push(new SceneManager(this, "Scene"));
-		}
+			this.managers.push(new PIXIRenderManager(this, "Render"));
 
-		if (options.physics === 'matter') {
-			this.managers.push(new PhysicsManager(this, "Physics"));
+			if (options.physics === 'matter') {
+				this.managers.push(new PMPhysicsManager(this, "Physics"));
+				this.managers.push(new PMSceneManager(this, "Scene"));
+			}
+			else {
+				this.managers.push(new PIXISceneManager(this, "Scene"));
+			}
 		}
 
 		this.managers.push(new InputManager(this, "Input"));
+		this.managers.push(new AudioManager(this, "Audio"));
 
 		for (var i = 0, len = options.managers.length; i < len; i++) {
-			this.AddManager(options.managers[i]);
+			this.addManager(options.managers[i]);
 		}
 
 		this._width = options.width;
@@ -73,9 +82,10 @@ export default class engine {
 
 		this._scaleMode = options.scaleMode;
 		this._gameScale = options.gameScale;
+		this._framerate = options.framerate;
 
 		for (var i = 0, len = this.managers.length; i < len; i++) {
-			this.managers[i].PreInit(options);
+			this.managers[i].preInit(options);
 		}
 	}
 
@@ -86,40 +96,44 @@ export default class engine {
 	public get container() { return this._container; }
 	public get scaleMode() { return this._scaleMode; }
 	public get gameScale() { return this._gameScale; }
+	public get framerate() { return this._framerate; }
 
-	public Run() : number {
+	public run() : number {
 
 		for (var i = 0, len = this.managers.length; i < len; i++) {
-			this.managers[i].Init();
+			this.managers[i].init();
 		}
 
 		console.log("Engine is running in ", document.querySelector(this._container));
 
-		requestAnimationFrame(this.Update.bind(this));
+		this.update();
 		return 0;
 	}
 
-	public Update() : void {
-		while(this.GetManager("Time").accumulator > this.GetManager("Time").step) {
-			this.GetManager("Time").FixDelta();
+	public update() : void {
+		while(this.getManager("Time").accumulator > this.getManager("Time").step) {
+			this.getManager("Time").fixDelta();
 			for (var i = 0, len = this.managers.length; i < len; i++) {
-				this.managers[i].FixedUpdate();
+				this.managers[i].fixedUpdate();
 			}
 		}
 		for (var i = 0, len = this.managers.length; i < len; i++) {
-			this.managers[i].Update();
+			this.managers[i].update();
 		}
-		this.GetManager("Time").SetLastUpdate();
-		requestAnimationFrame(this.Update.bind(this));
+		this.getManager("Time").setLastUpdate();
+		
+		setTimeout(()=>{
+			requestAnimationFrame(this.update.bind(this));
+		}, 1000 / (this._framerate + 15));
 	}
 
-	protected AddManager<ManagerType extends Manager>(m : ManagerType) : ManagerType {
+	protected addManager<ManagerType extends Manager>(m : ManagerType) : ManagerType {
 		m.engine = this;
 		this.managers.push(m);
 		return this.managers[this.managers.length - 1];
 	}
 
-	public GetManager(name : string) {
+	public getManager(name : string) {
 		for (var i = 0, len = this.managers.length; i < len; i++) {
 			if (this.managers[i].name === name) {
 				return this.managers[i];
@@ -127,7 +141,7 @@ export default class engine {
 		}
 	}
 
-	public GetManagers(name : string) {
+	public getManagers(name : string) {
 		let managers = [];
 		for (var i = 0, len = this.managers.length; i < len; i++) {
 			if (this.managers[i].name === name) {

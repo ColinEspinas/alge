@@ -7,7 +7,6 @@ export default class TimeManager extends Manager {
     private _fps;
     private _step;
     private _accumulator;
-    private frames;
     constructor(engine: Engine, name: string);
     get deltaTime(): number;
     get lastDeltaTime(): number;
@@ -15,7 +14,7 @@ export default class TimeManager extends Manager {
     get fps(): number;
     get step(): number;
     get accumulator(): number;
-    Update(): void;
-    SetLastUpdate(): void;
-    FixDelta(): void;
+    update(): void;
+    setLastUpdate(): void;
+    fixDelta(): void;
 }

@@ -5,14 +5,14 @@ export default class BaseSceneManager extends Manager {
     protected scenes: BaseScene[];
     protected loadedScene: BaseScene;
     constructor(engine: Engine, name: string);
-    Init(): void;
-    Update(): void;
-    FixedUpdate(): void;
-    CreateScene(name: string): BaseScene;
-    GetScenes(): BaseScene[];
-    GetScene(name: string): BaseScene;
-    GetLoadedScene(): BaseScene;
-    RemoveScene(index: number): void;
-    LoadSceneByIndex(index: number): void;
-    LoadSceneByName(name: string): void;
+    init(): void;
+    update(): void;
+    fixedUpdate(): void;
+    createScene(name: string): BaseScene;
+    getScenes(): BaseScene[];
+    getScene(name: string): BaseScene;
+    getLoadedScene(): BaseScene;
+    removeScene(index: number): void;
+    loadSceneByIndex(index: number): void;
+    loadSceneByName(name: string): void;
 }

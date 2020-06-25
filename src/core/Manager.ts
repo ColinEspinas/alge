@@ -18,23 +18,23 @@ export default abstract class Manager {
 	 * Called at the end of the engine constructor
 	 * @param options Engine construct options
 	 */
-	public PreInit(options : Options) {};
+	public preInit(options : Options) {};
 
 	/**
 	 * Called on engine run
 	 * @param args 
 	 */
-	public Init(...args : any[]) {};
+	public init(...args : any[]) {};
 
 	/**
 	 * Called on engine update
 	 * @param args 
 	 */
-	public Update(...args : any[]) {};
+	public update(...args : any[]) {};
 
 	/**
 	 * Called on engine update at fixed timesteps
 	 * @param args 
 	 */
-	public FixedUpdate(...args : any[]) {};
+	public fixedUpdate(...args : any[]) {};
 }

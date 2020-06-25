@@ -9,10 +9,10 @@ export default class Text extends Component {
     position: Vec;
     private scale;
     private anchor;
-    Create(): void;
-    Init(): void;
-    Update(): void;
-    SetText(content: string | number): void;
-    SetStyle(style: PIXI.TextStyle): void;
-    SetPosition(pos: Vec): void;
+    create(): void;
+    init(): void;
+    update(): void;
+    setText(content: string | number): void;
+    setStyle(style: PIXI.TextStyle): void;
+    setPosition(pos: Vec): void;
 }

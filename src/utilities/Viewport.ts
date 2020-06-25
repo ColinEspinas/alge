@@ -13,9 +13,9 @@ export default class Viewport extends PIXI.Container {
 
 	protected debugGraphics : PIXI.Graphics;
 
-	get width() { return this.viewWidth; }
-	get height() { return this.viewHeight; }
-	get center() { return new Vec(this.position.x + this.width / 2, this.position.y + this.height / 2); }
+	public get width() { return this.viewWidth; }
+	public get height() { return this.viewHeight; }
+	public get center() { return new Vec(this.position.x + this.width / 2, this.position.y + this.height / 2); }
 
 	constructor(options : IViewportOptions) {
 		super();
@@ -25,12 +25,12 @@ export default class Viewport extends PIXI.Container {
 		this.debugGraphics = new PIXI.Graphics;
 	}
 
-	Resize(width : number, height : number) {
+	public resize(width : number, height : number) {
 		this.viewWidth = width;
 		this.viewHeight = height;
 	}
 
-	Debug() {
+	public debug() {
 		this.debugGraphics.clear();
 
 		let coords = [
@@ -48,7 +48,7 @@ export default class Viewport extends PIXI.Container {
 						.lineTo(coords[0], coords[1]);
 	}
 
-	SetStage(stage : PIXI.Container, debug : boolean) {
+	public setStage(stage : PIXI.Container, debug : boolean) {
 		this.removeChildren();
 		this.addChild(stage);
 		this._stage = stage;
@@ -57,7 +57,7 @@ export default class Viewport extends PIXI.Container {
 		}
 	}
 
-	get stage() { return this._stage; }
+	public get stage() { return this._stage; }
 }
 
 export interface IViewportOptions {

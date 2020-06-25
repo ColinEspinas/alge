@@ -1,8 +1,8 @@
 export default class Vec {
 
-	x : number;
-	y : number;
-	z ?: number;
+	public x : number;
+	public y : number;
+	public z ?: number;
 
 	constructor(x : number, y : number, z ?: number) {
 		this.x = x;
@@ -11,18 +11,14 @@ export default class Vec {
 			this.z = z;
 	}
 
-	public static FromArray = function(a : number[]) : Vec {
-		return new Vec(a[0], a[1], a[2]);
-	}
-
-	public Equals(v : Vec, tolerance : number) : boolean {
+	public equals(v : Vec, tolerance : number) : boolean {
 		if (tolerance == undefined) {
 		  tolerance = 0.0000001;
 		}
 		return (Math.abs(v.x - this.x) <= tolerance) && (Math.abs(v.y - this.y) <= tolerance) && (Math.abs(v.z - this.z) <= tolerance);
 	};
 
-	public Add(v : Vec) : Vec {
+	public add(v : Vec) : Vec {
 		this.x += v.x;
 		this.y += v.y;
 		if (this.z) {
@@ -31,7 +27,7 @@ export default class Vec {
 		return this;
 	};
 
-	public Sub(v : Vec) : Vec  {
+	public sub(v : Vec) : Vec  {
 		this.x -= v.x;
 		this.y -= v.y;
 		if (this.z) {
@@ -40,7 +36,7 @@ export default class Vec {
 		return this;
 	};
 
-	public Scale(f : number) : Vec  {
+	public scale(f : number) : Vec  {
 		this.x *= f;
 		this.y *= f;
 		if (this.z) {
@@ -49,7 +45,7 @@ export default class Vec {
 		return this;
 	};
 
-	public Distance(v : Vec) {
+	public distance(v : Vec) {
 		var dx = v.x - this.x;
 		var dy = v.y - this.y;
 		var dz = v.z - this.z;
@@ -59,7 +55,7 @@ export default class Vec {
 		return Math.sqrt(dx * dx + dy * dy);
 	};
 
-	public SquareDistance(v : Vec) {
+	public squareDistance(v : Vec) {
 		var dx = v.x - this.x;
 		var dy = v.y - this.y;
 		var dz = v.z - this.z;
@@ -69,7 +65,7 @@ export default class Vec {
 		return dx * dx + dy * dy;
 	};
 
-	public SimpleDistance(v : Vec) {
+	public simpleDistance(v : Vec) {
 		var dx = Math.abs(v.x - this.x);
 		var dy = Math.abs(v.y - this.y);
 		var dz = Math.abs(v.z - this.z);
@@ -79,14 +75,14 @@ export default class Vec {
 		return Math.min(dx, dy);
 	};
 
-	public Dot(v : Vec) : number {
+	public dot(v : Vec) : number {
 		if (this.z) {
 			return this.x * v.x + this.y * v.y + this.z * v.z;
 		}
 		return this.x * v.x + this.y * v.y;
 	};
 
-	public Cross(v : Vec) : Vec {
+	public cross(v : Vec) : Vec {
 		var x = this.x;
 		var y = this.y;
 		var z = this.z;
@@ -99,51 +95,55 @@ export default class Vec {
 		return this;
 	};
 
-	public Length() : number {
+	public length() : number {
 		if (this.z) {
 			return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
 		}
 		return Math.sqrt(this.x * this.x + this.y * this.y);
 	};
 
-	public Normalize() : Vec {
-		var len = this.Length();
+	public normalize() : Vec {
+		var len = this.length();
 		if (len > 0) {
-			this.Scale(1 / len);
+			this.scale(1 / len);
 		}
 		return this;
 	};
 
-	public Limit(s : number) : Vec {
-		var len = this.Length();
+	public limit(s : number) : Vec {
+		var len = this.length();
 		if (len > s && len > 0) {
-			this.Scale(s / len);
+			this.scale(s / len);
 		}
 		return this;
 	};
 
-	public Lerp(v : Vec, t : number) : Vec {
+	public lerp(v : Vec, t : number) : Vec {
 		this.x = this.x + (v.x - this.x) * t;
 		this.y = this.y + (v.y - this.y) * t;
 		this.z = this.z + (v.z - this.z) * t;
 		return this;
 	}
 
-	public ToString() : string {
+	public toString() : string {
 		return "{" + Math.floor(this.x*1000)/1000 + ", " + Math.floor(this.y*1000)/1000 + ", " + Math.floor(this.z*1000)/1000 + "}";
 	};
 
-	public static Zero() : Vec { return new Vec(0, 0, 0); }
-	public static One() : Vec { return new Vec(1, 1, 1); }
-	public static Up() : Vec { return new Vec(0, -1, 0); }
-	public static Down() : Vec { return new Vec(0, 1, 0); }
-	public static Left() : Vec { return new Vec(-1, 0, 0); }
-	public static Right() : Vec { return new Vec(1, 0, 0); }
-	public static Front() : Vec { return new Vec(0, 0, 1); }
-	public static Back() : Vec { return new Vec(0, 0, -1); }
+	public static zero() { return new Vec(0, 0, 0); }
+	public static one() { return new Vec(1, 1, 1); }
+	public static up() { return new Vec(0, -1, 0); }
+	public static down() { return new Vec(0, 1, 0); }
+	public static left() { return new Vec(-1, 0, 0); }
+	public static right() { return new Vec(1, 0, 0); }
+	public static front() { return new Vec(0, 0, 1); }
+	public static back() { return new Vec(0, 0, -1); }
 
-	public static From(v : Vec) : Vec {
+	public static from(v : Vec) : Vec {
 		if (v.z) return new Vec(v.x, v.y, v.z);
 		return new Vec(v.x, v.y);
+	}
+
+	public static fromArray(a : number[]) : Vec {
+		return new Vec(a[0], a[1], a[2]);
 	}
 }

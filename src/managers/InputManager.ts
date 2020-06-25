@@ -17,7 +17,7 @@ export default class InputManager extends Manager{
 
 	private containerElement : HTMLElement;
 
-	public Init() : void {
+	public init() : void {
 
 		window.oncontextmenu = () => { return false };
 
@@ -60,7 +60,7 @@ export default class InputManager extends Manager{
 		});
 	}
 
-	public Update() {
+	public update() {
 		for (var i = 0, len = Object.keys(this.pressed).length; i < len; i++) {
 			this.pressed[Object.keys(this.pressed)[i]] = false;
 		}
@@ -75,39 +75,39 @@ export default class InputManager extends Manager{
 		}
 	}
 
-	public GetKeyDown(key : number) : boolean {
+	public getKeyDown(key : number) : boolean {
 		return this.down[key];
 	}
 
-	public GetMousePosition() : Vec {
+	public getMousePosition() : Vec {
 		return this.mousePos;
 	}
 
-	public GetMouseDown(button : number) : boolean {
+	public getMouseDown(button : number) : boolean {
 		return this.mouseDown[button];
 	}
 
-	public GetMousePressed(button : number) : boolean {
+	public getMousePressed(button : number) : boolean {
 		return this.mousePressed[button];
 	}
 
-	public GetMouseReleased(button : number) : boolean {
+	public getMouseReleased(button : number) : boolean {
 		return this.mouseReleased[button];
 	}
 
-	public GetMouseWheel() : Vec {
+	public getMouseWheel() : Vec {
 		return this.mouseWheel;
 	}
 
-	public SetCursor(type : Cursor) : void {
+	public setCursor(type : Cursor) : void {
 		this.containerElement.style.cursor = type;
 	}
 
-	public GetKeyPressed(key : number) {
+	public getKeyPressed(key : number) {
 		return this.pressed[key];
 	}
 
-	public GetKeyReleased(key : number) {
+	public getKeyReleased(key : number) {
 		return this.released[key];
 	}
 }

@@ -12,22 +12,22 @@ export default class BaseSceneManager extends Manager {
 		this.scenes = [];
 	}
 
-	public Init() {
-		this.LoadSceneByIndex(0);
+	public init() {
+		this.loadSceneByIndex(0);
 	}
 
-	public Update() {
-		this.loadedScene.Update();
+	public update() {
+		this.loadedScene.update();
 	}
 
-	public FixedUpdate() {
-		this.loadedScene.FixedUpdate();
+	public fixedUpdate() {
+		this.loadedScene.fixedUpdate();
 	}
 
-	public CreateScene(name : string) : BaseScene {
+	public createScene(name : string) : BaseScene {
 		if (name && name !== "") {
 			try {
-				this.GetScene(name);
+				this.getScene(name);
 			}
 			catch {
 				let scene = new BaseScene(this, name);
@@ -39,11 +39,11 @@ export default class BaseSceneManager extends Manager {
 		else throw Error("Cannot create scene with name " + name);
 	}
 	
-	public GetScenes() : BaseScene[] {
+	public getScenes() : BaseScene[] {
 		return this.scenes;
 	}
 
-	public GetScene(name : string) : BaseScene {
+	public getScene(name : string) : BaseScene {
 		for (var i = 0, len = this.scenes.length; i < len; i++) {
 			if (this.scenes[i].name === name) {
 				return this.scenes[i];
@@ -52,31 +52,31 @@ export default class BaseSceneManager extends Manager {
 		throw Error("Cannot get scene with name " + name);
 	}
 
-	public GetLoadedScene() : BaseScene {
+	public getLoadedScene() : BaseScene {
 		return this.loadedScene;
 	}
 
-	public RemoveScene(index : number) : void {
+	public removeScene(index : number) : void {
 		this.scenes.splice(index, 1);
 	}
 
-	public LoadSceneByIndex(index : number) : void {
+	public loadSceneByIndex(index : number) : void {
 		if (typeof this.scenes[index] !== "undefined") {
 			if (this.loadedScene)
-			this.loadedScene.Unload();
+			this.loadedScene.unload();
 			this.loadedScene = this.scenes[index];
-			this.scenes[index].Load();
+			this.scenes[index].load();
 		}
 		else throw Error("Cannot load scene with index " + index);
 	}
 
-	public LoadSceneByName(name : string) : void {
+	public loadSceneByName(name : string) : void {
 		try {
-			const scene = this.GetScene(name);
+			const scene = this.getScene(name);
 			if (this.loadedScene)
-				this.loadedScene.Unload();
+				this.loadedScene.unload();
 			this.loadedScene = scene;
-			scene.Load();
+			scene.load();
 		}
 		catch(error) { 
 			console.error(error);

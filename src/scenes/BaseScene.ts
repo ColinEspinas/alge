@@ -23,89 +23,111 @@ export default class BaseScene {
 		this.loadedEntities = [];
 	}
 
-	get id() : number {
-		return this._id;
+	public get id() : number { return this._id; }
+	public get name() : string { return this._name; }
+	public get engine() : Engine { return this._manager.engine; }
+
+	public reload() : void {
+		this.unload();
+		this.load();
 	}
 
-	get name() : string {
-		return this._name;
-	}
-
-	get engine() : Engine {
-		return this._manager.engine;
-	}
-
-	public Reload() : void {
-		this.Unload();
-		this.Load();
-	}
-
-	public Load() : void {
+	public load() : void {
 		this.loadedEntities = [];
 		this.loaded = false;
 		this.loadedEntities = this.entities;
 	}
 
-	protected UnloadEntity(entity : Entity) : void {
-		entity.Unload();
-		entity.UnloadComponents();
+	protected unloadEntity(entity : Entity) : void {
+		entity.unload();
+		entity.unloadComponents();
 	}
 
-	public Unload() : void {
+	public unload() : void {
 		this.loaded = false;
 		for (var i = 0, len = this.loadedEntities.length; i < len; i++) {
 			const entity = this.loadedEntities[i];
-			this.UnloadEntity(entity);
+			this.unloadEntity(entity);
 		}
 		this.loadedEntities = [];
 	}
 
-	protected InitEntity(entity : Entity) : void {
+	protected initEntity(entity : Entity) : void {
 		if (entity) {
-			entity.Init();
-			entity.InitComponents();
+			entity.init();
+			entity.initComponents();
 		}
 	}
 
-	protected UpdateEntity(entity : Entity) : void {
-		if (this.loaded == false) {
-			this.InitEntity(entity);
-		}
-		else {
-			entity.Update();
-			entity.UpdateComponents();
+	protected updateEntity(entity : Entity) : void {
+		if (entity) {
+			if (this.loaded == false) {
+				this.initEntity(entity);
+			}
+			else {
+				entity.update();
+				entity.updateComponents();
+			}
 		}
 	}
 
-	public Update() : void {
+	public update() : void {
 		for (var i = 0, len = this.loadedEntities.length; i < len; i++) {
 			const entity = this.loadedEntities[i];
-			this.UpdateEntity(entity);
+			this.updateEntity(entity);
 		}
 		this.loaded = true;
 	}
 
-	public FixedUpdate() : void {
+	public fixedUpdate() : void {
 		for (var i = 0, len = this.loadedEntities.length; i < len; i++) {
-			this.loadedEntities[i].FixedUpdate();
+			this.loadedEntities[i].fixedUpdate();
+			this.loadedEntities[i].fixedUpdateComponents();
 		}
 	}
 
-	public AddEntity<EntityType extends Entity>(e : EntityType) : EntityType {
+	public addEntity<EntityType extends Entity>(e : EntityType) : EntityType {
 		e.scene = this;
-		e.Create();
+		e.create();
 		this.entities.push(e);
 		if (this.loaded) {
-			this.InitEntity(this.entities[this.entities.length - 1]);
+			this.initEntity(this.entities[this.entities.length - 1]);
 		}
 		return this.entities[this.entities.length - 1];
 	}
 
-	public GetEntity(name : string) {
+	public removeEntity(name : string) {
+		if (this.loaded) {
+			for (var i = this.loadedEntities.length - 1; i >= 0; --i) {
+				if (this.loadedEntities[i].name == name) {
+					this.unloadEntity(this.loadedEntities[i]);
+					this.loadedEntities.splice(i, 1);
+				}
+			}
+		}
+		else {
+			for (var i = this.entities.length - 1; i >= 0; --i) {
+				if (this.entities[i].name == name) {
+					this.entities.splice(i, 1);
+				}
+			}
+		}
+	}
+
+	public getEntity(name : string) {
 		for (var i = 0, len = this.entities.length; i < len; i++) {
 			if (this.entities[i].name == name) {
 				return this.entities[i];
 			}
+		}
+	}
+
+	public getEntities() {
+		if (this.loaded) {
+			return this.loadedEntities;
+		}
+		else {
+			return this.entities;
 		}
 	}
 }

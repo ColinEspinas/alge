@@ -12,14 +12,16 @@ export default class BaseScene {
     get id(): number;
     get name(): string;
     get engine(): Engine;
-    Reload(): void;
-    Load(): void;
-    protected UnloadEntity(entity: Entity): void;
-    Unload(): void;
-    protected InitEntity(entity: Entity): void;
-    protected UpdateEntity(entity: Entity): void;
-    Update(): void;
-    FixedUpdate(): void;
-    AddEntity<EntityType extends Entity>(e: EntityType): EntityType;
-    GetEntity(name: string): any;
+    reload(): void;
+    load(): void;
+    protected unloadEntity(entity: Entity): void;
+    unload(): void;
+    protected initEntity(entity: Entity): void;
+    protected updateEntity(entity: Entity): void;
+    update(): void;
+    fixedUpdate(): void;
+    addEntity<EntityType extends Entity>(e: EntityType): EntityType;
+    removeEntity(name: string): void;
+    getEntity(name: string): any;
+    getEntities(): any[];
 }

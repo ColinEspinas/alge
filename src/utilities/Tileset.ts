@@ -47,7 +47,7 @@ export default class Tileset {
 	 * @param index Index the alias is going to point to
 	 * @param name Name of the alias
 	 */
-	public SetAlias(index : number, name : string) {
+	public setAlias(index : number, name : string) {
 		if (index >= 0 && name && name !== '')
 			this.alias[name] = index;
 	}
@@ -56,7 +56,7 @@ export default class Tileset {
 	 * Get a tile from the tileset
 	 * @param tile Tile index or name
 	 */
-	public GetTile(tile : any) {
+	public getTile(tile : any) {
 		if (typeof tile === 'number') {
 			return this.tiles[tile];
 		}

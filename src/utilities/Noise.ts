@@ -2,7 +2,7 @@ import Tumult from "tumult";
 
 export default class Noise {
 
-	public static Simplex(dimension : number, seed : number | string) {
+	public static simplex(dimension : number, seed : number | string) {
 		if (dimension === 1) {
 			return new Tumult.Simplex1(seed);
 		}
@@ -11,7 +11,7 @@ export default class Noise {
 		}
 	}
 
-	public static Perlin(dimension : number, seed : number | string) {
+	public static perlin(dimension : number, seed : number | string) {
 		if (dimension === 1) {
 			return new Tumult.Perlin1(seed);
 		}

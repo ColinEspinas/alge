@@ -15,10 +15,10 @@ export default class Tileset {
      * @param index Index the alias is going to point to
      * @param name Name of the alias
      */
-    SetAlias(index: number, name: string): void;
+    setAlias(index: number, name: string): void;
     /**
      * Get a tile from the tileset
      * @param tile Tile index or name
      */
-    GetTile(tile: any): PIXI.Texture;
+    getTile(tile: any): PIXI.Texture;
 }

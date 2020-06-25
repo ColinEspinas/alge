@@ -6,9 +6,9 @@ export default class DebugCollider extends Component {
     private layer;
     private color;
     private thickness;
-    private rb;
-    Create(): void;
-    Init(): void;
-    Update(): void;
-    Draw(): void;
+    private body;
+    create(): void;
+    init(): void;
+    update(): void;
+    protected draw(): void;
 }

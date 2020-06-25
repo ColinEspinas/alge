@@ -2,7 +2,7 @@ import Entity from "../core/Entity";
 import Viewport from "../utilities/Viewport";
 import Vec from "../utilities/Vec";
 import Sprite from "../components/Sprite";
-import Scene from "../scenes/Scene";
+import PIXIScene from "../scenes/PIXIScene";
 import TimeManager from "../managers/TimeManager";
 export default class Camera extends Entity {
     protected _viewport: Viewport;
@@ -21,26 +21,27 @@ export default class Camera extends Entity {
     get viewport(): Viewport;
     set target(target: ITarget);
     get target(): ITarget;
-    get scene(): Scene;
-    set scene(scene: Scene);
-    Init(): void;
-    Update(): void;
-    WorldToCamera(position: Vec): Vec;
-    CameraToWorld(position: Vec): Vec;
-    Move(direction: Vec, speed?: number): void;
-    MoveTo(position: Vec, options: IMoveOptions): void;
-    MoveToHorizontal(position: Vec, options: IMoveOptions): void;
-    MoveToVertical(position: Vec, options: IMoveOptions): void;
-    AddTrauma(amount: number): void;
-    protected Shake(): void;
-    Rotate(angle: number): void;
-    IsOnCamera(position: Vec): boolean;
+    get scene(): PIXIScene;
+    set scene(scene: PIXIScene);
+    init(): void;
+    update(): void;
+    worldToCamera(position: Vec): Vec;
+    cameraToWorld(position: Vec): Vec;
+    move(direction: Vec, speed?: number): void;
+    moveTo(position: Vec, options: IMoveOptions): void;
+    moveToHorizontal(position: Vec, options: IMoveOptions): void;
+    moveToVertical(position: Vec, options: IMoveOptions): void;
+    addTrauma(amount: number): void;
+    protected shake(): void;
+    rotate(angle: number): void;
+    isOnCamera(position: Vec): boolean;
 }
 export interface IMoveOptions {
     time?: number;
     tolerance?: number;
     duration: number;
     centered?: boolean;
+    offset?: Vec;
 }
 export interface ITarget {
     entity?: Entity;

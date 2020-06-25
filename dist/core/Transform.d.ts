@@ -4,7 +4,7 @@ export default class Transform {
     rotation: number;
     scale: Vec;
     constructor();
-    Reset(): void;
-    WorldToLocal(position: Vec): Vec;
-    LocalToWorld(position: Vec): Vec;
+    reset(): void;
+    worldToLocal(position: Vec): Vec;
+    localToWorld(position: Vec): Vec;
 }

@@ -1,4 +1,6 @@
+import Vec from "./Vec";
 export default class Angle {
-    static DegToRad(degrees: number): number;
-    static RadToDeg(radians: number): number;
+    static degToRad(degrees: number): number;
+    static radToDeg(radians: number): number;
+    static betweenPositions(u: Vec, v: Vec): number;
 }

@@ -11,17 +11,17 @@ export default class InputManager extends Manager {
     private mousePos;
     private mouseWheel;
     private containerElement;
-    Init(): void;
-    Update(): void;
-    GetKeyDown(key: number): boolean;
-    GetMousePosition(): Vec;
-    GetMouseDown(button: number): boolean;
-    GetMousePressed(button: number): boolean;
-    GetMouseReleased(button: number): boolean;
-    GetMouseWheel(): Vec;
-    SetCursor(type: Cursor): void;
-    GetKeyPressed(key: number): boolean;
-    GetKeyReleased(key: number): boolean;
+    init(): void;
+    update(): void;
+    getKeyDown(key: number): boolean;
+    getMousePosition(): Vec;
+    getMouseDown(button: number): boolean;
+    getMousePressed(button: number): boolean;
+    getMouseReleased(button: number): boolean;
+    getMouseWheel(): Vec;
+    setCursor(type: Cursor): void;
+    getKeyPressed(key: number): boolean;
+    getKeyReleased(key: number): boolean;
 }
 export declare enum Cursor {
     Hidden = "none",

@@ -1,18 +1,18 @@
 import BaseSceneManager from './BaseSceneManager';
-import Scene from '../scenes/Scene';
+import PIXIScene from '../scenes/PIXIScene';
 
-export default class SceneManager extends BaseSceneManager {
+export default class PIXISceneManager extends BaseSceneManager {
 
-	protected scenes : Scene[];
-	protected loadedScene : Scene;
+	protected scenes : PIXIScene[];
+	protected loadedScene : PIXIScene;
 
-	public CreateScene(name : string) : Scene {
+	public createScene(name : string) : PIXIScene {
 		if (name && name !== "") {
 			try {
-				this.GetScene(name);
+				this.getScene(name);
 			}
 			catch {
-				let scene = new Scene(this, name);
+				let scene = new PIXIScene(this, name);
 				this.scenes.push(scene);
 				return scene;
 			}
@@ -21,11 +21,11 @@ export default class SceneManager extends BaseSceneManager {
 		else throw Error("Cannot create scene with name " + name);
 	}
 
-	public GetScenes() : Scene[] {
+	public getScenes() : PIXIScene[] {
 		return this.scenes;
 	}
 
-	public GetScene(name : string) : Scene {
+	public getScene(name : string) : PIXIScene {
 		for (var i = 0, len = this.scenes.length; i < len; i++) {
 			if (this.scenes[i].name === name) {
 				return this.scenes[i];
@@ -34,7 +34,7 @@ export default class SceneManager extends BaseSceneManager {
 		throw Error("Cannot get scene with name " + name);
 	}
 
-	public GetLoadedScene() : Scene {
+	public getLoadedScene() : PIXIScene {
 		return this.loadedScene;
 	}
 }

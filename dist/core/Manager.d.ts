@@ -10,20 +10,20 @@ export default abstract class Manager {
      * Called at the end of the engine constructor
      * @param options Engine construct options
      */
-    PreInit(options: Options): void;
+    preInit(options: Options): void;
     /**
      * Called on engine run
      * @param args
      */
-    Init(...args: any[]): void;
+    init(...args: any[]): void;
     /**
      * Called on engine update
      * @param args
      */
-    Update(...args: any[]): void;
+    update(...args: any[]): void;
     /**
      * Called on engine update at fixed timesteps
      * @param args
      */
-    FixedUpdate(...args: any[]): void;
+    fixedUpdate(...args: any[]): void;
 }
