@@ -33,6 +33,7 @@ import PMScene from './scenes/PMScene'
 
 // Base Utilities:
 import Vec from './utilities/Vec';
+import { Rect, Circle, Line, Polygon } from './utilities/Primitives';
 import Angle from './utilities/Angle';
 import Ease from './utilities/Ease';
 import Noise from './utilities/Noise';
@@ -42,6 +43,7 @@ import Intersects from './utilities/Intersects';
 
 import { Key, Cursor, Mouse } from './managers/InputManager';
 import { SpriteMode } from './components/Sprite';
+
 
 // Default dependencies
 import * as PIXI from 'pixi.js';
@@ -83,6 +85,10 @@ export {
 
 	// Base Utilities:
 	Vec,
+	Rect,
+	Circle,
+	Line,
+	Polygon,
 	Angle,
 	Ease,
 	Noise,

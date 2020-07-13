@@ -2,7 +2,7 @@ import Manager from '../core/Manager';
 import * as PIXI from 'pixi.js';
 // import { Viewport } from 'pixi-viewport';
 import Viewport from '../utilities/Viewport';
-import PIXIScene from '../scenes/PIXIScene';
+import PIXIScene from '../scenes/PixiScene';
 
 export default class PIXIRenderManager extends Manager{
 	

@@ -1,5 +1,5 @@
 import BaseSceneManager from './BaseSceneManager';
-import PIXIScene from '../scenes/PIXIScene';
+import PIXIScene from '../scenes/PixiScene';
 
 export default class PIXISceneManager extends BaseSceneManager {
 

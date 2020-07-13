@@ -4,7 +4,7 @@ import Viewport from "../utilities/Viewport";
 import Vec from "../utilities/Vec";
 import Sprite from "../components/Sprite";
 import Tileset from "../utilities/Tileset";
-import PIXIScene from "../scenes/PIXIScene";
+import PIXIScene from "../scenes/PMScene";
 import InputManager, { Key } from "../managers/InputManager";
 import TimeManager from "../managers/TimeManager";
 import Ease from "../utilities/Ease";
