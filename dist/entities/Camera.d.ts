@@ -2,7 +2,7 @@ import Entity from "../core/Entity";
 import Viewport from "../utilities/Viewport";
 import Vec from "../utilities/Vec";
 import Sprite from "../components/Sprite";
-import PIXIScene from "../scenes/PIXIScene";
+import PIXIScene from "../scenes/PMScene";
 import TimeManager from "../managers/TimeManager";
 export default class Camera extends Entity {
     protected _viewport: Viewport;
