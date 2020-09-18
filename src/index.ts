@@ -19,6 +19,7 @@ import AudioManager from './managers/AudioManager';
 
 // Base Components:
 import Sprite from './components/Sprite';
+import Painter from './components/Painter';
 import Text from './components/Text';
 import RigidBody from './components/RigidBody';
 import Tilemap from './components/Tilemap';
@@ -41,7 +42,7 @@ import Tileset from './utilities/Tileset';
 import Viewport from './utilities/Viewport';
 import Intersects from './utilities/Intersects';
 
-import { Key, Cursor, Mouse } from './managers/InputManager';
+import { Cursor, Mouse } from './managers/InputManager';
 import { SpriteMode } from './components/Sprite';
 
 
@@ -71,6 +72,7 @@ export {
 
 	// Base Components:
 	Sprite,
+	Painter,
 	Text,
 	RigidBody,
 	Tilemap,
@@ -95,7 +97,6 @@ export {
 	Tileset,
 	Viewport,
 	SpriteMode,
-	Key,
 	Cursor,
 	Mouse,
 	Intersects,

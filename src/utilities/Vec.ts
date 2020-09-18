@@ -139,8 +139,10 @@ export default class Vec {
 	public static back() { return new Vec(0, 0, -1); }
 
 	public static from(v : Vec) : Vec {
-		if (v.z) return new Vec(v.x, v.y, v.z);
-		return new Vec(v.x, v.y);
+		if (v) {
+			if (v.z) return new Vec(v.x, v.y, v.z);
+			return new Vec(v.x, v.y);
+		}
 	}
 
 	public static fromArray(a : number[]) : Vec {

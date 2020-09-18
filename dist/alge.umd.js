@@ -203,7 +203,7 @@
 	        else
 	            throw Error("Cannot load scene with index " + index);
 	    }
-	    loadSceneByName(name) {
+	    loadScene(name) {
 	        try {
 	            const scene = this.getScene(name);
 	            if (this.loadedScene)
@@ -350,9 +350,11 @@
 	    static front() { return new Vec(0, 0, 1); }
 	    static back() { return new Vec(0, 0, -1); }
 	    static from(v) {
-	        if (v.z)
-	            return new Vec(v.x, v.y, v.z);
-	        return new Vec(v.x, v.y);
+	        if (v) {
+	            if (v.z)
+	                return new Vec(v.x, v.y, v.z);
+	            return new Vec(v.x, v.y);
+	        }
 	    }
 	    static fromArray(a) {
 	        return new Vec(a[0], a[1], a[2]);
@@ -527,8 +529,7 @@
 	            });
 	            // Add listener to window resize to keep the rendered view the same size as the container.
 	            window.addEventListener('resize', () => {
-	                this._renderer.resize(container.clientWidth, container.clientHeight);
-	                this._viewport.resize(container.clientWidth, container.clientHeight);
+	                this.resize();
 	            });
 	        }
 	        else {
@@ -559,6 +560,13 @@
 	    loadSceneToViewport(scene) {
 	        this._viewport.removeChildren();
 	        this._viewport.setStage(scene.stage, false);
+	    }
+	    resize(width, height) {
+	        const container = document.querySelector(this.engine.container);
+	        if (this._renderer && this._viewport) {
+	            this._renderer.resize(width || container.clientWidth, height || container.clientHeight);
+	            this._viewport.resize(width || container.clientWidth, height || container.clientHeight);
+	        }
 	    }
 	    get renderer() { return this._renderer; }
 	    get viewport() { return this._viewport; }
@@ -612,14 +620,14 @@
 	        this.containerElement = document.querySelector(this.engine.container);
 	        // Setup keyboard events:
 	        this.containerElement.addEventListener('keydown', (e) => {
-	            this.down[e.keyCode] = true;
+	            this.down[e.key] = true;
 	            if (!e.repeat) {
-	                this.pressed[e.keyCode] = true;
+	                this.pressed[e.key] = true;
 	            }
 	        });
 	        this.containerElement.addEventListener('keyup', (e) => {
-	            this.down[e.keyCode] = false;
-	            this.released[e.keyCode] = true;
+	            this.down[e.key] = false;
+	            this.released[e.key] = true;
 	        });
 	        // Setup mouse events:
 	        this.containerElement.addEventListener('mousemove', (e) => {
@@ -661,6 +669,12 @@
 	    getKeyDown(key) {
 	        return this.down[key];
 	    }
+	    getKeyPressed(key) {
+	        return this.pressed[key];
+	    }
+	    getKeyReleased(key) {
+	        return this.released[key];
+	    }
 	    getMousePosition() {
 	        return this.mousePos;
 	    }
@@ -679,12 +693,6 @@
 	    setCursor(type) {
 	        this.containerElement.style.cursor = type;
 	    }
-	    getKeyPressed(key) {
-	        return this.pressed[key];
-	    }
-	    getKeyReleased(key) {
-	        return this.released[key];
-	    }
 	}
 	(function (Cursor) {
 	    Cursor["Hidden"] = "none";
@@ -702,122 +710,122 @@
 	    Mouse[Mouse["Middle"] = 1] = "Middle";
 	    Mouse[Mouse["Right"] = 2] = "Right";
 	})(exports.Mouse || (exports.Mouse = {}));
-	(function (Key) {
-	    Key[Key["Backspace"] = 8] = "Backspace";
-	    Key[Key["Tab"] = 9] = "Tab";
-	    Key[Key["Enter"] = 13] = "Enter";
-	    Key[Key["Shift"] = 16] = "Shift";
-	    Key[Key["Ctrl"] = 17] = "Ctrl";
-	    Key[Key["Alt"] = 18] = "Alt";
-	    Key[Key["PauseBreak"] = 19] = "PauseBreak";
-	    Key[Key["CapsLock"] = 20] = "CapsLock";
-	    Key[Key["Escape"] = 27] = "Escape";
-	    Key[Key["Space"] = 32] = "Space";
-	    Key[Key["PageUp"] = 33] = "PageUp";
-	    Key[Key["PageDown"] = 34] = "PageDown";
-	    Key[Key["End"] = 35] = "End";
-	    Key[Key["Home"] = 36] = "Home";
-	    Key[Key["LeftArrow"] = 37] = "LeftArrow";
-	    Key[Key["UpArrow"] = 38] = "UpArrow";
-	    Key[Key["RightArrow"] = 39] = "RightArrow";
-	    Key[Key["DownArrow"] = 40] = "DownArrow";
-	    Key[Key["Insert"] = 45] = "Insert";
-	    Key[Key["Delete"] = 46] = "Delete";
-	    Key[Key["Zero"] = 48] = "Zero";
-	    Key[Key["ClosedParen"] = 48] = "ClosedParen";
-	    Key[Key["One"] = 49] = "One";
-	    Key[Key["ExclamationMark"] = 49] = "ExclamationMark";
-	    Key[Key["Two"] = 50] = "Two";
-	    Key[Key["AtSign"] = 50] = "AtSign";
-	    Key[Key["Three"] = 51] = "Three";
-	    Key[Key["PoundSign"] = 51] = "PoundSign";
-	    Key[Key["Hash"] = 51] = "Hash";
-	    Key[Key["Four"] = 52] = "Four";
-	    Key[Key["DollarSign"] = 52] = "DollarSign";
-	    Key[Key["Five"] = 53] = "Five";
-	    Key[Key["PercentSign"] = 53] = "PercentSign";
-	    Key[Key["Six"] = 54] = "Six";
-	    Key[Key["Caret"] = 54] = "Caret";
-	    Key[Key["Hat"] = 54] = "Hat";
-	    Key[Key["Seven"] = 55] = "Seven";
-	    Key[Key["Ampersand"] = 55] = "Ampersand";
-	    Key[Key["Eight"] = 56] = "Eight";
-	    Key[Key["Star"] = 56] = "Star";
-	    Key[Key["Asterik"] = 56] = "Asterik";
-	    Key[Key["Nine"] = 57] = "Nine";
-	    Key[Key["OpenParen"] = 57] = "OpenParen";
-	    Key[Key["A"] = 65] = "A";
-	    Key[Key["B"] = 66] = "B";
-	    Key[Key["C"] = 67] = "C";
-	    Key[Key["D"] = 68] = "D";
-	    Key[Key["E"] = 69] = "E";
-	    Key[Key["F"] = 70] = "F";
-	    Key[Key["G"] = 71] = "G";
-	    Key[Key["H"] = 72] = "H";
-	    Key[Key["I"] = 73] = "I";
-	    Key[Key["J"] = 74] = "J";
-	    Key[Key["K"] = 75] = "K";
-	    Key[Key["L"] = 76] = "L";
-	    Key[Key["M"] = 77] = "M";
-	    Key[Key["N"] = 78] = "N";
-	    Key[Key["O"] = 79] = "O";
-	    Key[Key["P"] = 80] = "P";
-	    Key[Key["Q"] = 81] = "Q";
-	    Key[Key["R"] = 82] = "R";
-	    Key[Key["S"] = 83] = "S";
-	    Key[Key["T"] = 84] = "T";
-	    Key[Key["U"] = 85] = "U";
-	    Key[Key["V"] = 86] = "V";
-	    Key[Key["W"] = 87] = "W";
-	    Key[Key["X"] = 88] = "X";
-	    Key[Key["Y"] = 89] = "Y";
-	    Key[Key["Z"] = 90] = "Z";
-	    Key[Key["LeftWindowKey"] = 91] = "LeftWindowKey";
-	    Key[Key["RightWindowKey"] = 92] = "RightWindowKey";
-	    Key[Key["SelectKey"] = 93] = "SelectKey";
-	    Key[Key["Numpad0"] = 96] = "Numpad0";
-	    Key[Key["Numpad1"] = 97] = "Numpad1";
-	    Key[Key["Numpad2"] = 98] = "Numpad2";
-	    Key[Key["Numpad3"] = 99] = "Numpad3";
-	    Key[Key["Numpad4"] = 100] = "Numpad4";
-	    Key[Key["Numpad5"] = 101] = "Numpad5";
-	    Key[Key["Numpad6"] = 102] = "Numpad6";
-	    Key[Key["Numpad7"] = 103] = "Numpad7";
-	    Key[Key["Numpad8"] = 104] = "Numpad8";
-	    Key[Key["Numpad9"] = 105] = "Numpad9";
-	    Key[Key["Multiply"] = 106] = "Multiply";
-	    Key[Key["Add"] = 107] = "Add";
-	    Key[Key["Subtract"] = 109] = "Subtract";
-	    Key[Key["DecimalPoint"] = 110] = "DecimalPoint";
-	    Key[Key["Divide"] = 111] = "Divide";
-	    Key[Key["F1"] = 112] = "F1";
-	    Key[Key["F2"] = 113] = "F2";
-	    Key[Key["F3"] = 114] = "F3";
-	    Key[Key["F4"] = 115] = "F4";
-	    Key[Key["F5"] = 116] = "F5";
-	    Key[Key["F6"] = 117] = "F6";
-	    Key[Key["F7"] = 118] = "F7";
-	    Key[Key["F8"] = 119] = "F8";
-	    Key[Key["F9"] = 120] = "F9";
-	    Key[Key["F10"] = 121] = "F10";
-	    Key[Key["F11"] = 122] = "F11";
-	    Key[Key["F12"] = 123] = "F12";
-	    Key[Key["NumLock"] = 144] = "NumLock";
-	    Key[Key["ScrollLock"] = 145] = "ScrollLock";
-	    Key[Key["SemiColon"] = 186] = "SemiColon";
-	    Key[Key["Equals"] = 187] = "Equals";
-	    Key[Key["Comma"] = 188] = "Comma";
-	    Key[Key["Dash"] = 189] = "Dash";
-	    Key[Key["Period"] = 190] = "Period";
-	    Key[Key["UnderScore"] = 189] = "UnderScore";
-	    Key[Key["PlusSign"] = 187] = "PlusSign";
-	    Key[Key["ForwardSlash"] = 191] = "ForwardSlash";
-	    Key[Key["Tilde"] = 192] = "Tilde";
-	    Key[Key["GraveAccent"] = 192] = "GraveAccent";
-	    Key[Key["OpenBracket"] = 219] = "OpenBracket";
-	    Key[Key["ClosedBracket"] = 221] = "ClosedBracket";
-	    Key[Key["Quote"] = 222] = "Quote";
-	})(exports.Key || (exports.Key = {}));
+	// export enum Key {
+	// 	Backspace = 8,
+	// 	Tab = 9,
+	// 	Enter = 13,
+	// 	Shift = 16,
+	// 	Ctrl = 17,
+	// 	Alt = 18,
+	// 	PauseBreak = 19,
+	// 	CapsLock = 20,
+	// 	Escape = 27,
+	// 	Space = 32,
+	// 	PageUp = 33,
+	// 	PageDown = 34,
+	// 	End = 35,
+	// 	Home = 36,
+	// 	LeftArrow = 37,
+	// 	UpArrow = 38,
+	// 	RightArrow = 39,
+	// 	DownArrow = 40,
+	// 	Insert = 45,
+	// 	Delete = 46,
+	// 	Zero = 48,
+	// 	ClosedParen = Zero,
+	// 	One = 49,
+	// 	ExclamationMark = One,
+	// 	Two = 50,
+	// 	AtSign = Two,
+	// 	Three = 51,
+	// 	PoundSign = Three,
+	// 	Hash = PoundSign,
+	// 	Four = 52,
+	// 	DollarSign = Four,
+	// 	Five = 53,
+	// 	PercentSign = Five,
+	// 	Six = 54,
+	// 	Caret = Six,
+	// 	Hat = Caret,
+	// 	Seven = 55,
+	// 	Ampersand = Seven,
+	// 	Eight = 56,
+	// 	Star = Eight,
+	// 	Asterik = Star,
+	// 	Nine = 57,
+	// 	OpenParen = Nine,
+	// 	A = 65,
+	// 	B = 66,
+	// 	C = 67,
+	// 	D = 68,
+	// 	E = 69,
+	// 	F = 70,
+	// 	G = 71,
+	// 	H = 72,
+	// 	I = 73,
+	// 	J = 74,
+	// 	K = 75,
+	// 	L = 76,
+	// 	M = 77,
+	// 	N = 78,
+	// 	O = 79,
+	// 	P = 80,
+	// 	Q = 81,
+	// 	R = 82,
+	// 	S = 83,
+	// 	T = 84,
+	// 	U = 85,
+	// 	V = 86,
+	// 	W = 87,
+	// 	X = 88,
+	// 	Y = 89,
+	// 	Z = 90,
+	// 	LeftWindowKey = 91,
+	// 	RightWindowKey = 92,
+	// 	SelectKey = 93,
+	// 	Numpad0 = 96,
+	// 	Numpad1 = 97,
+	// 	Numpad2 = 98,
+	// 	Numpad3 = 99,
+	// 	Numpad4 = 100,
+	// 	Numpad5 = 101,
+	// 	Numpad6 = 102,
+	// 	Numpad7 = 103,
+	// 	Numpad8 = 104,
+	// 	Numpad9 = 105,
+	// 	Multiply = 106,
+	// 	Add = 107,
+	// 	Subtract = 109,
+	// 	DecimalPoint = 110,
+	// 	Divide = 111,
+	// 	F1 = 112,
+	// 	F2 = 113,
+	// 	F3 = 114,
+	// 	F4 = 115,
+	// 	F5 = 116,
+	// 	F6 = 117,
+	// 	F7 = 118,
+	// 	F8 = 119,
+	// 	F9 = 120,
+	// 	F10 = 121,
+	// 	F11 = 122,
+	// 	F12 = 123,
+	// 	NumLock = 144,
+	// 	ScrollLock = 145,
+	// 	SemiColon = 186,
+	// 	Equals = 187,
+	// 	Comma = 188,
+	// 	Dash = 189,
+	// 	Period = 190,
+	// 	UnderScore = Dash,
+	// 	PlusSign = Equals,
+	// 	ForwardSlash = 191,
+	// 	Tilde = 192,
+	// 	GraveAccent = Tilde,
+	// 	OpenBracket = 219,
+	// 	ClosedBracket = 221,
+	// 	Quote = 222
+	// }
 
 	class PMPhysicsManager extends Manager {
 	    constructor(engine, name) {
@@ -1679,6 +1687,37 @@
 	    SpriteMode[SpriteMode["Unscaled"] = 3] = "Unscaled";
 	})(exports.SpriteMode || (exports.SpriteMode = {}));
 
+	class Painter extends Component {
+	    create() {
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.scale = this.properties["scale"] || this.parent.transform.scale;
+	        this.angle = (this.properties["angle"] === 0) ? 0 : this.properties["angle"] || this.parent.transform.rotation;
+	        this.layer = this.properties["layer"] || "Default";
+	        this.graphics = new PIXI.Graphics();
+	    }
+	    init() {
+	        this.graphics.position.x = this.position.x;
+	        this.graphics.position.y = this.position.y;
+	        this.graphics.scale = new PIXI.Point(this.scale.x, this.scale.y);
+	        this.graphics.angle = this.angle;
+	        this.engine.getManager("Scene").getLoadedScene().getLayer(this.layer).container.addChild(this.graphics);
+	    }
+	    update() {
+	        // Set sprite position:
+	        this.position = this.properties["position"] || this.parent.transform.position;
+	        this.graphics.moveTo(this.position.x, this.position.y);
+	        // Set sprite scale:
+	        this.scale = this.properties["scale"] || this.parent.transform.scale;
+	        this.graphics.scale = new PIXI.Point(this.scale.x, this.scale.y);
+	        // Set sprite rotation (in degrees):
+	        this.angle = (this.properties["angle"] === 0) ? 0 : this.properties["angle"] || this.parent.transform.rotation;
+	        this.graphics.angle = this.angle;
+	    }
+	    unload() {
+	        this.engine.getManager("Scene").getLoadedScene().getLayer(this.layer).container.removeChild(this.graphics);
+	    }
+	}
+
 	class Text extends Component {
 	    create() {
 	        this.content = this.properties["content"];
@@ -2195,7 +2234,9 @@
 	    static lineToPoint(line, point, tolerance = 1) {
 	        tolerance = tolerance || 1;
 	        let distanceSquared = function (p1, p2) {
-	            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+	            if (p1 && p2) {
+	                return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+	            }
 	        };
 	        return Math.abs(distanceSquared(line.point1, line.point2) - (distanceSquared(line.point1, point) + distanceSquared(line.point2, point))) <= tolerance;
 	    }
@@ -2354,7 +2395,7 @@
 	    static polygonToPoint(polygon, point, tolerance = 1) {
 	        const length = polygon.points.length;
 	        let c = false;
-	        for (let i = 0, j = length; i < length; ++i) {
+	        for (let i = 0, j = length - 1; i < length; ++i) {
 	            if (((polygon.points[i].y > point.y) !== (polygon.points[j].y > point.y))
 	                && (point.x < (polygon.points[j].x - polygon.points[i].x) * (point.y - polygon.points[i].y) / (polygon.points[j].y - polygon.points[i].y) + polygon.points[i].x)) {
 	                c = !c;
@@ -2419,6 +2460,7 @@
 	exports.PMPhysicsManager = PMPhysicsManager;
 	exports.PMScene = PIXIMatterScene;
 	exports.PMSceneManager = PMSceneManager;
+	exports.Painter = Painter;
 	exports.Polygon = Polygon;
 	exports.Rect = Rect;
 	exports.RigidBody = RigidBody;

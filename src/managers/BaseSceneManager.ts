@@ -70,7 +70,7 @@ export default class BaseSceneManager extends Manager {
 		else throw Error("Cannot load scene with index " + index);
 	}
 
-	public loadSceneByName(name : string) : void {
+	public loadScene(name : string) : void {
 		try {
 			const scene = this.getScene(name);
 			if (this.loadedScene)

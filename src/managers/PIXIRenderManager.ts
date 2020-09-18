@@ -31,8 +31,7 @@ export default class PIXIRenderManager extends Manager{
 			});
 			// Add listener to window resize to keep the rendered view the same size as the container.
 			window.addEventListener('resize', () => {
-				this._renderer.resize(container.clientWidth, container.clientHeight);
-				this._viewport.resize(container.clientWidth, container.clientHeight);
+				this.resize();
 			});
 		}
 		else {	
@@ -67,6 +66,14 @@ export default class PIXIRenderManager extends Manager{
 	public loadSceneToViewport(scene : PIXIScene) {
 		this._viewport.removeChildren();
 		this._viewport.setStage(scene.stage, false);
+	}
+
+	public resize(width ?: number, height ?: number) : void {
+		const container = document.querySelector(this.engine.container);
+		if (this._renderer && this._viewport) {
+			this._renderer.resize(width || container.clientWidth, height || container.clientHeight);
+			this._viewport.resize(width || container.clientWidth, height || container.clientHeight);
+		}
 	}
 
 	public get renderer() : PIXI.Renderer { return this._renderer; }

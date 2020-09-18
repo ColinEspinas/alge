@@ -9,7 +9,9 @@ export default class Intersects {
 	public static lineToPoint(line : Line, point : Vec, tolerance : number = 1) : boolean {
 		tolerance = tolerance || 1;
 		let distanceSquared = function(p1 : Vec, p2 : Vec) : number {
-			return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+			if (p1 && p2) {
+				return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+			}
 		}
 		return  Math.abs(distanceSquared(line.point1, line.point2) - (distanceSquared(line.point1, point) + distanceSquared(line.point2, point))) <= tolerance;
 	}
@@ -194,7 +196,7 @@ export default class Intersects {
 	public static polygonToPoint(polygon : Polygon, point : Vec, tolerance : number = 1) : boolean {
 		const length = polygon.points.length;
 		let c = false;
-		for (let i = 0, j = length; i < length; ++i) {
+		for (let i = 0, j = length - 1; i < length; ++i) {
 			if (((polygon.points[i].y > point.y) !== (polygon.points[j].y > point.y)) 
 				&& (point.x < (polygon.points[j].x - polygon.points[i].x) * (point.y - polygon.points[i].y) / (polygon.points[j].y - polygon.points[i].y) + polygon.points[i].x)) {
 				c = !c;

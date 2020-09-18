@@ -9,6 +9,7 @@ export default class PIXIRenderManager extends Manager {
     init(): void;
     update(): void;
     loadSceneToViewport(scene: PIXIScene): void;
+    resize(width?: number, height?: number): void;
     get renderer(): PIXI.Renderer;
     get viewport(): Viewport;
 }

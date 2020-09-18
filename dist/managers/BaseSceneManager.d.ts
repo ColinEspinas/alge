@@ -14,5 +14,5 @@ export default class BaseSceneManager extends Manager {
     getLoadedScene(): BaseScene;
     removeScene(index: number): void;
     loadSceneByIndex(index: number): void;
-    loadSceneByName(name: string): void;
+    loadScene(name: string): void;
 }
