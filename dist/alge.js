@@ -2,13 +2,39 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
-
-var shortid = _interopDefault(require('shortid'));
+var shortid = require('shortid');
 var PIXI = require('pixi.js');
 var Matter = require('matter-js');
 var howler = require('howler');
-var Tumult = _interopDefault(require('tumult'));
+var Tumult = require('tumult');
+
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+function _interopNamespace(e) {
+	if (e && e.__esModule) { return e; } else {
+		var n = Object.create(null);
+		if (e) {
+			Object.keys(e).forEach(function (k) {
+				if (k !== 'default') {
+					var d = Object.getOwnPropertyDescriptor(e, k);
+					Object.defineProperty(n, k, d.get ? d : {
+						enumerable: true,
+						get: function () {
+							return e[k];
+						}
+					});
+				}
+			});
+		}
+		n['default'] = e;
+		return Object.freeze(n);
+	}
+}
+
+var shortid__default = /*#__PURE__*/_interopDefaultLegacy(shortid);
+var PIXI__namespace = /*#__PURE__*/_interopNamespace(PIXI);
+var Matter__namespace = /*#__PURE__*/_interopNamespace(Matter);
+var Tumult__default = /*#__PURE__*/_interopDefaultLegacy(Tumult);
 
 class Manager {
     constructor(engine, name) {
@@ -47,7 +73,7 @@ class Manager {
 class BaseScene {
     constructor(manager, name) {
         this.loaded = false;
-        this._id = shortid.generate();
+        this._id = shortid__default['default'].generate();
         this._name = name;
         this._manager = manager;
         this.entities = [];
@@ -578,29 +604,38 @@ class PIXIRenderManager extends Manager {
 class TimeManager extends Manager {
     constructor(engine, name) {
         super(engine, name);
-        this._step = 1 / 60;
-        this._accumulator = 0;
+        this._step = 1000 / 60;
+        this._tolerance = 0.1;
         this._lastUpdate = 0;
         this._deltaTime = 0;
+        this._now = 0;
         this._fps = 0;
     }
     get deltaTime() { return this._deltaTime; }
-    get lastDeltaTime() { return this._lastDeltaTime; }
     get lastUpdate() { return this._lastUpdate; }
     get fps() { return this._fps; }
     get step() { return this._step; }
-    get accumulator() { return this._accumulator; }
+    get now() { return this._now; }
+    get tolerance() { return this._tolerance; }
+    get milliDelta() { return this.deltaTime / 1000; }
+    init() {
+        this.setLastUpdate();
+    }
     update() {
-        this._lastDeltaTime = this._deltaTime;
-        this._deltaTime = Math.min(1, (performance.now() - this._lastUpdate) / 1000);
-        this._accumulator += this.deltaTime;
-        this._fps = 1 / this._deltaTime;
+        this._fps = 1 / this.milliDelta;
     }
-    setLastUpdate() {
-        this._lastUpdate = performance.now();
+    setNow(now) {
+        this._now = now;
     }
-    fixDelta() {
-        this._accumulator -= this._step;
+    setDeltaTime(now) {
+        this._now = now || this._now;
+        this._deltaTime = this._now - this._lastUpdate;
+    }
+    setLastUpdate(value) {
+        this._lastUpdate = value || performance.now();
+    }
+    setTargetFps(value) {
+        this._step = 1000 / value;
     }
 }
 
@@ -616,6 +651,11 @@ class InputManager extends Manager {
         this.mouseReleased = {};
         this.mousePos = new Vec(0, 0);
         this.mouseWheel = new Vec(0, 0, 0);
+        this.gamepadPressed = {};
+        this.gamepadWasPressed = {};
+        this.gamepadDown = {};
+        this.gamepadReleased = {};
+        this.mode = "qwerty";
     }
     init() {
         window.oncontextmenu = () => { return false; };
@@ -654,6 +694,10 @@ class InputManager extends Manager {
             this.mouseWheel.y += e.deltaY;
             this.mouseWheel.z += e.deltaZ;
         });
+        window.addEventListener('gamepadconnected', (e) => {
+            console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.", e.gamepad.index, e.gamepad.id, e.gamepad.buttons.length, e.gamepad.axes.length);
+            console.log(navigator.getGamepads()[e.gamepad.index]);
+        });
     }
     update() {
         for (var i = 0, len = Object.keys(this.pressed).length; i < len; i++) {
@@ -668,6 +712,30 @@ class InputManager extends Manager {
         for (var i = 0, len = Object.keys(this.mouseReleased).length; i < len; i++) {
             this.mouseReleased[Object.keys(this.mouseReleased)[i]] = false;
         }
+        for (let i = 0, len = navigator.getGamepads().length; i < len; ++i) {
+            if (navigator.getGamepads()[i]) {
+                this.gamepadDown[i] = this.gamepadDown[i] || {};
+                this.gamepadReleased[i] = this.gamepadReleased[i] || {};
+                this.gamepadWasPressed[i] = this.gamepadWasPressed[i] || {};
+                this.gamepadPressed[i] = this.gamepadPressed[i] || {};
+                for (let j = 0, nbButtons = navigator.getGamepads()[i].buttons.length; j < nbButtons; ++j) {
+                    this.gamepadDown[i][exports.Buttons[j]] = false;
+                    this.gamepadReleased[i][exports.Buttons[j]] = false;
+                    this.gamepadPressed[i][exports.Buttons[j]] = false;
+                    if (navigator.getGamepads()[i].buttons[j].pressed) {
+                        this.gamepadDown[i][exports.Buttons[j]] = true;
+                        if (!this.gamepadWasPressed[i][exports.Buttons[j]]) {
+                            this.gamepadPressed[i][exports.Buttons[j]] = true;
+                            this.gamepadWasPressed[i][exports.Buttons[j]] = true;
+                        }
+                    }
+                    else if (this.gamepadWasPressed[i][exports.Buttons[j]] && !this.gamepadDown[i][exports.Buttons[j]]) {
+                        this.gamepadReleased[i][exports.Buttons[j]] = true;
+                        this.gamepadWasPressed[i][exports.Buttons[j]] = false;
+                    }
+                }
+            }
+        }
     }
     getKeyDown(key) {
         return this.down[key];
@@ -678,6 +746,7 @@ class InputManager extends Manager {
     getKeyReleased(key) {
         return this.released[key];
     }
+    // Mouse : 
     getMousePosition() {
         return this.mousePos;
     }
@@ -696,6 +765,30 @@ class InputManager extends Manager {
     setCursor(type) {
         this.containerElement.style.cursor = type;
     }
+    // Gamepads :
+    getButtonDown(gamepadIndex, button) {
+        if (this.gamepadDown[gamepadIndex])
+            return this.gamepadDown[gamepadIndex][button];
+        else
+            return false;
+    }
+    getButtonPressed(gamepadIndex, button) {
+        if (this.gamepadPressed[gamepadIndex])
+            return this.gamepadPressed[gamepadIndex][button];
+        else
+            return false;
+    }
+    getButtonValue(gamepadIndex, button) {
+        if (navigator.getGamepads()[gamepadIndex])
+            return navigator.getGamepads()[gamepadIndex].buttons[exports.Buttons[button]].value;
+        return null;
+    }
+    getButtonReleased(gamepadIndex, button) {
+        if (this.gamepadReleased[gamepadIndex])
+            return this.gamepadReleased[gamepadIndex][button];
+        else
+            return false;
+    }
 }
 (function (Cursor) {
     Cursor["Hidden"] = "none";
@@ -713,6 +806,25 @@ class InputManager extends Manager {
     Mouse[Mouse["Middle"] = 1] = "Middle";
     Mouse[Mouse["Right"] = 2] = "Right";
 })(exports.Mouse || (exports.Mouse = {}));
+(function (Buttons) {
+    Buttons[Buttons["A"] = 0] = "A";
+    Buttons[Buttons["B"] = 1] = "B";
+    Buttons[Buttons["X"] = 2] = "X";
+    Buttons[Buttons["Y"] = 3] = "Y";
+    Buttons[Buttons["LB"] = 4] = "LB";
+    Buttons[Buttons["RB"] = 5] = "RB";
+    Buttons[Buttons["LT"] = 6] = "LT";
+    Buttons[Buttons["RT"] = 7] = "RT";
+    Buttons[Buttons["Back"] = 8] = "Back";
+    Buttons[Buttons["Start"] = 9] = "Start";
+    Buttons[Buttons["LSB"] = 10] = "LSB";
+    Buttons[Buttons["RSB"] = 11] = "RSB";
+    Buttons[Buttons["DPad-Up"] = 12] = "DPad-Up";
+    Buttons[Buttons["DPad-Down"] = 13] = "DPad-Down";
+    Buttons[Buttons["DPad-Left"] = 14] = "DPad-Left";
+    Buttons[Buttons["DPad-Right"] = 15] = "DPad-Right";
+    Buttons[Buttons["Power"] = 16] = "Power";
+})(exports.Buttons || (exports.Buttons = {}));
 // export enum Key {
 // 	Backspace = 8,
 // 	Tab = 9,
@@ -1056,13 +1168,16 @@ class engine {
         for (var i = 0, len = this.managers.length; i < len; i++) {
             this.managers[i].init();
         }
+        this.getManager("Time").setTargetFps(this.framerate);
         console.log("Engine is running in ", document.querySelector(this._container));
-        this.update();
+        requestAnimationFrame(this.update.bind(this));
         return 0;
     }
-    update() {
-        while (this.getManager("Time").accumulator > this.getManager("Time").step) {
-            this.getManager("Time").fixDelta();
+    update(now) {
+        requestAnimationFrame(this.update.bind(this));
+        this.getManager("Time").setDeltaTime(now);
+        if (this.getManager("Time").deltaTime >= (this.getManager("Time").step - this.getManager("Time").tolerance)) {
+            this.getManager("Time").setLastUpdate(this.getManager("Time").now - (this.getManager("Time").deltaTime % this.getManager("Time").step));
             for (var i = 0, len = this.managers.length; i < len; i++) {
                 this.managers[i].fixedUpdate();
             }
@@ -1070,10 +1185,6 @@ class engine {
         for (var i = 0, len = this.managers.length; i < len; i++) {
             this.managers[i].update();
         }
-        this.getManager("Time").setLastUpdate();
-        setTimeout(() => {
-            requestAnimationFrame(this.update.bind(this));
-        }, 1000 / (this._framerate + 15));
     }
     addManager(m) {
         m.engine = this;
@@ -1117,7 +1228,7 @@ class Transform {
 
 class Entity {
     constructor(name, properties) {
-        this._id = shortid.generate();
+        this._id = shortid__default['default'].generate();
         this._name = name;
         this._properties = properties || {};
         this.transform = new Transform();
@@ -1518,7 +1629,7 @@ class Camera extends Entity {
     update() {
         this._center = new Vec(this.transform.position.x, this.transform.position.y).add(new Vec(this._viewport.width / 2, this._viewport.height / 2));
         if (this.trauma > 0) {
-            this.trauma = Math.max(this.trauma - this.traumaDecay * this.time.deltaTime, 0);
+            this.trauma = Math.max(this.trauma - this.traumaDecay * this.time.milliDelta, 0);
             this.shake();
         }
         if (this._target && this._target.position && this._target.position instanceof Vec) {
@@ -1569,8 +1680,8 @@ class Camera extends Entity {
     }
     move(direction, speed) {
         speed = speed || 1;
-        this.transform.position.x += direction.x * speed * this.time.deltaTime * 100;
-        this.transform.position.y += direction.y * speed * this.time.deltaTime * 100;
+        this.transform.position.x += direction.x * speed * this.time.milliDelta * 100;
+        this.transform.position.y += direction.y * speed * this.time.milliDelta * 100;
     }
     moveTo(position, options) {
         const tolerance = options.tolerance || 0.5;
@@ -1578,8 +1689,8 @@ class Camera extends Entity {
         const centerX = (options.centered) ? this._viewport.width / 2 : 0;
         const centerY = (options.centered) ? this._viewport.height / 2 : 0;
         if (position.distance(pos) > tolerance) {
-            this.transform.position.x = Math.floor(Ease.lerp(this.transform.position.x, (position.x - centerX) + (options.offset ? options.offset.x : 0), Math.min(1, options.duration * (this.time.deltaTime * 100))));
-            this.transform.position.y = Math.floor(Ease.lerp(this.transform.position.y, (position.y - centerY) + (options.offset ? options.offset.y : 0), Math.min(1, options.duration * (this.time.deltaTime * 100))));
+            this.transform.position.x = Math.floor(Ease.lerp(this.transform.position.x, (position.x - centerX) + (options.offset ? options.offset.x : 0), Math.min(1, options.duration * (this.time.milliDelta * 100))));
+            this.transform.position.y = Math.floor(Ease.lerp(this.transform.position.y, (position.y - centerY) + (options.offset ? options.offset.y : 0), Math.min(1, options.duration * (this.time.milliDelta * 100))));
         }
     }
     moveToHorizontal(position, options) {
@@ -1587,7 +1698,7 @@ class Camera extends Entity {
         const pos = (options.centered) ? this._center : this.transform.position;
         const centerX = (options.centered) ? this._viewport.width / 2 : 0;
         if (position.distance(pos) > tolerance) {
-            this.transform.position.x = Math.floor(Ease.lerp(this.transform.position.x, (position.x - centerX) + (options.offset ? options.offset.x : 0), Math.min(1, options.duration * (this.time.deltaTime * 100))));
+            this.transform.position.x = Math.floor(Ease.lerp(this.transform.position.x, (position.x - centerX) + (options.offset ? options.offset.x : 0), Math.min(1, options.duration * (this.time.milliDelta * 100))));
         }
     }
     moveToVertical(position, options) {
@@ -1595,7 +1706,7 @@ class Camera extends Entity {
         const pos = (options.centered) ? this._center : this.transform.position;
         const centerY = (options.centered) ? this._viewport.height / 2 : 0;
         if (position.distance(pos) > tolerance) {
-            this.transform.position.y = Math.floor(Ease.lerp(this.transform.position.y, (position.y - centerY) + (options.offset ? options.offset.y : 0), Math.min(1, options.duration * (this.time.deltaTime * 100))));
+            this.transform.position.y = Math.floor(Ease.lerp(this.transform.position.y, (position.y - centerY) + (options.offset ? options.offset.y : 0), Math.min(1, options.duration * (this.time.milliDelta * 100))));
         }
     }
     addTrauma(amount) {
@@ -1625,6 +1736,15 @@ class Camera extends Entity {
     rotate(angle) {
         for (let i = 0, len = this.scene.layers.length; i < len; ++i) {
             this.scene.layers[i].container.angle = angle * this.scene.layers[i].rotation;
+        }
+    }
+    rotateTo(angle, speed) {
+        for (let i = 0, len = this.scene.layers.length; i < len; ++i) {
+            if (this.scene.layers[i].container.angle >= angle)
+                this.scene.layers[i].container.angle -= speed * this.scene.layers[i].rotation;
+            else if (this.scene.layers[i].container.angle <= angle) {
+                this.scene.layers[i].container.angle += speed * this.scene.layers[i].rotation;
+            }
         }
     }
     isOnCamera(position) {
@@ -1677,6 +1797,13 @@ class Sprite extends Component {
         // Set anchor point:
         this.sprite.anchor.x = this.anchor.x;
         this.sprite.anchor.y = this.anchor.y;
+        if (typeof this.properties["src"] === 'string') {
+            this.src = this.properties["src"];
+            this.texture = PIXI.Texture.from(this.src);
+        }
+        else if (this.properties["src"] instanceof PIXI.Texture) {
+            this.texture = this.properties["src"];
+        }
         this.sprite.texture = this.texture;
     }
     unload() {
@@ -2167,27 +2294,27 @@ class Polygon {
 class Noise {
     static simplex(dimension, seed) {
         if (dimension === 1) {
-            return new Tumult.Simplex1(seed);
+            return new Tumult__default['default'].Simplex1(seed);
         }
         if (dimension === 2) {
-            return new Tumult.Simplex2(seed);
+            return new Tumult__default['default'].Simplex2(seed);
         }
     }
     static perlin(dimension, seed) {
         if (dimension === 1) {
-            return new Tumult.Perlin1(seed);
+            return new Tumult__default['default'].Perlin1(seed);
         }
         if (dimension === 2) {
-            return new Tumult.Perlin2(seed);
+            return new Tumult__default['default'].Perlin2(seed);
         }
         if (dimension === 3) {
-            return new Tumult.Perlin3(seed);
+            return new Tumult__default['default'].Perlin3(seed);
         }
         if (dimension === 4) {
-            return new Tumult.Perlin4(seed);
+            return new Tumult__default['default'].Perlin4(seed);
         }
         if (dimension > 4) {
-            return new Tumult.PerlinN(seed);
+            return new Tumult__default['default'].PerlinN(seed);
         }
     }
 }
@@ -2440,8 +2567,8 @@ class Intersects {
     }
 }
 
-exports.PIXI = PIXI;
-exports.Matter = Matter;
+exports.PIXI = PIXI__namespace;
+exports.Matter = Matter__namespace;
 exports.Angle = Angle;
 exports.AudioManager = AudioManager;
 exports.BaseScene = BaseScene;

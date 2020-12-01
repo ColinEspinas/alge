@@ -8,10 +8,10 @@ export default class Sprite extends Component {
 	private src : string;
 
 	private texture : PIXI.Texture;
-	private sprite : PIXI.Sprite;
+	public sprite : PIXI.Sprite;
 	private layer : string;
 
-	public position : Vec;z
+	public position : Vec;
 	private scale : Vec;
 	private anchor : Vec;
 	private angle : number;
@@ -62,7 +62,6 @@ export default class Sprite extends Component {
 	public update() {
 
 		// Set sprite position:
-		
 		this.position = this.properties["position"] || this.parent.transform.position;
 		this.sprite.position.x = this.position.x;
 		this.sprite.position.y = this.position.y;
@@ -79,6 +78,15 @@ export default class Sprite extends Component {
 		// Set anchor point:
 		this.sprite.anchor.x = this.anchor.x;
 		this.sprite.anchor.y = this.anchor.y;
+
+		
+		if (typeof this.properties["src"] === 'string') {
+			this.src = this.properties["src"];
+			this.texture = PIXI.Texture.from(this.src);
+		}
+		else if(this.properties["src"] instanceof PIXI.Texture) {
+			this.texture = this.properties["src"];
+		}
 
 		this.sprite.texture = this.texture;
 	}

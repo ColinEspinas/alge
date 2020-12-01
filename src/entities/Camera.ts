@@ -47,7 +47,7 @@ export default class Camera extends Entity {
 		this._center = new Vec(this.transform.position.x, this.transform.position.y).add(new Vec (this._viewport.width / 2, this._viewport.height / 2));
 
 		if (this.trauma > 0) {
-			this.trauma = Math.max(this.trauma - this.traumaDecay * this.time.deltaTime, 0);
+			this.trauma = Math.max(this.trauma - this.traumaDecay * this.time.milliDelta, 0);
 			this.shake();
 		}
 
@@ -114,8 +114,8 @@ export default class Camera extends Entity {
 
 	public move(direction : Vec, speed ?: number) {
 		speed = speed || 1;
-		this.transform.position.x += direction.x * speed * this.time.deltaTime * 100;
-		this.transform.position.y += direction.y * speed * this.time.deltaTime * 100;
+		this.transform.position.x += direction.x * speed * this.time.milliDelta * 100;
+		this.transform.position.y += direction.y * speed * this.time.milliDelta * 100;
 	}
 
 	public moveTo(position : Vec, options : IMoveOptions) : void {
@@ -128,12 +128,12 @@ export default class Camera extends Entity {
 			this.transform.position.x = Math.floor(Ease.lerp(
 				this.transform.position.x, 
 				(position.x - centerX) + (options.offset ? options.offset.x : 0), 
-				Math.min(1, options.duration * (this.time.deltaTime * 100))
+				Math.min(1, options.duration * (this.time.milliDelta * 100))
 			));
 			this.transform.position.y = Math.floor(Ease.lerp(
 				this.transform.position.y, 
 				(position.y - centerY)  + (options.offset ? options.offset.y : 0), 
-				Math.min(1, options.duration * (this.time.deltaTime * 100))
+				Math.min(1, options.duration * (this.time.milliDelta * 100))
 			));
 		}
 	}
@@ -147,7 +147,7 @@ export default class Camera extends Entity {
 			this.transform.position.x = Math.floor(Ease.lerp(
 				this.transform.position.x, 
 				(position.x - centerX) + (options.offset ? options.offset.x : 0), 
-				Math.min(1, options.duration * (this.time.deltaTime * 100))
+				Math.min(1, options.duration * (this.time.milliDelta * 100))
 			));
 		}
 	}
@@ -161,7 +161,7 @@ export default class Camera extends Entity {
 			this.transform.position.y = Math.floor(Ease.lerp(
 				this.transform.position.y, 
 				(position.y - centerY) + (options.offset ? options.offset.y : 0), 
-				Math.min(1, options.duration * (this.time.deltaTime * 100))
+				Math.min(1, options.duration * (this.time.milliDelta * 100))
 			));
 		}
 	}
@@ -200,6 +200,16 @@ export default class Camera extends Entity {
 		for (let i = 0, len = this.scene.layers.length; i < len; ++i) {
 			this.scene.layers[i].container.angle = angle * this.scene.layers[i].rotation;
 
+		}
+	}
+
+	public rotateTo(angle : number, speed : number) {
+		for (let i = 0, len = this.scene.layers.length; i < len; ++i) {
+			if (this.scene.layers[i].container.angle >= angle)
+				this.scene.layers[i].container.angle -= speed * this.scene.layers[i].rotation;
+			else if (this.scene.layers[i].container.angle <= angle) {
+				this.scene.layers[i].container.angle += speed * this.scene.layers[i].rotation;
+			}
 		}
 	}
 

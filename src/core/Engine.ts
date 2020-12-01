@@ -104,15 +104,22 @@ export default class engine {
 			this.managers[i].init();
 		}
 
+		this.getManager("Time").setTargetFps(this.framerate);
+
 		console.log("Engine is running in ", document.querySelector(this._container));
 
-		this.update();
+		requestAnimationFrame(this.update.bind(this));
 		return 0;
 	}
 
-	public update() : void {
-		while(this.getManager("Time").accumulator > this.getManager("Time").step) {
-			this.getManager("Time").fixDelta();
+	public update(now : number) : void {
+		
+		requestAnimationFrame(this.update.bind(this));
+
+		this.getManager("Time").setDeltaTime(now);
+
+		if (this.getManager("Time").deltaTime >= (this.getManager("Time").step - this.getManager("Time").tolerance)) {
+			this.getManager("Time").setLastUpdate(this.getManager("Time").now - (this.getManager("Time").deltaTime % this.getManager("Time").step));
 			for (var i = 0, len = this.managers.length; i < len; i++) {
 				this.managers[i].fixedUpdate();
 			}
@@ -120,11 +127,6 @@ export default class engine {
 		for (var i = 0, len = this.managers.length; i < len; i++) {
 			this.managers[i].update();
 		}
-		this.getManager("Time").setLastUpdate();
-		
-		setTimeout(()=>{
-			requestAnimationFrame(this.update.bind(this));
-		}, 1000 / (this._framerate + 15));
 	}
 
 	protected addManager<ManagerType extends Manager>(m : ManagerType) : ManagerType {

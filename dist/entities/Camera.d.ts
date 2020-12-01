@@ -34,6 +34,7 @@ export default class Camera extends Entity {
     addTrauma(amount: number): void;
     protected shake(): void;
     rotate(angle: number): void;
+    rotateTo(angle: number, speed: number): void;
     isOnCamera(position: Vec): boolean;
 }
 export interface IMoveOptions {

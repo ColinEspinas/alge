@@ -1,9 +1,10 @@
 import Component from "../core/Component";
+import * as PIXI from "pixi.js";
 import Vec from "../utilities/Vec";
 export default class Sprite extends Component {
     private src;
     private texture;
-    private sprite;
+    sprite: PIXI.Sprite;
     private layer;
     position: Vec;
     z: any;
