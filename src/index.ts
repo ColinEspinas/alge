@@ -42,7 +42,7 @@ import Tileset from './utilities/Tileset';
 import Viewport from './utilities/Viewport';
 import Intersects from './utilities/Intersects';
 
-import { Cursor, Mouse } from './managers/InputManager';
+import { Cursor, Mouse, Buttons } from './managers/InputManager';
 import { SpriteMode } from './components/Sprite';
 
 
@@ -99,6 +99,7 @@ export {
 	SpriteMode,
 	Cursor,
 	Mouse,
+	Buttons,
 	Intersects,
 
 	PIXI,

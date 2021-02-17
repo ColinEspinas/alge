@@ -1,7 +1,7 @@
 import Vec from "../utilities/Vec";
 import Manager from "../core/Manager";
 
-export default class InputManager extends Manager{
+export default class InputManager extends Manager {
 	
 	private pressed : { [key: string]: boolean; } = {};
 	private down : { [key: string]: boolean; } = {};
@@ -15,7 +15,14 @@ export default class InputManager extends Manager{
 	private mousePos : Vec = new Vec(0, 0);
 	private mouseWheel : Vec = new Vec(0, 0, 0);
 
+	private gamepadPressed : { [index : number]: {[key: string]: boolean}; } = {};
+	private gamepadWasPressed : { [index : number]: {[key: string]: boolean}; } = {};
+	private gamepadDown : { [index : number]: {[key: string]: boolean}; } = {};
+	private gamepadReleased : { [index : number]: {[key: string]: boolean}; } = {};
+
 	private containerElement : HTMLElement;
+
+	public mode : string = "qwerty";
 
 	public init() : void {
 
@@ -58,6 +65,12 @@ export default class InputManager extends Manager{
 			this.mouseWheel.y += e.deltaY;
 			this.mouseWheel.z += e.deltaZ;
 		});
+		window.addEventListener('gamepadconnected', (e : GamepadEvent) => {
+			console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+				e.gamepad.index, e.gamepad.id,
+				e.gamepad.buttons.length, e.gamepad.axes.length);
+			console.log(navigator.getGamepads()[e.gamepad.index]);
+		});
 	}
 
 	public update() {
@@ -73,6 +86,33 @@ export default class InputManager extends Manager{
 		for (var i = 0, len = Object.keys(this.mouseReleased).length; i < len; i++) {
 			this.mouseReleased[Object.keys(this.mouseReleased)[i]] = false;
 		}
+		for (let i = 0, len = navigator.getGamepads().length; i < len; ++i) {
+			if (navigator.getGamepads()[i]) {
+				this.gamepadDown[i] = this.gamepadDown[i] ||{};
+				this.gamepadReleased[i] = this.gamepadReleased[i] || {};
+				this.gamepadWasPressed[i] = this.gamepadWasPressed[i] || {};
+				this.gamepadPressed[i] = this.gamepadPressed[i] || {};
+				for (let j = 0, nbButtons = navigator.getGamepads()[i].buttons.length; j < nbButtons; ++j) {
+
+					this.gamepadDown[i][Buttons[j]] = false;
+					this.gamepadReleased[i][Buttons[j]] = false;
+					this.gamepadPressed[i][Buttons[j]] = false;
+
+					if (navigator.getGamepads()[i].buttons[j].pressed) {
+						this.gamepadDown[i][Buttons[j]] = true;
+
+						if (!this.gamepadWasPressed[i][Buttons[j]]) {
+							this.gamepadPressed[i][Buttons[j]] = true;
+							this.gamepadWasPressed[i][Buttons[j]] = true;
+						}
+					}
+					else if (this.gamepadWasPressed[i][Buttons[j]] && !this.gamepadDown[i][Buttons[j]]) {
+						this.gamepadReleased[i][Buttons[j]] = true;
+						this.gamepadWasPressed[i][Buttons[j]] = false;
+					}
+				}
+			}
+		}
 	}
 
 	public getKeyDown(key : string) : boolean {
@@ -86,6 +126,9 @@ export default class InputManager extends Manager{
 	public getKeyReleased(key : string) {
 		return this.released[key];
 	}
+
+
+	// Mouse : 
 
 	public getMousePosition() : Vec {
 		return this.mousePos;
@@ -110,6 +153,32 @@ export default class InputManager extends Manager{
 	public setCursor(type : Cursor) : void {
 		this.containerElement.style.cursor = type;
 	}
+
+
+	// Gamepads :
+	public getButtonDown(gamepadIndex : number, button : string) : boolean {
+		if (this.gamepadDown[gamepadIndex])
+			return this.gamepadDown[gamepadIndex][button];
+		else return false;
+	}
+
+	public getButtonPressed(gamepadIndex : number, button : string) : boolean {
+		if (this.gamepadPressed[gamepadIndex])
+			return this.gamepadPressed[gamepadIndex][button];
+		else return false;
+	}
+
+	public getButtonValue(gamepadIndex : number, button : string) : number {
+		if (navigator.getGamepads()[gamepadIndex])
+			return navigator.getGamepads()[gamepadIndex].buttons[Buttons[button]].value;
+		return null;
+	}
+
+	public getButtonReleased(gamepadIndex : number, button : string) : boolean {
+		if (this.gamepadReleased[gamepadIndex])
+			return this.gamepadReleased[gamepadIndex][button];
+		else return false;
+	}
 }
 
 export enum Cursor {
@@ -128,6 +197,26 @@ export enum Mouse {
 	Left = 0,
 	Middle = 1,
 	Right = 2,
+}
+
+export enum Buttons {
+	'A',
+	'B',
+	'X',
+	'Y',
+	'LB',
+	'RB',
+	'LT',
+	'RT',
+	'Back',
+	'Start',
+	'LSB',
+	'RSB',
+	'DPad-Up',
+	'DPad-Down',
+	'DPad-Left',
+	'DPad-Right',
+	'Power',
 }
 
 // export enum Key {

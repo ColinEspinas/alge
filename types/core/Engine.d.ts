@@ -32,7 +32,7 @@ export default class engine {
     get gameScale(): number;
     get framerate(): number;
     run(): number;
-    update(): void;
+    update(now: number): void;
     protected addManager<ManagerType extends Manager>(m: ManagerType): ManagerType;
     getManager(name: string): any;
     getManagers(name: string): any[];
