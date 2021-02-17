@@ -15,7 +15,6 @@
   "author": "Colin Espinas",
   "license": "ISC",
   "devDependencies": {
-    "parcel-bundler": "^1.12.4",
     "rimraf": "^3.0.2",
     "rollup": "^2.3.1",
     "rollup-plugin-terser": "^5.3.0",
