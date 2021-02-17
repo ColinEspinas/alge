@@ -3,7 +3,6 @@ import * as PIXI from 'pixi.js';
 import Viewport from "../utilities/Viewport";
 import Vec from "../utilities/Vec";
 import Sprite from "../components/Sprite";
-import Tileset from "../utilities/Tileset";
 import PIXIScene from "../scenes/PMScene";
 import TimeManager from "../managers/TimeManager";
 import Ease from "../utilities/Ease";

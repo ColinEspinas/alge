@@ -1,7 +1,5 @@
 import typescript from 'rollup-plugin-typescript2';
-import execute from 'rollup-plugin-execute';
 import pkg from './package.json';
-import path from 'path';
 import { terser } from 'rollup-plugin-terser';
 
 export default {
@@ -27,9 +25,10 @@ export default {
     plugins: [
         typescript({
             typescript: require('typescript'),
+            useTsconfigDeclarationDir: true,
         }),
         // terser(),
-        execute(`mv ${path.join(process.cwd(), 'dist', 'index.d.ts')} ${path.join(process.cwd(), 'dist', 'alge.d.ts')}`)
+        // execute(`mv ${path.join(process.cwd(), 'dist', 'index.d.ts')} ${path.join(process.cwd(), 'dist', 'alge.d.ts')}`)
         // copy({
         //     targets: [{ src: 'dist/index.d.ts', dest: 'dist/', rename: 'alge.d.ts' }]
         // })
