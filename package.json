@@ -5,21 +5,20 @@
   "source": "src/*.ts",
   "main": "dist/index.js",
   "browser": "dist/index.umd.js",
-  "module": "dist/index.module.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "watch": "rollup -w -c",
-    "build": "npm run clean-dist & rollup -c",
-    "clean-dist": "rimraf ./dist"
+    "dev": "webpack --mode=development --watch",
+    "build": "webpack --mode=production"
   },
   "author": "Colin Espinas",
   "license": "ISC",
   "devDependencies": {
-    "rimraf": "^3.0.2",
-    "rollup": "^2.3.1",
-    "rollup-plugin-terser": "^5.3.0",
-    "rollup-plugin-typescript2": "^0.27.0",
-    "typescript": "^3.8.3"
+    "fork-ts-checker-webpack-plugin": "^6.2.0",
+    "ts-loader": "^8.1.0",
+    "typescript": "^3.9.9",
+    "webpack": "^5.30.0",
+    "webpack-cli": "^4.6.0",
+    "webpackbar": "^5.0.0-3"
   },
   "dependencies": {
     "howler": "^2.1.3",
