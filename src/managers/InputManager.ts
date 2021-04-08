@@ -15,10 +15,12 @@ export default class InputManager extends Manager {
 	private mousePos : Vec = new Vec(0, 0);
 	private mouseWheel : Vec = new Vec(0, 0, 0);
 
-	private gamepadPressed : { [index : number]: {[key: string]: boolean}; } = {};
-	private gamepadWasPressed : { [index : number]: {[key: string]: boolean}; } = {};
-	private gamepadDown : { [index : number]: {[key: string]: boolean}; } = {};
-	private gamepadReleased : { [index : number]: {[key: string]: boolean}; } = {};
+	private gamepadPressed : { [key: string]: number }[] = [];
+	private gamepadWasPressed : { [key: string]: boolean }[] = [];
+	private gamepadDown : { [key: string]: number }[] = [];
+	private gamepadReleased : { [key: string]: boolean }[] = [];
+
+	private gamepadAxes : { [key: string]: number }[] = []
 
 	private containerElement : HTMLElement;
 
@@ -65,12 +67,6 @@ export default class InputManager extends Manager {
 			this.mouseWheel.y += e.deltaY;
 			this.mouseWheel.z += e.deltaZ;
 		});
-		window.addEventListener('gamepadconnected', (e : GamepadEvent) => {
-			console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
-				e.gamepad.index, e.gamepad.id,
-				e.gamepad.buttons.length, e.gamepad.axes.length);
-			console.log(navigator.getGamepads()[e.gamepad.index]);
-		});
 	}
 
 	public update() {
@@ -92,17 +88,18 @@ export default class InputManager extends Manager {
 				this.gamepadReleased[i] = this.gamepadReleased[i] || {};
 				this.gamepadWasPressed[i] = this.gamepadWasPressed[i] || {};
 				this.gamepadPressed[i] = this.gamepadPressed[i] || {};
+				this.gamepadAxes[i] = this.gamepadAxes[i] || {};
 				for (let j = 0, nbButtons = navigator.getGamepads()[i].buttons.length; j < nbButtons; ++j) {
 
-					this.gamepadDown[i][Buttons[j]] = false;
+					this.gamepadDown[i][Buttons[j]] = 0;
 					this.gamepadReleased[i][Buttons[j]] = false;
-					this.gamepadPressed[i][Buttons[j]] = false;
+					this.gamepadPressed[i][Buttons[j]] = 0;
 
 					if (navigator.getGamepads()[i].buttons[j].pressed) {
-						this.gamepadDown[i][Buttons[j]] = true;
+						this.gamepadDown[i][Buttons[j]] = navigator.getGamepads()[i].buttons[j].value;
 
 						if (!this.gamepadWasPressed[i][Buttons[j]]) {
-							this.gamepadPressed[i][Buttons[j]] = true;
+							this.gamepadPressed[i][Buttons[j]] = navigator.getGamepads()[i].buttons[j].value;
 							this.gamepadWasPressed[i][Buttons[j]] = true;
 						}
 					}
@@ -110,6 +107,9 @@ export default class InputManager extends Manager {
 						this.gamepadReleased[i][Buttons[j]] = true;
 						this.gamepadWasPressed[i][Buttons[j]] = false;
 					}
+				}
+				for (let j = 0, nbAxes = navigator.getGamepads()[i].axes.length; j < nbAxes; ++j) {
+					this.gamepadAxes[i][Axes[j]] = navigator.getGamepads()[i].axes[j];
 				}
 			}
 		}
@@ -156,16 +156,17 @@ export default class InputManager extends Manager {
 
 
 	// Gamepads :
-	public getButtonDown(gamepadIndex : number, button : string) : boolean {
+	
+	public getButtonDown(gamepadIndex : number, button : string) : number {
 		if (this.gamepadDown[gamepadIndex])
 			return this.gamepadDown[gamepadIndex][button];
-		else return false;
+		else return 0;
 	}
 
-	public getButtonPressed(gamepadIndex : number, button : string) : boolean {
+	public getButtonPressed(gamepadIndex : number, button : string) : number {
 		if (this.gamepadPressed[gamepadIndex])
 			return this.gamepadPressed[gamepadIndex][button];
-		else return false;
+		else return 0;
 	}
 
 	public getButtonValue(gamepadIndex : number, button : string) : number {
@@ -217,6 +218,13 @@ export enum Buttons {
 	'DPad-Left',
 	'DPad-Right',
 	'Power',
+}
+
+export enum Axes {
+	'LSX',
+	'LSY',
+	'RSX',
+	'RSY',
 }
 
 // export enum Key {
