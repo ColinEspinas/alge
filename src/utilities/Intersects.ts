@@ -17,14 +17,14 @@ export default class Intersects {
 	}
 	
 	public static lineToLine(line1 : Line, line2 : Line, includeEnds : boolean) : boolean {
-		const s1_x = line1.point2.x - line1.point1.x;
-		const s1_y = line1.point2.y - line1.point1.y;
-		const s2_x = line2.point2.x - line2.point1.x;
-		const s2_y = line2.point2.y - line2.point1.y;
-		let s = (-s1_y * (line1.point1.x - line2.point1.x) + s1_x * (line1.point1.y - line2.point1.y)) / (-s2_x * s1_y + s1_x * s2_y)
-		let t = (s2_x * (line1.point1.y - line2.point1.y) - s2_y * (line1.point1.x - line2.point1.x)) / (-s2_x * s1_y + s1_x * s2_y)
-		if (includeEnds) return s >= 0 && s <= 1 && t >= 0 && t <= 1
-		else return s > 0 && s < 1 && t > 0 && t < 1
+		const s1_x: number = line1.point2.x - line1.point1.x;
+		const s1_y: number = line1.point2.y - line1.point1.y;
+		const s2_x: number = line2.point2.x - line2.point1.x;
+		const s2_y: number = line2.point2.y - line2.point1.y;
+		let s: number = (-s1_y * (line1.point1.x - line2.point1.x) + s1_x * (line1.point1.y - line2.point1.y)) / (-s2_x * s1_y + s1_x * s2_y);
+		let t: number = (s2_x * (line1.point1.y - line2.point1.y) - s2_y * (line1.point1.x - line2.point1.x)) / (-s2_x * s1_y + s1_x * s2_y);
+		if (includeEnds) return s >= 0 && s <= 1 && t >= 0 && t <= 1;
+		else return s > 0 && s < 1 && t > 0 && t < 1;
 	}
 
 	public static lineToCircle(line : Line, circle : Circle) : boolean {

@@ -5,29 +5,29 @@ import Ease from './Ease';
 
 export default class Viewport extends PIXI.Container {
 
-	protected viewWidth : number;
-	protected viewHeight : number;
+	protected _viewWidth : number;
+	protected _viewHeight : number;
 
 	protected _stage : PIXI.Container;
 	protected stagePosition : Vec;
 
 	protected debugGraphics : PIXI.Graphics;
 
-	public get width() { return this.viewWidth; }
-	public get height() { return this.viewHeight; }
+	public get viewWidth () { return this._viewWidth; }
+	public get viewHeight() { return this._viewHeight; }
 	public get center() { return new Vec(this.position.x + this.width / 2, this.position.y + this.height / 2); }
 
 	constructor(options : IViewportOptions) {
 		super();
-		this.viewWidth = options.width;
-		this.viewHeight = options.height;
+		this._viewHeight = options.width;
+		this._viewHeight = options.height;
 
 		this.debugGraphics = new PIXI.Graphics;
 	}
 
 	public resize(width : number, height : number) {
-		this.viewWidth = width;
-		this.viewHeight = height;
+		this._viewHeight = width;
+		this._viewHeight = height;
 	}
 
 	public debug() {
@@ -36,8 +36,8 @@ export default class Viewport extends PIXI.Container {
 		let coords = [
 			this.position.x,
 			this.position.y,
-			this.position.x + this.viewWidth,
-			this.position.y + this.viewHeight,
+			this.position.x + this._viewHeight,
+			this.position.y + this._viewHeight,
 		];
 
 		this.debugGraphics.position = this.position;
